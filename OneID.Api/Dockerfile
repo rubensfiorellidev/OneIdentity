@@ -1,51 +1,37 @@
-# ======= BASE IMAGE: ASP.NET 8.0 ==========
+# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
+# This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-
-# Define o fuso horário para São Paulo (ou outro fuso desejado)
-RUN ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
-
-
-#RUN apt-get update && apt-get install -y \
-#    libldap-2.5-0 \
-#    libsasl2-2 \
-#    ca-certificates \
-#    && rm -rf /var/lib/apt/lists/*
-
-# Define o fuso horário para São Paulo (ou outro fuso desejado)
-RUN ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
- 
-# Instala pacotes necessários
-RUN echo "deb http://deb.debian.org/debian bookworm contrib non-free" > /etc/apt/sources.list.d/contrib.list
-RUN apt-get update && apt-get install -y libldap-2.5-0 libsasl2-2 libgdiplus ttf-mscorefonts-installer fontconfig && rm -rf /var/lib/apt/lists/*
-
-RUN fc-cache -f -v
-
 WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-# ======= BUILD IMAGE: .NET SDK 8.0 ==========
+# Define o fuso horário para São Paulo (ou outro fuso desejado)
+RUN ln -sf /usr/share/zoneinfo/America/Sao_Paulo /etc/localtime
+
+
+# This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["src/HawkId.Login.Api/HawkId.WebApi.csproj", "src/HawkId.Login.Api/"]
-COPY ["src/HawkId.CrossCutting/HawkId.CrossCutting.csproj", "src/HawkId.CrossCutting/"]
-COPY ["src/HawkId.Application/HawkId.Application.csproj", "src/HawkId.Application/"]
-COPY ["src/HawkId.Core/HawkId.Domain.csproj", "src/HawkId.Core/"]
-COPY ["src/HawkId.Data/HawkId.Data.csproj", "src/HawkId.Data/"]
-
-RUN dotnet restore "./src/HawkId.Login.Api/HawkId.WebApi.csproj"
+COPY ["OneID.Api/OneID.Api.csproj", "OneID.Api/"]
+COPY ["OneID.Application/OneID.Application.csproj", "OneID.Application/"]
+COPY ["OneID.Domain/OneID.Domain.csproj", "OneID.Domain/"]
+COPY ["OneID.Data/OneID.Data.csproj", "OneID.Data/"]
+COPY ["OneID.Shared/OneID.Shared.csproj", "OneID.Shared/"]
+COPY ["OneID.Messaging/OneID.Messaging.csproj", "OneID.Messaging/"]
+RUN dotnet restore "./OneID.Api/OneID.Api.csproj"
 COPY . .
-WORKDIR "/src/src/HawkId.Login.Api"
-RUN dotnet build "./HawkId.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/OneID.Api"
+RUN dotnet build "./OneID.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-# ======= PUBLISH IMAGE ==========
+# This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "./HawkId.WebApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./OneID.Api.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
-# ======= FINAL IMAGE ==========
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-ENTRYPOINT ["dotnet", "HawkId.WebApi.dll"]
+ENTRYPOINT ["dotnet", "OneID.Api.dll"]
