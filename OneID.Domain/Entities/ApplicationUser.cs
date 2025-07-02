@@ -6,7 +6,8 @@ namespace OneID.Domain.Entities
     public sealed class ApplicationUser : IdentityUser
     {
         public string Fullname { get; private set; }
-        public string Login { get; private set; }
+        public string LoginHash { get; private set; }
+        public string LoginCrypt { get; private set; }
         public DateTimeOffset ProvisioningAt { get; private set; }
         public bool IsActive { get; private set; }
         public DateTimeOffset? LastLoginAt { get; private set; }
@@ -14,37 +15,28 @@ namespace OneID.Domain.Entities
 
         private ApplicationUser() { }
         public ApplicationUser(
-            string login,
             string fullName,
             string email,
             string phoneNumber,
-            string createdBy)
+            string createdBy,
+            string loginHash,
+            string loginCrypt)
         {
             Id = $"{Ulid.NewUlid()}";
-            UserName = login;
-            Login = login;
             Fullname = fullName;
             Email = email;
             PhoneNumber = phoneNumber;
+            CreatedBy = createdBy;
+            LoginHash = loginHash;
+            LoginCrypt = loginCrypt;
             ProvisioningAt = DateTimeOffset.UtcNow;
             IsActive = true;
-            CreatedBy = createdBy;
         }
 
+        public void SetLastLoginAt(DateTimeOffset lastLogin) => LastLoginAt = lastLogin;
+        public void Deactivate() => IsActive = false;
+        public void Activate() => IsActive = true;
 
-        public void SetLastLoginAt(DateTimeOffset lastLogin)
-        {
-            LastLoginAt = lastLogin;
-        }
-
-        public void Deactivate()
-        {
-            IsActive = false;
-        }
-        public void Activate()
-        {
-            IsActive = true;
-        }
     }
 
 }

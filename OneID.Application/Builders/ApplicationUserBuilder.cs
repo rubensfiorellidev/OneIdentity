@@ -6,18 +6,12 @@ namespace OneID.Application.Builders
 {
     public class ApplicationUserBuilder : IApplicationUserBuilder
     {
-        private readonly IUserLoginGenerator _loginGenerator;
-
         private string _fullName;
         private string _email;
         private string _phoneNumber;
         private string _createdBy;
-
-        public ApplicationUserBuilder(
-            IUserLoginGenerator loginGenerator)
-        {
-            _loginGenerator = loginGenerator;
-        }
+        private string _loginHash;
+        private string _loginCrypt;
 
         public IApplicationUserBuilder WithFullName(string fullName)
         {
@@ -43,21 +37,32 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public async Task<ApplicationUser> BuildAsync(CancellationToken ct)
+        public IApplicationUserBuilder WithLoginHash(string loginHash)
         {
-            var login = await _loginGenerator.GenerateLoginAsync(_fullName, ct);
+            _loginHash = loginHash;
+            return this;
+        }
 
-            var user = new ApplicationUser(
-                login,
+        public IApplicationUserBuilder WithLoginCrypt(string loginCrypt)
+        {
+            _loginCrypt = loginCrypt;
+            return this;
+        }
+
+        public ApplicationUser Build()
+        {
+            if (string.IsNullOrWhiteSpace(_loginHash) || string.IsNullOrWhiteSpace(_loginCrypt))
+                throw new InvalidOperationException("LoginHash and LoginCrypt must be provided.");
+
+            return new ApplicationUser(
                 _fullName,
                 _email,
                 _phoneNumber,
-                _createdBy
+                _createdBy,
+                _loginHash,
+                _loginCrypt
             );
-
-            return user;
         }
-
     }
 
 }

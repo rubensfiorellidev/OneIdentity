@@ -8,7 +8,9 @@ namespace OneID.Application.Interfaces
         IApplicationUserBuilder WithEmail(string email);
         IApplicationUserBuilder WithPhoneNumber(string phoneNumber);
         IApplicationUserBuilder WithCreatedBy(string createdBy);
-        Task<ApplicationUser> BuildAsync(CancellationToken ct);
+        IApplicationUserBuilder WithLoginHash(string loginHash);
+        IApplicationUserBuilder WithLoginCrypt(string loginCrypt);
+        ApplicationUser Build();
     }
 
 }
