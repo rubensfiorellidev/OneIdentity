@@ -12,8 +12,8 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneIdDbContext))]
-    [Migration("20250702022940_AddFullnameAndLoginToUser")]
-    partial class AddFullnameAndLoginToUser
+    [Migration("20250702032139_UpdateApplicationUserWithFullDomain")]
+    partial class UpdateApplicationUserWithFullDomain
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -181,6 +181,11 @@ namespace OneID.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("concurrency_stamp");
 
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("created_by");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
@@ -195,6 +200,16 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("varchar")
                         .HasColumnName("fullname");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("last_login_at");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")

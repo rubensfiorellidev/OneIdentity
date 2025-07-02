@@ -178,6 +178,11 @@ namespace OneID.Data.Migrations
                         .HasColumnType("text")
                         .HasColumnName("concurrency_stamp");
 
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar")
+                        .HasColumnName("created_by");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)")
@@ -192,6 +197,16 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("varchar")
                         .HasColumnName("fullname");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamptz")
+                        .HasColumnName("last_login_at");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")

@@ -34,6 +34,23 @@ namespace OneID.Data.Mappings
                 .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'")
                 .IsRequired();
 
+            builder.Property(u => u.IsActive)
+                .HasColumnName("is_active")
+                .HasColumnType("boolean")
+                .HasDefaultValue(true)
+                .IsRequired();
+
+            builder.Property(u => u.LastLoginAt)
+                .HasColumnName("last_login_at")
+                .HasColumnType("timestamptz")
+                .IsRequired(false);
+
+            builder.Property(u => u.CreatedBy)
+                .HasColumnName("created_by")
+                .HasColumnType("varchar")
+                .HasMaxLength(100)
+                .IsRequired(false);
+
             builder.Property(u => u.UserName)
                 .HasColumnName("user_name")
                 .HasMaxLength(256);
