@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
@@ -37,12 +38,25 @@ namespace OneID.Data.DataContexts
             base.OnModelCreating(builder);
 
             builder.ApplyConfiguration(new ApplicationUserMap());
+            builder.ApplyConfiguration(new ApplicationRoleMap());
+
 
             builder.Entity<ApplicationRole>(entity =>
             {
                 entity.ToTable("tb_oneid_roles");
                 entity.Property(e => e.ConcurrencyStamp).IsConcurrencyToken();
             });
+
+            builder.Entity<IdentityUserRole<string>>(entity =>
+            {
+                entity.ToTable("tb_oneid_user_roles");
+            });
+
+            builder.Entity<IdentityUserClaim<string>>().ToTable("tb_oneid_user_claims");
+            builder.Entity<IdentityUserLogin<string>>().ToTable("tb_oneid_user_logins");
+            builder.Entity<IdentityRoleClaim<string>>().ToTable("tb_oneid_role_claims");
+            builder.Entity<IdentityUserToken<string>>().ToTable("tb_oneid_user_tokens");
+
 
         }
     }
