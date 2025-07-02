@@ -1,10 +1,9 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
+using OneID.Data.Mappings;
 using OneID.Domain.Entities;
-using System.Text.Json;
 
 namespace OneID.Data.DataContexts
 {
@@ -20,14 +19,12 @@ namespace OneID.Data.DataContexts
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-
             base.OnConfiguring(optionsBuilder);
 
             optionsBuilder.UseLoggerFactory(LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
             })).EnableSensitiveDataLogging();
-
 
             if (!optionsBuilder.IsConfigured)
             {
@@ -39,26 +36,15 @@ namespace OneID.Data.DataContexts
         {
             base.OnModelCreating(builder);
 
-            builder.Entity<IdentityRole>(entity =>
+            builder.ApplyConfiguration(new ApplicationUserMap());
+
+            builder.Entity<ApplicationRole>(entity =>
             {
+                entity.ToTable("tb_oneid_roles");
                 entity.Property(e => e.ConcurrencyStamp).IsConcurrencyToken();
             });
-
-            var jsonOptions = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            builder.Entity<IdentityRole>(entity =>
-            {
-                entity.Property(e => e.ConcurrencyStamp).IsConcurrencyToken();
-            });
-
-
-
 
         }
-
-
     }
+
 }
