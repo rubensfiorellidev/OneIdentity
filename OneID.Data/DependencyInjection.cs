@@ -6,7 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using OneID.Application.Interfaces;
 using OneID.Data.DataContexts;
+using OneID.Data.Repositories.UsersContext;
 using OneID.Domain.Entities;
 using System.Text;
 
@@ -15,6 +17,7 @@ namespace OneID.Data
 {
     public static class DependencyInjection
     {
+        #region Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContextFactory<OneIdDbContext>((serviceProvider, opts) =>
@@ -40,12 +43,23 @@ namespace OneID.Data
                 opts.EnableSensitiveDataLogging(false);
             });
 
+            services.AddDbContext<OneIdDbContext>((serviceProvider, opts) => { });
+
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<OneIdDbContext>()
                 .AddDefaultTokenProviders();
 
             return services;
         }
+
+        public static IServiceCollection AddRepositories(this IServiceCollection services)
+        {
+            services.AddScoped<IUserRepository, UserRepository>();
+
+            return services;
+        }
+
+        #endregion
 
         #region JwtWebTokens
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
@@ -84,6 +98,8 @@ namespace OneID.Data
             return services;
         }
         #endregion
+
+
 
     }
 }

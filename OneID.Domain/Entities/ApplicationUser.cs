@@ -12,8 +12,8 @@ namespace OneID.Domain.Entities
         public DateTimeOffset? LastLoginAt { get; private set; }
         public string CreatedBy { get; private set; }
 
-        public ApplicationUser() { }
-        internal ApplicationUser(
+        private ApplicationUser() { }
+        public ApplicationUser(
             string login,
             string fullName,
             string email,
@@ -29,8 +29,8 @@ namespace OneID.Domain.Entities
             ProvisioningAt = DateTimeOffset.UtcNow;
             IsActive = true;
             CreatedBy = createdBy;
-
         }
+
 
         public void SetLastLoginAt(DateTimeOffset lastLogin)
         {
@@ -41,7 +41,6 @@ namespace OneID.Domain.Entities
         {
             IsActive = false;
         }
-
         public void Activate()
         {
             IsActive = true;
