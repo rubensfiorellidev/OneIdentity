@@ -22,10 +22,28 @@ namespace OneID.Data.Mappings
                 .HasMaxLength(250)
                 .IsRequired();
 
-            builder.Property(u => u.Login)
-                .HasColumnName("login")
+            builder.Property(u => u.FirstName)
+                .HasColumnName("first_name")
+                .HasColumnType("varchar")
+                .HasMaxLength(250)
+                .IsRequired();
+
+            builder.Property(u => u.LastName)
+                .HasColumnName("last_name")
+                .HasColumnType("varchar")
+                .HasMaxLength(250)
+                .IsRequired();
+
+            builder.Property(u => u.LoginHash)
+                .HasColumnName("login_hash")
                 .HasColumnType("varchar")
                 .HasMaxLength(150)
+                .IsRequired();
+
+            builder.Property(u => u.LoginCrypt)
+                .HasColumnName("login_crypt")
+                .HasColumnType("varchar")
+                .HasMaxLength(250)
                 .IsRequired();
 
             builder.Property(u => u.ProvisioningAt)
