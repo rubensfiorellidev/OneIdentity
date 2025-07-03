@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace OneID.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class UpdateApplicationUserWithFullDomain : Migration
+    public partial class First_Migration_ApplicationUser_Table_Create : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -33,11 +33,15 @@ namespace OneID.Data.Migrations
                 {
                     id = table.Column<string>(type: "varchar", maxLength: 26, nullable: false),
                     fullname = table.Column<string>(type: "varchar", maxLength: 250, nullable: false),
-                    login = table.Column<string>(type: "varchar", maxLength: 150, nullable: false),
+                    first_name = table.Column<string>(type: "varchar", maxLength: 250, nullable: false),
+                    last_name = table.Column<string>(type: "varchar", maxLength: 250, nullable: false),
+                    login_hash = table.Column<string>(type: "varchar", maxLength: 150, nullable: false),
+                    login_crypt = table.Column<string>(type: "varchar", maxLength: 250, nullable: false),
                     provisioning_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP AT TIME ZONE 'UTC'"),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     last_login_at = table.Column<DateTimeOffset>(type: "timestamptz", nullable: true),
                     created_by = table.Column<string>(type: "varchar", maxLength: 100, nullable: true),
+                    KeycloakUserId = table.Column<string>(type: "text", nullable: true),
                     user_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     normalized_user_name = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),

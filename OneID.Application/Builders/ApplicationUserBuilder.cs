@@ -7,11 +7,15 @@ namespace OneID.Application.Builders
     public class ApplicationUserBuilder : IApplicationUserBuilder
     {
         private string _fullName;
+        private string _firstName;
+        private string _lastName;
         private string _email;
         private string _phoneNumber;
         private string _createdBy;
         private string _loginHash;
         private string _loginCrypt;
+        private string _keycloakUserId;
+
 
         public IApplicationUserBuilder WithFullName(string fullName)
         {
@@ -49,18 +53,46 @@ namespace OneID.Application.Builders
             return this;
         }
 
+        public IApplicationUserBuilder WithFirstName(string firstName)
+        {
+            _firstName = firstName;
+            return this;
+        }
+
+        public IApplicationUserBuilder WithLastName(string lastName)
+        {
+            _lastName = lastName;
+            return this;
+        }
+
+        public IApplicationUserBuilder WithKeycloakUserId(string keycloakUserId)
+        {
+            _keycloakUserId = keycloakUserId;
+            return this;
+        }
+
         public ApplicationUser Build()
         {
-            if (string.IsNullOrWhiteSpace(_loginHash) || string.IsNullOrWhiteSpace(_loginCrypt))
-                throw new InvalidOperationException("LoginHash and LoginCrypt must be provided.");
+            if (string.IsNullOrWhiteSpace(_fullName))
+                throw new InvalidOperationException("FullName must be provided.");
+            if (string.IsNullOrWhiteSpace(_firstName))
+                throw new InvalidOperationException("FirstName must be provided.");
+            if (string.IsNullOrWhiteSpace(_lastName))
+                throw new InvalidOperationException("LastName must be provided.");
+            if (string.IsNullOrWhiteSpace(_email))
+                throw new InvalidOperationException("Email must be provided.");
+
 
             return new ApplicationUser(
                 _fullName,
+                _firstName,
+                _lastName,
                 _email,
                 _phoneNumber,
                 _createdBy,
                 _loginHash,
-                _loginCrypt
+                _loginCrypt,
+                _keycloakUserId
             );
         }
     }

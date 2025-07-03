@@ -12,8 +12,8 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneIdDbContext))]
-    [Migration("20250702032139_UpdateApplicationUserWithFullDomain")]
-    partial class UpdateApplicationUserWithFullDomain
+    [Migration("20250703193121_First_Migration_ApplicationUser_Table_Create")]
+    partial class First_Migration_ApplicationUser_Table_Create
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -195,6 +195,12 @@ namespace OneID.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("email_confirmed");
 
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar")
+                        .HasColumnName("first_name");
+
                     b.Property<string>("Fullname")
                         .IsRequired()
                         .HasMaxLength(250)
@@ -207,9 +213,18 @@ namespace OneID.Data.Migrations
                         .HasDefaultValue(true)
                         .HasColumnName("is_active");
 
+                    b.Property<string>("KeycloakUserId")
+                        .HasColumnType("text");
+
                     b.Property<DateTimeOffset?>("LastLoginAt")
                         .HasColumnType("timestamptz")
                         .HasColumnName("last_login_at");
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar")
+                        .HasColumnName("last_name");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean")
@@ -219,11 +234,17 @@ namespace OneID.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_end");
 
-                    b.Property<string>("Login")
+                    b.Property<string>("LoginCrypt")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("varchar")
+                        .HasColumnName("login_crypt");
+
+                    b.Property<string>("LoginHash")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("varchar")
-                        .HasColumnName("login");
+                        .HasColumnName("login_hash");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
