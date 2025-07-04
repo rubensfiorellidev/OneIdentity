@@ -1,25 +1,24 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
-using OneID.Data.Factories;
+using OneID.Application.Interfaces;
 using OneID.Domain.Entities;
 
 namespace OneID.Application.Messaging.Sagas.Consumers
 {
     public class AdmissionAuditConsumer : IConsumer<AdmissionAudit>
     {
-        private readonly IOneDbContextFactory _dbContextFactory;
+        private readonly IAdmissionAuditRepository _repository;
         private readonly ILogger<AdmissionAuditConsumer> _logger;
 
         public AdmissionAuditConsumer(ILogger<AdmissionAuditConsumer> logger,
-                                                 IOneDbContextFactory dbContextFactory)
+                                      IAdmissionAuditRepository repository)
         {
             _logger = logger;
-            _dbContextFactory = dbContextFactory;
+            _repository = repository;
         }
 
         public async Task Consume(ConsumeContext<AdmissionAudit> context)
         {
-            await using var dbContext = _dbContextFactory.CreateDbContext();
 
             try
             {
@@ -39,8 +38,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 };
 
 
-                await dbContext.AutomaticAdmissionPjAudits.AddAsync(audit, context.CancellationToken);
-                await dbContext.SaveChangesAsync(context.CancellationToken);
+                await _repository.AddAsync(audit, context.CancellationToken);
 
                 _logger.LogInformation(
                     "Audit registrado com sucesso - CorrelationId: {CorrelationId} - CurrentState: {CurrentState}",

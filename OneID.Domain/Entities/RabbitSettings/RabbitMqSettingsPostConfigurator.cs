@@ -17,7 +17,7 @@ namespace OneID.Domain.Entities.RabbitSettings
             {
                 options.HostName = connectionSection["Hostname"];
                 options.Port = int.TryParse(connectionSection["Port"], out var port) ? port : 5671;
-                options.Username = connectionSection["Username"];
+                options.UserName = connectionSection["UserName"];
                 options.Password = connectionSection["Password"];
                 options.VirtualHost = connectionSection["VirtualHost"];
             }

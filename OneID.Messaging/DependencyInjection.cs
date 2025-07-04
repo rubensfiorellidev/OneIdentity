@@ -18,7 +18,7 @@ namespace OneID.Messaging
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddMessaging(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddMessaging(this IServiceCollection services)
         {
             services.AddMassTransit(x =>
             {
@@ -91,7 +91,7 @@ namespace OneID.Messaging
                         k.SetRestartTimeout(TimeSpan.FromMinutes(1));
                     });
 
-                    cfg.ReceiveEndpoint("create-account-pj-saga", e =>
+                    cfg.ReceiveEndpoint("create-account-saga", e =>
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
@@ -101,40 +101,40 @@ namespace OneID.Messaging
                             r.Handle<DbUpdateConcurrencyException>(); // Tratar conflitos de concorrência
                         });
                         e.ConfigureSaga<AccountSagaState>(context);
-                        logger.LogInformation("Fila [create-account-pj-saga] registrada com sucesso.");
+                        logger.LogInformation("Fila [create-account-saga] registrada com sucesso.");
                     });
 
-                    cfg.ReceiveEndpoint("create-login-pj", e =>
+                    cfg.ReceiveEndpoint("create-login", e =>
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
 
                         e.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
-                        e.ConfigureConsumer<CreateLoginForPjConsumer>(context);
+                        e.ConfigureConsumer<CreateLoginConsumer>(context);
 
-                        logger.LogInformation("Fila [create-login-pj] registrada com sucesso.");
+                        logger.LogInformation("Fila [create-login] registrada com sucesso.");
                     });
 
-                    cfg.ReceiveEndpoint("create-account-pj-db", e =>
-                    {
-                        e.PrefetchCount = 10;
-                        e.UseInMemoryOutbox(context);
+                    //cfg.ReceiveEndpoint("create-account-pj-db", e =>
+                    //{
+                    //    e.PrefetchCount = 10;
+                    //    e.UseInMemoryOutbox(context);
 
-                        e.UseMessageRetry(r =>
-                        {
-                            r.Handle<TimeoutException>();
-                            r.Handle<HttpRequestException>();
-                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
-                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
-                            r.Interval(3, TimeSpan.FromSeconds(10));
-                        });
+                    //    e.UseMessageRetry(r =>
+                    //    {
+                    //        r.Handle<TimeoutException>();
+                    //        r.Handle<HttpRequestException>();
+                    //        r.Handle<NpgsqlException>(ex => ex.IsTransient);
+                    //        r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                    //        r.Interval(3, TimeSpan.FromSeconds(10));
+                    //    });
 
-                        e.ConfigureConsumer<CreateAccountPjDatabaseConsumer>(context);
+                    //    e.ConfigureConsumer<CreateAccountPjDatabaseConsumer>(context);
 
-                        logger.LogInformation("Fila [create-account-pj-db] registrada com sucesso.");
-                    });
+                    //    logger.LogInformation("Fila [create-account-pj-db] registrada com sucesso.");
+                    //});
 
-                    cfg.ReceiveEndpoint("admission-pj-audit", e =>
+                    cfg.ReceiveEndpoint("admission-audit", e =>
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);

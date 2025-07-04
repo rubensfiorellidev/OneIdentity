@@ -5,9 +5,9 @@ using OneID.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddApplication();
+builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddData(builder.Configuration);
-builder.Services.AddMessaging(builder.Configuration);
+builder.Services.AddMessaging();
 builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
