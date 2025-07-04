@@ -4,7 +4,7 @@ namespace OneID.Data.Factories
 {
     public interface IOneDbContextFactory
     {
-        OneIdDbContext CreateDbContext();
+        OneDbContext CreateDbContext();
 
     }
 }

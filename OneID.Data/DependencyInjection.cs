@@ -20,7 +20,7 @@ namespace OneID.Data
         #region Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContextFactory<OneIdDbContext>((serviceProvider, opts) =>
+            services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
             {
                 var env = serviceProvider.GetRequiredService<IHostEnvironment>();
                 var config = serviceProvider.GetRequiredService<IConfiguration>();
@@ -36,17 +36,17 @@ namespace OneID.Data
 
                 opts.UseNpgsql(dataSource, npgsqlOptions =>
                 {
-                    npgsqlOptions.MigrationsAssembly(typeof(OneIdDbContext).Assembly.FullName);
+                    npgsqlOptions.MigrationsAssembly(typeof(OneDbContext).Assembly.FullName);
                     npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), null);
                 });
 
                 opts.EnableSensitiveDataLogging(false);
             });
 
-            services.AddDbContext<OneIdDbContext>((serviceProvider, opts) => { });
+            services.AddDbContext<OneDbContext>((serviceProvider, opts) => { });
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<OneIdDbContext>()
+                .AddEntityFrameworkStores<OneDbContext>()
                 .AddDefaultTokenProviders();
 
             return services;

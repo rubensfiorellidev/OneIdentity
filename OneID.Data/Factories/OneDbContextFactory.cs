@@ -6,11 +6,11 @@ namespace OneID.Data.Factories
 {
     internal class OneDbContextFactory : IOneDbContextFactory
     {
-        private readonly DbContextOptions<OneIdDbContext> _options;
+        private readonly DbContextOptions<OneDbContext> _options;
 
-        public OneDbContextFactory(DbContextOptions<OneIdDbContext> options) => _options = options;
+        public OneDbContextFactory(DbContextOptions<OneDbContext> options) => _options = options;
 
-        public OneIdDbContext CreateDbContext() => new(_options);
+        public OneDbContext CreateDbContext() => new(_options);
 
     }
 }

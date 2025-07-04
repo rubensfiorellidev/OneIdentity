@@ -56,7 +56,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         LastName = context.Saga.Payload.Lastname
 
                     })
-                    .Publish(context => new AutomaticAdmissionAudit
+                    .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
@@ -87,7 +87,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
                         _logger.LogInformation("Saga {CorrelationId}: Login {Login} criado, senha temporária gerada.", context.Saga.CorrelationId, context.Message.Login);
                     })
-                    .Publish(context => new AutomaticAdmissionAudit
+                    .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
@@ -109,7 +109,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         _logger.LogError("Saga {CorrelationId}: Falha ao criar login: {Reason}", context.Saga.CorrelationId, context.Message.FaultReason);
                         context.Saga.FaultReason = context.Message.FaultReason;
                     })
-                    .Publish(context => new AutomaticAdmissionAudit
+                    .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
@@ -130,7 +130,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     {
                         _logger.LogInformation("Saga {CorrelationId}: Usuário criado no Keycloak com sucesso.", context.Saga.CorrelationId);
                     })
-                    .Publish(context => new AutomaticAdmissionAudit
+                    .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
@@ -152,7 +152,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         _logger.LogError("Saga {CorrelationId}: Falha ao criar usuário no Keycloak: {Reason}", context.Saga.CorrelationId, context.Message.FaultReason);
                         context.Saga.FaultReason = context.Message.FaultReason;
                     })
-                    .Publish(context => new AutomaticAdmissionAudit
+                    .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,

@@ -1,10 +1,11 @@
 ﻿#nullable disable
 namespace OneID.Domain.Entities
 {
-    public sealed class AutomaticAdmissionAudit
+    public sealed class AdmissionAudit
     {
         public Guid CorrelationId { get; set; }
 
+        public string Id { get; set; }
         public string Firstname { get; set; }
         public string Lastname { get; set; }
         public string DatabaseId { get; set; }

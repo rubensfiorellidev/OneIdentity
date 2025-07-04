@@ -10,7 +10,7 @@ using OneID.Data.DataContexts;
 
 namespace OneID.Data.Migrations
 {
-    [DbContext(typeof(OneIdDbContext))]
+    [DbContext(typeof(OneDbContext))]
     partial class OneIdDbContextModelSnapshot : ModelSnapshot
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
@@ -126,6 +126,88 @@ namespace OneID.Data.Migrations
                     b.HasKey("UserId", "LoginProvider", "Name");
 
                     b.ToTable("tb_oneid_user_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("OneID.Application.Messaging.Sagas.Contracts.AccountSagaState", b =>
+                {
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamptz")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
+
+                    b.Property<string>("CurrentState")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FaultReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<byte[]>("Version")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bytea");
+
+                    b.HasKey("CorrelationId");
+
+                    b.ToTable("tb_oneid_account_saga_state", (string)null);
+                });
+
+            modelBuilder.Entity("OneID.Domain.Entities.AdmissionAudit", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("CorrelationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrentState")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("DatabaseId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("EventName")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("EventName");
+
+                    b.Property<string>("Firstname")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Lastname")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("Login")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("ProvisioningDate")
+                        .HasColumnType("timestamptz");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tb_oneid_automatic_admission_audit", (string)null);
                 });
 
             modelBuilder.Entity("OneID.Domain.Entities.ApplicationRole", b =>
@@ -345,6 +427,44 @@ namespace OneID.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("OneID.Application.Messaging.Sagas.Contracts.AccountSagaState", b =>
+                {
+                    b.OwnsOne("OneID.Application.DTOs.Admission.AdmissionPayload", "Payload", b1 =>
+                        {
+                            b1.Property<Guid>("AccountSagaStateCorrelationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CorrelationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Firstname")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Lastname")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Password")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Username")
+                                .HasColumnType("text");
+
+                            b1.HasKey("AccountSagaStateCorrelationId");
+
+                            b1.ToTable("tb_oneid_account_saga_state");
+
+                            b1.ToJson("Payload");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AccountSagaStateCorrelationId");
+                        });
+
+                    b.Navigation("Payload");
                 });
 #pragma warning restore 612, 618
         }
