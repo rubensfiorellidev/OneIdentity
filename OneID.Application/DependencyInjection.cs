@@ -16,17 +16,21 @@ namespace OneID.Application
             services.AddHttpClient("KeycloakClient", client =>
             {
                 var keycloak = configuration.GetSection("Keycloak").Get<KeycloakOptions>();
-                client.BaseAddress = new Uri($"{keycloak.BaseUrl}realms/{keycloak.Realm}/protocol/openid-connect/");
+                client.BaseAddress = new Uri($"{keycloak.BaseUrl.TrimEnd('/')}/");
             });
 
             services.AddHttpClient("KeycloakAdmin", client =>
             {
                 var keycloak = configuration.GetSection("Keycloak").Get<KeycloakOptions>();
-                client.BaseAddress = new Uri($"{keycloak.BaseUrl}");
+                client.BaseAddress = new Uri($"{keycloak.BaseUrl.TrimEnd('/')}/");
             });
 
-            services.AddScoped<IKeycloakTokenService, KeycloakTokenService>();
+            services.AddScoped<IAccountProvisioningOrchestrator, AccountProvisioningOrchestrator>();
+            services.AddScoped<IUserLoginGenerator, UserLoginGenerator>();
+            services.AddScoped<IKeycloakUserCreator, KeycloakUserCreator>();
             services.AddScoped<IKeycloakUserChecker, KeycloakUserChecker>();
+            services.AddScoped<IKeycloakTokenService, KeycloakTokenService>();
+
 
 
             return services;

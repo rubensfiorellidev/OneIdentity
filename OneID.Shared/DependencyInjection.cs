@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using OneID.Application.Abstractions;
 using OneID.Domain.Entities.ApiOptions;
 using OneID.Domain.Entities.RabbitSettings;
 using RabbitMQ.Client;
@@ -70,5 +71,17 @@ namespace OneID.Shared
             return services;
         }
 
+        public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+        {
+
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+                cfg.AddOpenBehavior(typeof(RequestLoggingPipelineBehavior<,>));
+            });
+
+
+            return services;
+        }
     }
 }

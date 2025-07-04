@@ -9,6 +9,7 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddData(builder.Configuration);
 builder.Services.AddMessaging();
 builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
+builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

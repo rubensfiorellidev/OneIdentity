@@ -5,13 +5,18 @@ using OneID.Data.DataContexts;
 #nullable disable
 namespace OneID.Data.Factories
 {
-    internal class OneDbContextFactory : IOneDbContextFactory
+    public class OneDbContextFactory : IOneDbContextFactory
     {
-        private readonly DbContextOptions<OneDbContext> _options;
+        private readonly IDbContextFactory<OneDbContext> _factory;
 
-        public OneDbContextFactory(DbContextOptions<OneDbContext> options) => _options = options;
+        public OneDbContextFactory(IDbContextFactory<OneDbContext> factory)
+        {
+            _factory = factory;
+        }
 
-        public OneDbContext CreateDbContext() => new(_options);
-
+        public OneDbContext CreateDbContext()
+        {
+            return _factory.CreateDbContext();
+        }
     }
 }

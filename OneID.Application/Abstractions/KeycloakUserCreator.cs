@@ -45,6 +45,7 @@ namespace OneID.Application.Abstractions
                 firstName,
                 lastName,
                 enabled = true,
+                emailVerified = true,
                 credentials = new[]
                 {
                 new

@@ -28,7 +28,11 @@ namespace OneID.Application.Services.KeyCloakServices
                 new KeyValuePair<string, string>("grant_type", "client_credentials")
             ]);
 
-            var response = await client.PostAsync("realms/" + _options.Realm + "/protocol/openid-connect/token", content, cancellationToken);
+            var response = await client.PostAsync(
+                $"realms/{_options.Realm}/protocol/openid-connect/token",
+                content,
+                cancellationToken);
+
 
             if (!response.IsSuccessStatusCode)
             {

@@ -8,6 +8,8 @@ using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using OneID.Application.Interfaces;
 using OneID.Data.DataContexts;
+using OneID.Data.Factories;
+using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.UsersContext;
 using OneID.Domain.Entities;
 using System.Text;
@@ -20,6 +22,10 @@ namespace OneID.Data
         #region Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+
             services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
             {
                 var env = serviceProvider.GetRequiredService<IHostEnvironment>();
@@ -28,8 +34,8 @@ namespace OneID.Data
                 string connectionString = env.IsDevelopment()
                     ? config.GetConnectionString("NPSqlConnection")
                     : env.IsEnvironment("Staging")
-                        ? config.GetConnectionString("NPSqlConnectionQa")
-                        : config.GetConnectionString("NPSqlConnectionPrd");
+                        ? config.GetConnectionString("NPSqlConnectionStaging")
+                        : config.GetConnectionString("NPSqlConnectionProduction");
 
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
                 var dataSource = dataSourceBuilder.Build();
@@ -43,22 +49,12 @@ namespace OneID.Data
                 opts.EnableSensitiveDataLogging(false);
             });
 
-            services.AddDbContext<OneDbContext>((serviceProvider, opts) => { });
-
             services.AddIdentity<ApplicationUser, IdentityRole>()
                 .AddEntityFrameworkStores<OneDbContext>()
                 .AddDefaultTokenProviders();
 
             return services;
         }
-
-        public static IServiceCollection AddRepositories(this IServiceCollection services)
-        {
-            services.AddScoped<IUserRepository, UserRepository>();
-
-            return services;
-        }
-
         #endregion
 
         #region JwtWebTokens
@@ -98,8 +94,6 @@ namespace OneID.Data
             return services;
         }
         #endregion
-
-
-
     }
+
 }
