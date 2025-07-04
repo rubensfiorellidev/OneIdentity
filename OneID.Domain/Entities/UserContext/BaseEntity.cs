@@ -73,7 +73,6 @@ namespace OneID.Domain.Entities.UserContext
             {
                 _notifications.AddRange(notifications);
             }
-
         }
 
         public abstract bool Validation();

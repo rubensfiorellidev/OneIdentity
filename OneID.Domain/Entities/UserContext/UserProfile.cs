@@ -1,4 +1,7 @@
 ﻿using OneID.Domain.Abstractions.Events;
+using OneID.Domain.Abstractions.Validations;
+using OneID.Domain.Contracts.UserProfileContext;
+using OneID.Domain.Contracts.Validations;
 using OneID.Domain.Enums;
 using OneID.Domain.Notifications;
 
@@ -6,17 +9,21 @@ using OneID.Domain.Notifications;
 
 namespace OneID.Domain.Entities.UserContext
 {
-    public class UserProfile : BaseEntity
+    public class UserProfile : BaseEntity, IContract, IAccount
     {
         private readonly List<Event> _events = [];
+
+        public UserProfile(List<Notification> notifications) : base(notifications)
+        {
+        }
 
         public string FullName { get; private set; }
         public string FirstName { get; private set; }
         public string LastName { get; private set; }
         public string SocialName { get; private set; }
         public string Cpf { get; private set; }
-        public DateTime? BirthDate { get; private set; }
-        public DateTime? DateOfHire { get; private set; }
+        public DateTime BirthDate { get; private set; }
+        public DateTime DateOfHire { get; private set; }
         public DateTime? DateOfFired { get; private set; }
         public string Registry { get; private set; }
         public string MotherName { get; private set; }
@@ -44,7 +51,5 @@ namespace OneID.Domain.Entities.UserContext
 
             return contracts.HasNotifications();
         }
-
-       
     }
 }
