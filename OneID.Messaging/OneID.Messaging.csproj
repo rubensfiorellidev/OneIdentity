@@ -43,8 +43,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OneID.Application\OneID.Application.csproj" />
+    <ProjectReference Include="..\OneID.Data\OneID.Data.csproj" />
     <ProjectReference Include="..\OneID.Domain\OneID.Domain.csproj" />
-    <ProjectReference Include="..\OneID.Shared\OneID.Shared.csproj" />
   </ItemGroup>
 
 </Project>

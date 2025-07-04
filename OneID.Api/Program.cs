@@ -1,12 +1,14 @@
 using OneID.Application;
 using OneID.Data;
 using OneID.Messaging;
+using OneID.Shared;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplication();
 builder.Services.AddData(builder.Configuration);
 builder.Services.AddMessaging(builder.Configuration);
+builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
