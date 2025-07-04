@@ -49,7 +49,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         context.Saga.Payload = context.Message.Payload with { };
                         context.Saga.CreatedAt = DateTimeOffset.UtcNow;
                     })
-                    .Publish(context => new LoginRequested
+                    .Publish(context => new CreateLoginRequested
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         FirstName = context.Saga.Payload.Firstname,

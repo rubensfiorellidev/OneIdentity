@@ -47,7 +47,7 @@ namespace OneID.Messaging
 
 
                 //x.AddConsumer<CreateAccountPjDatabaseConsumer>();
-                x.AddConsumer<CreateLoginForPjConsumer>();
+                x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
 
 

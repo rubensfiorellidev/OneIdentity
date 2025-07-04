@@ -44,4 +44,8 @@
     <ProjectReference Include="..\OneID.Domain\OneID.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Services\CommandHandlers\" />
+  </ItemGroup>
+
 </Project>

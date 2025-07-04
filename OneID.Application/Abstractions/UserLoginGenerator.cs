@@ -4,13 +4,11 @@ namespace OneID.Application.Abstractions
 {
     public class UserLoginGenerator : IUserLoginGenerator
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IHashService _hashService;
+        private readonly IKeycloakUserChecker _userChecker;
 
-        public UserLoginGenerator(IUserRepository userRepository, IHashService hashService)
+        public UserLoginGenerator(IKeycloakUserChecker userChecker)
         {
-            _userRepository = userRepository;
-            _hashService = hashService;
+            _userChecker = userChecker;
         }
 
         public async Task<string> GenerateLoginAsync(string fullName, CancellationToken cancellationToken)
@@ -21,9 +19,7 @@ namespace OneID.Application.Abstractions
 
             while (true)
             {
-                var loginHash = await _hashService.ComputeSha3HashAsync(candidate);
-
-                if (!await _userRepository.LoginExistsAsync(loginHash, cancellationToken))
+                if (!await _userChecker.UsernameExistsAsync(candidate, cancellationToken))
                 {
                     return candidate;
                 }
@@ -37,10 +33,8 @@ namespace OneID.Application.Abstractions
         {
             var parts = fullName.Trim().ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
-            if (parts.Length == 1)
-            {
-                return Truncate(parts[0]);
-            }
+            if (parts.Length < 2)
+                throw new InvalidOperationException("Full name must include at least first and last names.");
 
             var firstName = parts[0];
             var lastName = parts[^1];
@@ -52,7 +46,6 @@ namespace OneID.Application.Abstractions
         {
             return login.Length <= 12 ? login : login[..12];
         }
-
     }
 
 }

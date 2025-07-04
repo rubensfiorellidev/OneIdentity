@@ -4,7 +4,7 @@ namespace OneID.Application.Messaging.Sagas.Contracts.Events
 {
 #nullable disable
 
-    public record LoginRequested : CorrelatedBy<Guid>
+    public record CreateLoginRequested : CorrelatedBy<Guid>
     {
         public Guid CorrelationId { get; init; }
         public string FirstName { get; init; }
