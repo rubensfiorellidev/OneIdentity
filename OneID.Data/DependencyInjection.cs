@@ -6,7 +6,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Npgsql;
+using OneID.Application.Interfaces;
 using OneID.Data.DataContexts;
+using OneID.Data.Factories;
+using OneID.Data.Interfaces;
+using OneID.Data.Repositories.AdmissionContext;
+using OneID.Data.Repositories.UsersContext;
 using OneID.Domain.Entities;
 using System.Text;
 
@@ -15,9 +20,14 @@ namespace OneID.Data
 {
     public static class DependencyInjection
     {
+        #region Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddDbContextFactory<OneIdDbContext>((serviceProvider, opts) =>
+            services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
+            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+
+            services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
             {
                 var env = serviceProvider.GetRequiredService<IHostEnvironment>();
                 var config = serviceProvider.GetRequiredService<IConfiguration>();
@@ -25,15 +35,15 @@ namespace OneID.Data
                 string connectionString = env.IsDevelopment()
                     ? config.GetConnectionString("NPSqlConnection")
                     : env.IsEnvironment("Staging")
-                        ? config.GetConnectionString("NPSqlConnectionQa")
-                        : config.GetConnectionString("NPSqlConnectionPrd");
+                        ? config.GetConnectionString("NPSqlConnectionStaging")
+                        : config.GetConnectionString("NPSqlConnectionProduction");
 
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
                 var dataSource = dataSourceBuilder.Build();
 
                 opts.UseNpgsql(dataSource, npgsqlOptions =>
                 {
-                    npgsqlOptions.MigrationsAssembly(typeof(OneIdDbContext).Assembly.FullName);
+                    npgsqlOptions.MigrationsAssembly(typeof(OneDbContext).Assembly.FullName);
                     npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), null);
                 });
 
@@ -41,11 +51,12 @@ namespace OneID.Data
             });
 
             services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<OneIdDbContext>()
+                .AddEntityFrameworkStores<OneDbContext>()
                 .AddDefaultTokenProviders();
 
             return services;
         }
+        #endregion
 
         #region JwtWebTokens
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
@@ -84,6 +95,6 @@ namespace OneID.Data
             return services;
         }
         #endregion
-
     }
+
 }
