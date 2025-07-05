@@ -6,9 +6,7 @@ namespace OneID.Application.Builders
 {
     public class ApplicationUserBuilder : IApplicationUserBuilder
     {
-        private string _fullName;
-        private string _firstName;
-        private string _lastName;
+        private string _userName;
         private string _email;
         private string _phoneNumber;
         private string _createdBy;
@@ -16,10 +14,9 @@ namespace OneID.Application.Builders
         private string _loginCrypt;
         private string _keycloakUserId;
 
-
-        public IApplicationUserBuilder WithFullName(string fullName)
+        public IApplicationUserBuilder WithUserName(string userName)
         {
-            _fullName = fullName;
+            _userName = userName;
             return this;
         }
 
@@ -53,18 +50,6 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IApplicationUserBuilder WithFirstName(string firstName)
-        {
-            _firstName = firstName;
-            return this;
-        }
-
-        public IApplicationUserBuilder WithLastName(string lastName)
-        {
-            _lastName = lastName;
-            return this;
-        }
-
         public IApplicationUserBuilder WithKeycloakUserId(string keycloakUserId)
         {
             _keycloakUserId = keycloakUserId;
@@ -73,20 +58,8 @@ namespace OneID.Application.Builders
 
         public ApplicationUser Build()
         {
-            if (string.IsNullOrWhiteSpace(_fullName))
-                throw new InvalidOperationException("FullName must be provided.");
-            if (string.IsNullOrWhiteSpace(_firstName))
-                throw new InvalidOperationException("FirstName must be provided.");
-            if (string.IsNullOrWhiteSpace(_lastName))
-                throw new InvalidOperationException("LastName must be provided.");
-            if (string.IsNullOrWhiteSpace(_email))
-                throw new InvalidOperationException("Email must be provided.");
-
-
             return new ApplicationUser(
-                _fullName,
-                _firstName,
-                _lastName,
+                _userName,
                 _email,
                 _phoneNumber,
                 _createdBy,

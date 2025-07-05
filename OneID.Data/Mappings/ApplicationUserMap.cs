@@ -15,21 +15,6 @@ namespace OneID.Data.Mappings
                 .HasMaxLength(26)
                 .IsRequired();
 
-            builder.Property(u => u.Fullname)
-                .HasColumnType("varchar")
-                .HasMaxLength(250)
-                .IsRequired();
-
-            builder.Property(u => u.FirstName)
-                .HasColumnType("varchar")
-                .HasMaxLength(250)
-                .IsRequired();
-
-            builder.Property(u => u.LastName)
-                .HasColumnType("varchar")
-                .HasMaxLength(250)
-                .IsRequired();
-
             builder.Property(u => u.LoginHash)
                 .HasColumnType("varchar")
                 .HasMaxLength(150)
@@ -55,6 +40,11 @@ namespace OneID.Data.Mappings
                 .IsRequired(false);
 
             builder.Property(u => u.CreatedBy)
+                .HasColumnType("varchar")
+                .HasMaxLength(100)
+                .IsRequired(false);
+
+            builder.Property(u => u.KeycloakUserId)
                 .HasColumnType("varchar")
                 .HasMaxLength(100)
                 .IsRequired(false);

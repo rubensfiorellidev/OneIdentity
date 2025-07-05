@@ -1,6 +1,5 @@
 ﻿using OneID.Domain.Abstractions.Events;
 using OneID.Domain.Abstractions.Validations;
-using OneID.Domain.Contracts.UserProfileContext;
 using OneID.Domain.Contracts.Validations;
 using OneID.Domain.Enums;
 using OneID.Domain.Notifications;
@@ -9,7 +8,7 @@ using OneID.Domain.Notifications;
 
 namespace OneID.Domain.Entities.UserContext
 {
-    public class UserProfile : BaseEntity, IContract, IAccount
+    public class UserProfile : BaseEntity, IContract
     {
         private readonly List<Event> _events = [];
 

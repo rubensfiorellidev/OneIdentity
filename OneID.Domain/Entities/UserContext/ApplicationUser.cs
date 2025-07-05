@@ -1,15 +1,10 @@
 ﻿#nullable disable
-using OneID;
-
 namespace OneID.Domain.Entities.UserContext
 {
     using Microsoft.AspNetCore.Identity;
 
     public sealed class ApplicationUser : IdentityUser
     {
-        public string Fullname { get; private set; }
-        public string FirstName { get; private set; }
-        public string LastName { get; private set; }
         public string LoginHash { get; private set; }
         public string LoginCrypt { get; private set; }
         public DateTimeOffset ProvisioningAt { get; private set; }
@@ -21,9 +16,7 @@ namespace OneID.Domain.Entities.UserContext
         private ApplicationUser() { }
 
         public ApplicationUser(
-            string fullName,
-            string firstName,
-            string lastName,
+            string userName,
             string email,
             string phoneNumber,
             string createdBy,
@@ -32,9 +25,7 @@ namespace OneID.Domain.Entities.UserContext
             string keycloakUserId)
         {
             Id = $"{Ulid.NewUlid()}";
-            Fullname = fullName;
-            FirstName = firstName;
-            LastName = lastName;
+            UserName = userName;
             Email = email;
             PhoneNumber = phoneNumber;
             CreatedBy = createdBy;
@@ -48,13 +39,10 @@ namespace OneID.Domain.Entities.UserContext
         public void SetLastLoginAt(DateTimeOffset lastLogin) => LastLoginAt = lastLogin;
         public void Deactivate() => IsActive = false;
         public void Activate() => IsActive = true;
-
         public void SetKeycloakUserId(string keycloakUserId)
         {
             if (string.IsNullOrWhiteSpace(KeycloakUserId))
-            {
                 KeycloakUserId = keycloakUserId;
-            }
         }
     }
 
