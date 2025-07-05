@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Data.Mappings;
 using OneID.Domain.Entities;
+using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.DataContexts
 {
@@ -67,7 +68,6 @@ namespace OneID.Data.DataContexts
             builder.Entity<IdentityUserLogin<string>>().ToTable("tb_oneid_user_logins");
             builder.Entity<IdentityRoleClaim<string>>().ToTable("tb_oneid_role_claims");
             builder.Entity<IdentityUserToken<string>>().ToTable("tb_oneid_user_tokens");
-
 
         }
     }
