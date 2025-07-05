@@ -4,7 +4,7 @@ using OneID.Application.Interfaces;
 using System.Text;
 
 #nullable disable
-namespace OneID.Application.Abstractions
+namespace OneID.Application.Services.KeyCloakServices
 {
     public class KeycloakUserCreator : IKeycloakUserCreator
     {

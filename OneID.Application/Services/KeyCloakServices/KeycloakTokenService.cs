@@ -1,7 +1,7 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using OneID.Application.Abstractions;
 using OneID.Application.Interfaces;
+using OneID.Domain.Entities.KeycloakOptions;
 
 #nullable disable
 namespace OneID.Application.Services.KeyCloakServices

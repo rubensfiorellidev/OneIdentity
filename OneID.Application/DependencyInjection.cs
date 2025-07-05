@@ -1,8 +1,9 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using OneID.Application.Abstractions;
 using OneID.Application.Interfaces;
+using OneID.Application.Services;
 using OneID.Application.Services.KeyCloakServices;
+using OneID.Domain.Entities.KeycloakOptions;
 
 #nullable disable
 namespace OneID.Application

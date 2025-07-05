@@ -1,5 +1,7 @@
 ﻿#nullable disable
-namespace OneID.Application.Abstractions
+using OneID;
+
+namespace OneID.Domain.Entities.KeycloakOptions
 {
     public sealed class KeycloakOptions
     {

@@ -1,6 +1,6 @@
 ﻿using OneID.Application.Interfaces;
 
-namespace OneID.Application.Abstractions
+namespace OneID.Application.Services
 {
     public class UserLoginGenerator : IUserLoginGenerator
     {

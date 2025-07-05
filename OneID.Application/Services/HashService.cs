@@ -3,7 +3,7 @@ using Org.BouncyCastle.Crypto.Digests;
 using System.Text;
 
 #nullable disable
-namespace OneID.Application.Abstractions
+namespace OneID.Application.Services
 {
     public sealed class HashService : IHashService
     {
