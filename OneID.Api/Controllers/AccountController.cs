@@ -1,23 +1,24 @@
-﻿using MediatR;
+﻿using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.Admission;
-using OneID.Application.Interfaces;
+using OneID.Application.Messaging.Sagas.Contracts.Events;
 
 namespace OneID.Api.Controllers
 {
     [Route("v1/json/accounts")]
     public class AccountController : MainController
     {
-        private readonly IAccountProvisioningOrchestrator _orchestrator;
         private readonly ILogger<AccountController> _logger;
+        private readonly IBus _bus;
 
         public AccountController(
             ISender sender,
-            IAccountProvisioningOrchestrator orchestrator,
-            ILogger<AccountController> logger) : base(sender)
+            ILogger<AccountController> logger,
+            IBus bus) : base(sender)
         {
-            _orchestrator = orchestrator;
             _logger = logger;
+            _bus = bus;
         }
 
         [HttpPost("start-provisioning")]
@@ -28,18 +29,34 @@ namespace OneID.Api.Controllers
                 if (!ModelState.IsValid)
                     return UnprocessableEntity(ModelState);
 
-                var login = await _orchestrator.ProvisionLoginAsync(request.Firstname, request.Lastname, cancellationToken);
+                var correlationId = request.CorrelationId == Guid.Empty ? Guid.NewGuid() : request.CorrelationId;
 
-                return Ok(new
+                var payload = new AdmissionPayload
                 {
-                    Message = "Provisionamento concluído com sucesso",
-                    Login = login
+                    CorrelationId = correlationId,
+                    Firstname = request.Firstname,
+                    Lastname = request.Lastname
+
+                };
+
+                await _bus.Publish(new StartCreateAccountSaga
+                {
+                    CorrelationId = correlationId,
+                    Payload = payload
+                }, cancellationToken);
+
+                _logger.LogInformation("Saga de criação de conta iniciada - CorrelationId: {CorrelationId}", correlationId);
+
+                return Accepted(new
+                {
+                    Message = "Processamento iniciado. Acompanhe os eventos de auditoria.",
+                    CorrelationId = correlationId
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao provisionar usuário");
-                return Problem(detail: ex.Message, statusCode: 500);
+                _logger.LogError(ex, "Erro ao iniciar o processo de provisionamento");
+                return Problem(detail: "Erro inesperado ao iniciar o processo", statusCode: 500);
             }
         }
     }

@@ -1,4 +1,5 @@
 ﻿using OneID.Application.Interfaces;
+using OneID.Data.Interfaces;
 using OneID.Domain.Entities;
 
 namespace OneID.Data.Repositories.AdmissionContext

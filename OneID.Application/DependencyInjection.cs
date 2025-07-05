@@ -25,7 +25,6 @@ namespace OneID.Application
                 client.BaseAddress = new Uri($"{keycloak.BaseUrl.TrimEnd('/')}/");
             });
 
-            services.AddScoped<IAccountProvisioningOrchestrator, AccountProvisioningOrchestrator>();
             services.AddScoped<IUserLoginGenerator, UserLoginGenerator>();
             services.AddScoped<IKeycloakUserCreator, KeycloakUserCreator>();
             services.AddScoped<IKeycloakUserChecker, KeycloakUserChecker>();

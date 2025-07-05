@@ -5,7 +5,7 @@ using OneID.Domain.Interfaces;
 using RabbitMQ.Client;
 
 #nullable disable
-namespace OneID.Shared
+namespace OneID.Messaging
 {
     public sealed class RabbitMqConnection : IRabbitMqConnection
     {

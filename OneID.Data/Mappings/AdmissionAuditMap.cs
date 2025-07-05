@@ -35,7 +35,6 @@ namespace OneID.Data.Mappings
                 .HasMaxLength(50);
 
             builder.Property(x => x.EventName)
-                .HasColumnName("EventName")
                 .HasMaxLength(250)
                 .IsRequired();
 

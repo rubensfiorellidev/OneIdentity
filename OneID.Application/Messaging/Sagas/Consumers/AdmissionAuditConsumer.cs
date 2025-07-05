@@ -33,7 +33,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     EventName = message.EventName,
                     ProvisioningDate = message.ProvisioningDate,
                     Description = message.Description,
-                    Login = message.Login
+                    Login = message.Login,
+                    Firstname = message.Firstname,
+                    Lastname = message.Lastname
 
                 };
 

@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using OneID.Application.Interfaces;
 using OneID.Data.DataContexts;
+using OneID.Data.Interfaces;
 
 #nullable disable
 namespace OneID.Data.Factories

@@ -12,8 +12,8 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    [Migration("20250704024232_Add_Account_Saga_State_and_Admission_Audit")]
-    partial class Add_Account_Saga_State_and_Admission_Audit
+    [Migration("20250705003318_UpdateAccountSagaState")]
+    partial class UpdateAccountSagaState
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -152,7 +152,6 @@ namespace OneID.Data.Migrations
 
                     b.Property<byte[]>("Version")
                         .IsConcurrencyToken()
-                        .IsRequired()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("bytea");
 
@@ -187,8 +186,7 @@ namespace OneID.Data.Migrations
                     b.Property<string>("EventName")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("character varying(250)")
-                        .HasColumnName("EventName");
+                        .HasColumnType("character varying(250)");
 
                     b.Property<string>("Firstname")
                         .IsRequired()
@@ -216,27 +214,23 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.ApplicationRole", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text")
-                        .HasColumnName("id");
+                        .HasColumnType("text");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("text")
-                        .HasColumnName("concurrency_stamp");
+                        .HasColumnType("text");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text")
-                        .HasColumnName("description");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<string>("Name")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("name");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedName")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_name");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 
@@ -251,123 +245,99 @@ namespace OneID.Data.Migrations
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(26)
-                        .HasColumnType("varchar")
-                        .HasColumnName("id");
+                        .HasColumnType("varchar");
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("access_failed_count");
+                        .HasColumnType("integer");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
-                        .HasColumnType("text")
-                        .HasColumnName("concurrency_stamp");
+                        .HasColumnType("text");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
-                        .HasColumnType("varchar")
-                        .HasColumnName("created_by");
+                        .HasColumnType("varchar");
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("email");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("email_confirmed");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("varchar")
-                        .HasColumnName("first_name");
+                        .HasColumnType("varchar");
 
                     b.Property<string>("Fullname")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("varchar")
-                        .HasColumnName("fullname");
+                        .HasColumnType("varchar");
 
                     b.Property<bool>("IsActive")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
-                        .HasDefaultValue(true)
-                        .HasColumnName("is_active");
+                        .HasDefaultValue(true);
 
                     b.Property<string>("KeycloakUserId")
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("LastLoginAt")
-                        .HasColumnType("timestamptz")
-                        .HasColumnName("last_login_at");
+                        .HasColumnType("timestamptz");
 
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("varchar")
-                        .HasColumnName("last_name");
+                        .HasColumnType("varchar");
 
                     b.Property<bool>("LockoutEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("lockout_enabled");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LockoutEnd")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("lockout_end");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("LoginCrypt")
                         .IsRequired()
                         .HasMaxLength(250)
-                        .HasColumnType("varchar")
-                        .HasColumnName("login_crypt");
+                        .HasColumnType("varchar");
 
                     b.Property<string>("LoginHash")
                         .IsRequired()
                         .HasMaxLength(150)
-                        .HasColumnType("varchar")
-                        .HasColumnName("login_hash");
+                        .HasColumnType("varchar");
 
                     b.Property<string>("NormalizedEmail")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_email");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("normalized_user_name");
+                        .HasColumnType("character varying(256)");
 
                     b.Property<string>("PasswordHash")
-                        .HasColumnType("text")
-                        .HasColumnName("password_hash");
+                        .HasColumnType("text");
 
                     b.Property<string>("PhoneNumber")
-                        .HasColumnType("text")
-                        .HasColumnName("phone_number");
+                        .HasColumnType("text");
 
                     b.Property<bool>("PhoneNumberConfirmed")
-                        .HasColumnType("boolean")
-                        .HasColumnName("phone_number_confirmed");
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset>("ProvisioningAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamptz")
-                        .HasColumnName("provisioning_at")
                         .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'");
 
                     b.Property<string>("SecurityStamp")
-                        .HasColumnType("text")
-                        .HasColumnName("security_stamp");
+                        .HasColumnType("text");
 
                     b.Property<bool>("TwoFactorEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("two_factor_enabled");
+                        .HasColumnType("boolean");
 
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("user_name");
+                        .HasColumnType("character varying(256)");
 
                     b.HasKey("Id");
 

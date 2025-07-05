@@ -8,14 +8,13 @@ namespace OneID.Application.Messaging.Sagas.Consumers
     public sealed class CreateLoginConsumer : IConsumer<CreateLoginRequested>
     {
         private readonly ILogger<CreateLoginConsumer> _logger;
-        private readonly IAccountProvisioningOrchestrator _provisioningOrchestrator;
+        private readonly IUserLoginGenerator _loginGenerator;
 
         public CreateLoginConsumer(
-            ILogger<CreateLoginConsumer> logger,
-            IAccountProvisioningOrchestrator provisioningOrchestrator)
+            ILogger<CreateLoginConsumer> logger, IUserLoginGenerator loginGenerator)
         {
             _logger = logger;
-            _provisioningOrchestrator = provisioningOrchestrator;
+            _loginGenerator = loginGenerator;
         }
 
         public async Task Consume(ConsumeContext<CreateLoginRequested> context)
@@ -28,9 +27,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     "Iniciando provisionamento de login para {Firstname} {Lastname} - CorrelationId: {CorrelationId}",
                     message.FirstName, message.LastName, message.CorrelationId);
 
-                var login = await _provisioningOrchestrator.ProvisionLoginAsync(
-                    message.FirstName,
-                    message.LastName,
+                var login = await _loginGenerator.GenerateLoginAsync(
+                    $"{context.Message.FirstName} " +
+                    $"{context.Message.LastName}",
                     context.CancellationToken);
 
                 _logger.LogInformation(

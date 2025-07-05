@@ -9,6 +9,7 @@ using Npgsql;
 using OneID.Application.Interfaces;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
+using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.UsersContext;
 using OneID.Domain.Entities;

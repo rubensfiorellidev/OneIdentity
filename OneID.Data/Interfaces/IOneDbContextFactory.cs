@@ -1,6 +1,6 @@
 ﻿using OneID.Data.DataContexts;
 
-namespace OneID.Application.Interfaces
+namespace OneID.Data.Interfaces
 {
     public interface IOneDbContextFactory
     {

@@ -46,15 +46,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .Then(context =>
                     {
                         context.Saga.CorrelationId = context.Message.CorrelationId;
-                        context.Saga.Payload = context.Message.Payload with { };
+                        context.Saga.Payload = context.Message.Payload;
                         context.Saga.CreatedAt = DateTimeOffset.UtcNow;
-                    })
-                    .Publish(context => new CreateLoginRequested
-                    {
-                        CorrelationId = context.Saga.CorrelationId,
-                        FirstName = context.Saga.Payload.Firstname,
-                        LastName = context.Saga.Payload.Lastname
-
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -68,6 +61,13 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Login = "NotAvailable",
                         DatabaseId = "NotAvailable"
                     })
+                    .Publish(context => new CreateLoginRequested
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        FirstName = context.Saga.Payload.Firstname,
+                        LastName = context.Saga.Payload.Lastname
+
+                    })
                     .TransitionTo(WaitingLoginResult)
 
             );
@@ -76,16 +76,13 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                 When(LoginCreated)
                     .Then(context =>
                     {
-                        var password = PasswordTempGenerator.GenerateTemporaryPassword();
-
+                        var pwd = PasswordTempGenerator.GenerateTemporaryPassword();
                         context.Saga.Payload = context.Saga.Payload with
                         {
                             Username = context.Message.Login,
-                            Password = password,
+                            Password = pwd,
                             Email = $"{context.Message.Login}@company.com"
                         };
-
-                        _logger.LogInformation("Saga {CorrelationId}: Login {Login} criado, senha temporária gerada.", context.Saga.CorrelationId, context.Message.Login);
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -99,15 +96,18 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Login = context.Message.Login,
                         DatabaseId = "NotAvailable"
                     })
-                    .TransitionTo(WaitingKeycloakCreation)
-            );
+                   .Publish(context => new KeycloakUserCreationRequested
+                   {
+                       CorrelationId = context.Saga.CorrelationId,
+                       Payload = context.Saga.Payload
+                   })
+                   .TransitionTo(WaitingKeycloakCreation),
 
-            DuringAny(
                 When(LoginFailed)
                     .Then(context =>
                     {
-                        _logger.LogError("Saga {CorrelationId}: Falha ao criar login: {Reason}", context.Saga.CorrelationId, context.Message.FaultReason);
                         context.Saga.FaultReason = context.Message.FaultReason;
+                        _logger.LogError("Falha ao criar login: {Reason}", context.Message.FaultReason);
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -115,8 +115,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Faulted),
-                        EventName = "Falha na geração do login",
-                        Description = $"Erro ao gerar o login: {context.Message.FaultReason}",
+                        EventName = "Falha na criação do login",
+                        Description = $"Erro: {context.Message.FaultReason}",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = "NotAvailable",
                         DatabaseId = "NotAvailable"
@@ -126,31 +126,25 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
             During(WaitingKeycloakCreation,
                 When(KeycloakUserCreated)
-                    .Then(context =>
-                    {
-                        _logger.LogInformation("Saga {CorrelationId}: Usuário criado no Keycloak com sucesso.", context.Saga.CorrelationId);
-                    })
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Completed),
-                        EventName = "Usuário criado no Keycloak",
-                        Description = "Usuário criado no Keycloak com sucesso.",
+                        EventName = "Usuário provisionado no Keycloak",
+                        Description = "Usuário provisionado com sucesso no Keycloak.",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.Payload.Username,
                         DatabaseId = "NotAvailable"
                     })
-                    .TransitionTo(Completed)
-            );
+                    .TransitionTo(Completed),
 
-            During(WaitingKeycloakCreation,
                 When(KeycloakUserFailed)
                     .Then(context =>
                     {
-                        _logger.LogError("Saga {CorrelationId}: Falha ao criar usuário no Keycloak: {Reason}", context.Saga.CorrelationId, context.Message.FaultReason);
                         context.Saga.FaultReason = context.Message.FaultReason;
+                        _logger.LogError("Falha ao criar usuário no Keycloak: {Reason}", context.Message.FaultReason);
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -158,8 +152,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Faulted),
-                        EventName = "Falha no provisionamento do usuário no Keycloak",
-                        Description = $"Erro ao provisionar usuário no Keycloak: {context.Message.FaultReason}",
+                        EventName = "Falha no Keycloak",
+                        Description = $"Erro: {context.Message.FaultReason}",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.Payload.Username,
                         DatabaseId = "NotAvailable"
@@ -167,8 +161,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .TransitionTo(Faulted)
             );
 
-
             SetCompletedWhenFinalized();
+
 
             DuringAny(
                 When(LoginFailed)

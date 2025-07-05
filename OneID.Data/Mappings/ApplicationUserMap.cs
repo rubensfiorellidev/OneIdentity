@@ -11,109 +11,85 @@ namespace OneID.Data.Mappings
             builder.ToTable("tb_oneid_users");
 
             builder.Property(u => u.Id)
-                .HasColumnName("id")
                 .HasColumnType("varchar")
                 .HasMaxLength(26)
                 .IsRequired();
 
             builder.Property(u => u.Fullname)
-                .HasColumnName("fullname")
                 .HasColumnType("varchar")
                 .HasMaxLength(250)
                 .IsRequired();
 
             builder.Property(u => u.FirstName)
-                .HasColumnName("first_name")
                 .HasColumnType("varchar")
                 .HasMaxLength(250)
                 .IsRequired();
 
             builder.Property(u => u.LastName)
-                .HasColumnName("last_name")
                 .HasColumnType("varchar")
                 .HasMaxLength(250)
                 .IsRequired();
 
             builder.Property(u => u.LoginHash)
-                .HasColumnName("login_hash")
                 .HasColumnType("varchar")
                 .HasMaxLength(150)
                 .IsRequired();
 
             builder.Property(u => u.LoginCrypt)
-                .HasColumnName("login_crypt")
                 .HasColumnType("varchar")
                 .HasMaxLength(250)
                 .IsRequired();
 
             builder.Property(u => u.ProvisioningAt)
-                .HasColumnName("provisioning_at")
                 .HasColumnType("timestamptz")
                 .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'")
                 .IsRequired();
 
             builder.Property(u => u.IsActive)
-                .HasColumnName("is_active")
                 .HasColumnType("boolean")
                 .HasDefaultValue(true)
                 .IsRequired();
 
             builder.Property(u => u.LastLoginAt)
-                .HasColumnName("last_login_at")
                 .HasColumnType("timestamptz")
                 .IsRequired(false);
 
             builder.Property(u => u.CreatedBy)
-                .HasColumnName("created_by")
                 .HasColumnType("varchar")
                 .HasMaxLength(100)
                 .IsRequired(false);
 
             builder.Property(u => u.UserName)
-                .HasColumnName("user_name")
                 .HasMaxLength(256);
 
             builder.Property(u => u.NormalizedUserName)
-                .HasColumnName("normalized_user_name")
                 .HasMaxLength(256);
 
             builder.Property(u => u.Email)
-                .HasColumnName("email")
                 .HasMaxLength(256);
 
             builder.Property(u => u.NormalizedEmail)
-                .HasColumnName("normalized_email")
                 .HasMaxLength(256);
 
-            builder.Property(u => u.PasswordHash)
-                .HasColumnName("password_hash");
+            builder.Property(u => u.PasswordHash);
 
-            builder.Property(u => u.SecurityStamp)
-                .HasColumnName("security_stamp");
+            builder.Property(u => u.SecurityStamp);
 
-            builder.Property(u => u.ConcurrencyStamp)
-                .HasColumnName("concurrency_stamp");
+            builder.Property(u => u.ConcurrencyStamp);
 
-            builder.Property(u => u.PhoneNumber)
-                .HasColumnName("phone_number");
+            builder.Property(u => u.PhoneNumber);
 
-            builder.Property(u => u.PhoneNumberConfirmed)
-                .HasColumnName("phone_number_confirmed");
+            builder.Property(u => u.PhoneNumberConfirmed);
 
-            builder.Property(u => u.EmailConfirmed)
-                .HasColumnName("email_confirmed");
+            builder.Property(u => u.EmailConfirmed);
 
-            builder.Property(u => u.LockoutEnabled)
-                .HasColumnName("lockout_enabled");
+            builder.Property(u => u.LockoutEnabled);
 
-            builder.Property(u => u.LockoutEnd)
-                .HasColumnName("lockout_end");
+            builder.Property(u => u.LockoutEnd);
 
-            builder.Property(u => u.TwoFactorEnabled)
-                .HasColumnName("two_factor_enabled");
+            builder.Property(u => u.TwoFactorEnabled);
 
-            builder.Property(u => u.AccessFailedCount)
-                .HasColumnName("access_failed_count");
+            builder.Property(u => u.AccessFailedCount);
 
             builder.HasIndex(u => u.NormalizedUserName)
                 .HasDatabaseName("ix_tb_oneid_users_normalized_user_name")
