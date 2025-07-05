@@ -1,5 +1,5 @@
 ﻿using OneID.Application.Interfaces;
-using OneID.Domain.Entities;
+using OneID.Domain.Entities.UserContext;
 
 #nullable disable
 namespace OneID.Application.Builders

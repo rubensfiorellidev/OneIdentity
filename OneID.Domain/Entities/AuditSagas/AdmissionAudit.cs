@@ -1,5 +1,5 @@
 ﻿#nullable disable
-namespace OneID.Domain.Entities
+namespace OneID.Domain.Entities.AuditSagas
 {
     public sealed class AdmissionAudit
     {

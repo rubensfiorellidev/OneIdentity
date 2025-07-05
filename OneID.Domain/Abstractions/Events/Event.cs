@@ -1,6 +1,6 @@
 ﻿#nullable disable
 
-using HawkId.Domain.Contracts.Notifications;
+using OneID.Domain.Contracts.Notifications;
 
 namespace OneID.Domain.Abstractions.Events
 {

@@ -1,6 +1,6 @@
 ﻿using OneID.Application.Interfaces;
 using OneID.Data.Interfaces;
-using OneID.Domain.Entities;
+using OneID.Domain.Entities.AuditSagas;
 
 namespace OneID.Data.Repositories.AdmissionContext
 {

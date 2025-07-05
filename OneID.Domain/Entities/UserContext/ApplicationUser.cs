@@ -1,5 +1,7 @@
 ﻿#nullable disable
-namespace OneID.Domain.Entities
+using OneID;
+
+namespace OneID.Domain.Entities.UserContext
 {
     using Microsoft.AspNetCore.Identity;
 

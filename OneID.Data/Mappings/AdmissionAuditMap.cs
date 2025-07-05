@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OneID.Domain.Entities;
+using OneID.Domain.Entities.AuditSagas;
 
 namespace OneID.Data.Mappings
 {

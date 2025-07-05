@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Logging;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
-using OneID.Domain.Entities;
+using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Helpers;
 
 #nullable disable

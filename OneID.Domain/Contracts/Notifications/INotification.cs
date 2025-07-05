@@ -1,4 +1,4 @@
-﻿namespace HawkId.Domain.Contracts.Notifications
+﻿namespace OneID.Domain.Contracts.Notifications
 {
     public interface INotification
     {

@@ -12,7 +12,7 @@ using OneID.Data.Factories;
 using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.UsersContext;
-using OneID.Domain.Entities;
+using OneID.Domain.Entities.UserContext;
 using System.Text;
 
 #nullable disable

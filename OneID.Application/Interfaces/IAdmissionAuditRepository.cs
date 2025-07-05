@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Entities;
+﻿using OneID.Domain.Entities.AuditSagas;
 
 namespace OneID.Application.Interfaces
 {

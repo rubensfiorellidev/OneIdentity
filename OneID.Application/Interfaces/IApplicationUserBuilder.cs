@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Entities;
+﻿using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Application.Interfaces
 {
