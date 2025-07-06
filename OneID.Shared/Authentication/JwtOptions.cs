@@ -1,0 +1,13 @@
+﻿namespace OneID.Shared.Authentication
+{
+    public sealed class JwtOptions
+    {
+        public string? Issuer { get; init; }
+        public string? Audience { get; init; }
+        public string? PrivateKey { get; init; }
+        public TimeSpan AccessTokenExpires { get; set; }
+        public TimeSpan RefreshTokenExpires { get; set; }
+        public string? PrivateKeyPath { get; set; }
+
+    }
+}

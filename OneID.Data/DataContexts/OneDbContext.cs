@@ -7,6 +7,7 @@ using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Data.Mappings;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.UserContext;
+using OneID.Shared.Authentication;
 
 namespace OneID.Data.DataContexts
 {
@@ -16,6 +17,8 @@ namespace OneID.Data.DataContexts
 
         public DbSet<AccountSagaState> AccountSagaStates => Set<AccountSagaState>();
         public DbSet<AdmissionAudit> AdmissionAudits => Set<AdmissionAudit>();
+        public DbSet<RefreshWebToken> RefreshWebTokens => Set<RefreshWebToken>();
+
 
 
 
@@ -51,6 +54,7 @@ namespace OneID.Data.DataContexts
             builder.ApplyConfiguration(new ApplicationRoleMap());
             builder.ApplyConfiguration(new AdmissionAuditMap());
             builder.ApplyConfiguration(new AccountSagaStateMap());
+            builder.ApplyConfiguration(new RefreshWebTokenMap());
 
 
             builder.Entity<ApplicationRole>(entity =>
