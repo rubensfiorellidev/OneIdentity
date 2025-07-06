@@ -6,8 +6,8 @@ using Microsoft.Extensions.Logging;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Data.Mappings;
 using OneID.Domain.Entities.AuditSagas;
+using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Entities.UserContext;
-using OneID.Shared.Authentication;
 
 namespace OneID.Data.DataContexts
 {

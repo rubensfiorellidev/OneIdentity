@@ -1,5 +1,7 @@
 ﻿#nullable disable
-namespace OneID.Shared.Authentication
+using OneID;
+
+namespace OneID.Domain.Entities.JwtWebTokens
 {
     public sealed class RefreshWebToken
     {

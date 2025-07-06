@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
@@ -22,6 +23,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("start-provisioning")]
+        [Authorize]
         public async Task<IActionResult> StartProvisioningAsync([FromBody] AccountRequest request, CancellationToken cancellationToken)
         {
             try

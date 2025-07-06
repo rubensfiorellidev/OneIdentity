@@ -1,19 +1,17 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using OneID.Application.Interfaces;
+using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
 using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
+using OneID.Data.Repositories.RefreshTokens;
 using OneID.Data.Repositories.UsersContext;
-using OneID.Domain.Entities.UserContext;
-using System.Text;
+using OneID.Shared.Authentication;
 
 #nullable disable
 namespace OneID.Data
@@ -26,6 +24,9 @@ namespace OneID.Data
             services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+
 
             services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
             {
@@ -50,51 +51,14 @@ namespace OneID.Data
                 opts.EnableSensitiveDataLogging(false);
             });
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<OneDbContext>()
-                .AddDefaultTokenProviders();
+            //services.AddIdentity<ApplicationUser, IdentityRole>()
+            //    .AddEntityFrameworkStores<OneDbContext>()
+            //    .AddDefaultTokenProviders();
 
             return services;
         }
         #endregion
 
-        #region JwtWebTokens
-        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
-        {
-            var jwtSettings = configuration.GetSection("Jwt");
-
-            var issuer = jwtSettings["Issuer"];
-            var audience = jwtSettings["Audience"];
-            var keyPathOrValue = jwtSettings["PrivateKeyPath"];
-
-            string key;
-            if (File.Exists(keyPathOrValue))
-            {
-                key = File.ReadAllText(keyPathOrValue);
-            }
-            else
-            {
-                key = keyPathOrValue;
-            }
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience = true,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        ValidIssuer = issuer,
-                        ValidAudience = audience,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
-                    };
-                });
-
-            return services;
-        }
-        #endregion
     }
 
 }

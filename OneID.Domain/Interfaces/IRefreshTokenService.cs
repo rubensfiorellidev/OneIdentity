@@ -1,4 +1,6 @@
-﻿namespace OneID.Shared.Authentication
+﻿using OneID.Domain.Entities.JwtWebTokens;
+
+namespace OneID.Shared.Authentication
 {
     public interface IRefreshTokenService
     {

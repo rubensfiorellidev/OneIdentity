@@ -10,6 +10,8 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddMassTrasitConfig();
 builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
 builder.Services.AddData(builder.Configuration);
+builder.Services.AddJwtAuthentication(builder.Configuration);
+
 
 
 builder.Services.AddControllers();
@@ -26,6 +28,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

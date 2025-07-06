@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OneID.Shared.Authentication;
+using OneID.Domain.Entities.JwtWebTokens;
 
 namespace OneID.Data.Mappings
 {

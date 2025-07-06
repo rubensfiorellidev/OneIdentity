@@ -5,7 +5,7 @@ namespace OneID.Shared.Authentication
 {
     public sealed class JwtOptionsSetup : IConfigureOptions<JwtOptions>
     {
-        private const string _sectionName = "JwtOptions";
+        private const string _sectionName = "Jwt";
         private readonly IConfiguration _configuration;
 
         public JwtOptionsSetup(IConfiguration configuration) => _configuration = configuration;
