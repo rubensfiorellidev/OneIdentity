@@ -69,46 +69,15 @@ namespace OneID.Shared
 
                 options.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = context =>
-                    {
-                        if (context.Request.Headers.TryGetValue("Authorization", out var authHeader))
-                        {
-                            var authHeaderValue = authHeader.ToString();
-                            Console.WriteLine($"🟢 Authorization header recebido: {authHeaderValue}");
-
-                            if (authHeaderValue.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                            {
-                                var token = authHeaderValue.Substring("Bearer ".Length).Trim();
-                                Console.WriteLine($"🟢 Token extraído: {token}");
-                            }
-                            else
-                            {
-                                Console.WriteLine("⚠ Authorization header não contém Bearer");
-                            }
-                        }
-                        else
-                        {
-                            Console.WriteLine("⚠ Nenhum Authorization header recebido");
-                        }
-
-                        return Task.CompletedTask;
-                    },
                     OnAuthenticationFailed = context =>
                     {
-                        Console.WriteLine($"🔴 Falha na autenticação: {context.Exception.Message}");
                         context.NoResult();
                         context.Response.StatusCode = 401;
                         context.Response.ContentType = "application/json";
                         return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                     },
-                    OnTokenValidated = context =>
-                    {
-                        Console.WriteLine($"✅ Token validado com sucesso para: {context.Principal.Identity?.Name ?? "unknown"}");
-                        return Task.CompletedTask;
-                    },
                     OnChallenge = context =>
                     {
-                        Console.WriteLine("⚠ Challenge acionado");
                         if (!context.Response.HasStarted)
                         {
                             context.Response.StatusCode = 401;
@@ -120,13 +89,13 @@ namespace OneID.Shared
                 };
             });
 
-
             services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
             services.TryAddScoped<JwtProvider>();
             services.ConfigureOptions<JwtOptionsSetup>();
 
             return services;
         }
+
         #endregion
 
     }
