@@ -8,13 +8,12 @@ using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 #nullable disable
 namespace OneID.Api.Controllers
 {
-    [Route("auth")]
+    [Route("v1/auth")]
     public class AuthController : MainController
     {
         private readonly JwtProvider _jwtProvider;
         private readonly ILogger<AuthController> _logger;
 
-        // Para MVP: secret fixa no código ou config
         private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
         public AuthController(ISender sender,
                               JwtProvider jwtProvider,
@@ -40,7 +39,7 @@ namespace OneID.Api.Controllers
             { "role", "adm-operator" }
         };
 
-            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
+            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
             return Ok(new { token });
         }
     }

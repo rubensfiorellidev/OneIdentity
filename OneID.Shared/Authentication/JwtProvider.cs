@@ -238,7 +238,7 @@ namespace OneID.Shared.Authentication
                 ValidAudience = _jwtOptions.Audience,
                 IssuerSigningKey = key,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.FromMinutes(2)
+                ClockSkew = TimeSpan.Zero
             };
 
             try

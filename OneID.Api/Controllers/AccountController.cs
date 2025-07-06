@@ -7,7 +7,7 @@ using OneID.Application.Messaging.Sagas.Contracts.Events;
 
 namespace OneID.Api.Controllers
 {
-    [Route("v1/json/accounts")]
+    [Route("v1/accounts")]
     public class AccountController : MainController
     {
         private readonly ILogger<AccountController> _logger;
