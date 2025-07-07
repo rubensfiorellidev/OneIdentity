@@ -3,15 +3,17 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
-using OneID.Application.Interfaces;
+using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
 using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.RefreshTokens;
+using OneID.Data.Repositories.StoredEvents;
 using OneID.Data.Repositories.UsersContext;
-using OneID.Shared.Authentication;
+using OneID.Domain.Interfaces;
+
 
 #nullable disable
 namespace OneID.Data
@@ -22,10 +24,13 @@ namespace OneID.Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<ILoginExistsUserRepository, LoginExistsUserRepository>();
             services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IStoredEventRepository, StoredEventRepository>();
+            services.AddScoped<IAddUserAccountRepository, AddUserAccountRepository>();
+
 
 
             services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
@@ -50,10 +55,6 @@ namespace OneID.Data
 
                 opts.EnableSensitiveDataLogging(false);
             });
-
-            //services.AddIdentity<ApplicationUser, IdentityRole>()
-            //    .AddEntityFrameworkStores<OneDbContext>()
-            //    .AddDefaultTokenProviders();
 
             return services;
         }

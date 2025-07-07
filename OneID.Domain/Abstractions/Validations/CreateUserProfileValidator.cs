@@ -4,10 +4,10 @@ namespace OneID.Domain.Abstractions.Validations
 {
     public class CreateUserProfileValidator
     {
-        public static ContractValidations<UserProfile> Validate(UserProfile account)
+        public static ContractValidations<UserAccount> Validate(UserAccount account)
         {
 
-            var validationResult = new ContractValidations<UserProfile>()
+            var validationResult = new ContractValidations<UserAccount>()
                 .NameIsOK(account.FullName, 50, 10,
                       "O Nome completo deve ter entre 10 e 50 caracteres.", nameof(account.FullName))
                 .CpfIsOK(account.Cpf, false, "Número de CPF inválido!", nameof(account.Cpf))

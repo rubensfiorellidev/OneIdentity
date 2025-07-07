@@ -12,6 +12,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
     {
         private readonly ILogger<AccountStateMachine> _logger;
 
+        public State WaitingUserAccountPersistence { get; private set; }
         public State WaitingLoginResult { get; private set; }
         public State WaitingKeycloakCreation { get; private set; }
         public State Completed { get; private set; }
@@ -23,7 +24,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
         public Event<KeycloakUserCreated> KeycloakUserCreated { get; private set; }
         public Event<KeycloakUserFailed> KeycloakUserFailed { get; private set; }
         public Event<AccountSagaFailed> SagaFailed { get; private set; }
-
+        public Event<UserProfilePersisted> UserProfilePersisted { get; private set; }
+        public Event<UserProfilePersistenceFailed> UserProfilePersistenceFailed { get; private set; }
 
 
         public AccountStateMachine(ILogger<AccountStateMachine> logger)
@@ -38,6 +40,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
             Event(() => KeycloakUserCreated, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => KeycloakUserFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => SagaFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => UserProfilePersisted, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => UserProfilePersistenceFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
 
 
 
@@ -107,7 +111,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .Then(context =>
                     {
                         context.Saga.FaultReason = context.Message.FaultReason;
-                        _logger.LogError("Falha ao criar login: {Reason}", context.Message.FaultReason);
+                        _logger.LogError("Falha ao gerar login: {Reason}", context.Message.FaultReason);
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -115,7 +119,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Faulted),
-                        EventName = "Falha na criação do login",
+                        EventName = "Falha na geração do login",
                         Description = $"Erro: {context.Message.FaultReason}",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = "NotAvailable",
@@ -138,13 +142,54 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Login = context.Saga.Payload.Username,
                         DatabaseId = "NotAvailable"
                     })
-                    .TransitionTo(Completed),
+                    .Publish(context => new UserAccountPersistenceRequested
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        Payload = context.Saga.Payload
+                    })
+                    .TransitionTo(WaitingUserAccountPersistence),
 
                 When(KeycloakUserFailed)
+                        .Then(context =>
+                        {
+                            context.Saga.FaultReason = context.Message.FaultReason;
+                        })
+                        .Publish(context => new AdmissionAudit
+                        {
+                            CorrelationId = context.Saga.CorrelationId,
+                            Firstname = context.Saga.Payload.Firstname,
+                            Lastname = context.Saga.Payload.Lastname,
+                            CurrentState = nameof(Faulted),
+                            EventName = "Falha no Keycloak",
+                            Description = $"Erro: {context.Message.FaultReason}",
+                            ProvisioningDate = DateTimeOffset.UtcNow,
+                            Login = context.Saga.Payload.Username,
+                            DatabaseId = "NotAvailable"
+                        })
+                        .TransitionTo(Faulted)
+                );
+
+            During(WaitingUserAccountPersistence,
+                When(UserProfilePersisted)
+                    .Publish(context => new AdmissionAudit
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        Firstname = context.Saga.Payload.Firstname,
+                        Lastname = context.Saga.Payload.Lastname,
+                        CurrentState = nameof(Completed),
+                        EventName = "UserAccount provisionado",
+                        Description = $"User account provisionado na base de dados com o ID {context.Message.DatabaseId}",
+                        ProvisioningDate = DateTimeOffset.UtcNow,
+                        Login = context.Saga.Payload.Username,
+                        DatabaseId = context.Message.DatabaseId
+                    })
+                    .TransitionTo(Completed),
+
+                When(UserProfilePersistenceFailed)
                     .Then(context =>
                     {
                         context.Saga.FaultReason = context.Message.FaultReason;
-                        _logger.LogError("Falha ao criar usuário no Keycloak: {Reason}", context.Message.FaultReason);
+                        _logger.LogError("Falha ao persistir UserAccount: {Reason}", context.Message.FaultReason);
                     })
                     .Publish(context => new AdmissionAudit
                     {
@@ -152,7 +197,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Faulted),
-                        EventName = "Falha no Keycloak",
+                        EventName = "Falha ao persistir UserAccount",
                         Description = $"Erro: {context.Message.FaultReason}",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.Payload.Username,

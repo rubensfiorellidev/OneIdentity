@@ -1,4 +1,5 @@
-﻿using OneID.Application.Interfaces;
+﻿using OneID.Application.Interfaces.Keycloak;
+using OneID.Application.Interfaces.Services;
 
 namespace OneID.Application.Services
 {

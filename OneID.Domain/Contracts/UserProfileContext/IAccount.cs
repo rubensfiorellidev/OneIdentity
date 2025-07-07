@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Abstractions.Events;
+﻿using OneID.Domain.Abstractions.EventsContext;
 
 namespace OneID.Domain.Contracts.UserProfileContext
 {

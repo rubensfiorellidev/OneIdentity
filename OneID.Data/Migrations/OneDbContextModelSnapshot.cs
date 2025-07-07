@@ -157,6 +157,51 @@ namespace OneID.Data.Migrations
                     b.ToTable("tb_oneid_account_saga_state", (string)null);
                 });
 
+            modelBuilder.Entity("OneID.Domain.Abstractions.EventsContext.StoredEvent", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("AggregateId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("AggregateType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("EventData")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("EventType")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<DateTimeOffset>("OccurredOn")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tb_oneid_stored_events", (string)null);
+                });
+
             modelBuilder.Entity("OneID.Domain.Entities.AuditSagas.AdmissionAudit", b =>
                 {
                     b.Property<string>("Id")
@@ -206,6 +251,39 @@ namespace OneID.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("tb_oneid_automatic_admission_audit", (string)null);
+                });
+
+            modelBuilder.Entity("OneID.Domain.Entities.JwtWebTokens.RefreshWebToken", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Jti")
+                        .HasMaxLength(500)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<string>("Token")
+                        .HasMaxLength(500)
+                        .HasColumnType("VARCHAR");
+
+                    b.Property<string>("UserUpn")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("tb_oneid_refresh_web_token", (string)null);
                 });
 
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.ApplicationRole", b =>
@@ -334,37 +412,145 @@ namespace OneID.Data.Migrations
                     b.ToTable("tb_oneid_users", (string)null);
                 });
 
-            modelBuilder.Entity("OneID.Shared.Authentication.RefreshWebToken", b =>
+            modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserAccount", b =>
                 {
                     b.Property<string>("Id")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateTime>("BirthDate")
+                        .HasColumnType("date");
 
-                    b.Property<DateTimeOffset>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("Company")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
-                    b.Property<bool>("IsRevoked")
+                    b.Property<string>("ContractorCnpj")
+                        .HasMaxLength(18)
+                        .HasColumnType("character varying(18)");
+
+                    b.Property<string>("ContractorCnpjHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("ContractorName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CorporateEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CorporateEmailHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Cpf")
+                        .HasMaxLength(14)
+                        .HasColumnType("character varying(14)");
+
+                    b.Property<string>("CpfHash")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime?>("DateOfFired")
+                        .HasColumnType("date");
+
+                    b.Property<DateTime>("DateOfHire")
+                        .HasColumnType("date");
+
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("FiscalNumberIdentity")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FiscalNumberIdentityHash")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)");
+
+                    b.Property<string>("FullName")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("IsInactive")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
+                    b.Property<string>("LastName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Jti")
-                        .HasMaxLength(500)
-                        .HasColumnType("VARCHAR");
+                    b.Property<string>("Login")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
-                    b.Property<string>("Token")
-                        .HasMaxLength(500)
-                        .HasColumnType("VARCHAR");
+                    b.Property<string>("LoginHash")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
 
-                    b.Property<string>("UserUpn")
+                    b.Property<string>("LoginManager")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("MotherName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("PersonalEmail")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("PersonalEmailHash")
                         .HasColumnType("text");
+
+                    b.Property<string>("PositionHeldId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTimeOffset>("ProvisioningAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("Registry")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("SocialName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int>("StatusUserAccount")
+                        .HasMaxLength(50)
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TypeUserAccount")
+                        .HasMaxLength(50)
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamptz");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("tb_oneid_refresh_web_token", (string)null);
+                    b.HasIndex("CorporateEmail")
+                        .HasDatabaseName("idx_user_account_corporate_email");
+
+                    b.HasIndex("Cpf")
+                        .HasDatabaseName("idx_user_account_cpf");
+
+                    b.HasIndex("Login")
+                        .HasDatabaseName("idx_user_account_login");
+
+                    b.ToTable("tb_oneid_user_accounts", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

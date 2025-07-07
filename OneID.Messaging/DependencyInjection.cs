@@ -49,10 +49,11 @@ namespace OneID.Messaging
                     });
 
 
-                //x.AddConsumer<CreateAccountPjDatabaseConsumer>();
                 x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
                 x.AddConsumer<KeycloakUserProvisioningConsumer>();
+                x.AddConsumer<UserAccountConsumer>();
+
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -100,10 +101,11 @@ namespace OneID.Messaging
                         e.UseInMemoryOutbox(context);
                         e.UseMessageRetry(r =>
                         {
-                            r.Interval(5, TimeSpan.FromSeconds(1));
-                            r.Handle<DbUpdateConcurrencyException>();
+                            r.Handle<TimeoutException>();
+                            r.Handle<HttpRequestException>();
                             r.Handle<NpgsqlException>(ex => ex.IsTransient);
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                            r.Interval(3, TimeSpan.FromSeconds(10));
                         });
 
                         e.ConfigureSaga<AccountSagaState>(context);
@@ -129,24 +131,24 @@ namespace OneID.Messaging
                         logger.LogInformation("Fila [create-login] registrada com sucesso.");
                     });
 
-                    //cfg.ReceiveEndpoint("create-account-pj-db", e =>
-                    //{
-                    //    e.PrefetchCount = 10;
-                    //    e.UseInMemoryOutbox(context);
+                    cfg.ReceiveEndpoint("user-profile-persistence-db", e =>
+                    {
+                        e.PrefetchCount = 10;
+                        e.UseInMemoryOutbox(context);
 
-                    //    e.UseMessageRetry(r =>
-                    //    {
-                    //        r.Handle<TimeoutException>();
-                    //        r.Handle<HttpRequestException>();
-                    //        r.Handle<NpgsqlException>(ex => ex.IsTransient);
-                    //        r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
-                    //        r.Interval(3, TimeSpan.FromSeconds(10));
-                    //    });
+                        e.UseMessageRetry(r =>
+                        {
+                            r.Handle<TimeoutException>();
+                            r.Handle<HttpRequestException>();
+                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
+                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                            r.Interval(3, TimeSpan.FromSeconds(10));
+                        });
 
-                    //    e.ConfigureConsumer<CreateAccountPjDatabaseConsumer>(context);
+                        e.ConfigureConsumer<UserAccountConsumer>(context);
 
-                    //    logger.LogInformation("Fila [create-account-pj-db] registrada com sucesso.");
-                    //});
+                        logger.LogInformation("Fila [user-profile-persistence-db] registrada com sucesso.");
+                    });
 
                     cfg.ReceiveEndpoint("admission-audit", e =>
                     {
@@ -155,10 +157,11 @@ namespace OneID.Messaging
 
                         e.UseMessageRetry(r =>
                         {
-                            r.Interval(3, TimeSpan.FromSeconds(10));
                             r.Handle<TimeoutException>();
+                            r.Handle<HttpRequestException>();
                             r.Handle<NpgsqlException>(ex => ex.IsTransient);
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                            r.Interval(3, TimeSpan.FromSeconds(10));
                         });
 
                         e.ConfigureConsumer<AdmissionAuditConsumer>(context);
@@ -173,9 +176,11 @@ namespace OneID.Messaging
 
                         e.UseMessageRetry(r =>
                         {
-                            r.Interval(3, TimeSpan.FromSeconds(5));
                             r.Handle<TimeoutException>();
                             r.Handle<HttpRequestException>();
+                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
+                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                            r.Interval(3, TimeSpan.FromSeconds(10));
                         });
 
                         e.ConfigureConsumer<KeycloakUserProvisioningConsumer>(context);

@@ -1,6 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
-using OneID.Application.Interfaces;
+using OneID.Application.Interfaces.Repositories;
 using OneID.Domain.Entities.AuditSagas;
 
 namespace OneID.Application.Messaging.Sagas.Consumers

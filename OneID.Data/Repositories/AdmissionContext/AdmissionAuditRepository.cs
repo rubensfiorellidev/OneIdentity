@@ -1,4 +1,4 @@
-﻿using OneID.Application.Interfaces;
+﻿using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.AuditSagas;
 

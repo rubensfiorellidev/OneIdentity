@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
-using OneID.Application.Interfaces;
+using OneID.Application.Interfaces.Keycloak;
 using OneID.Domain.Entities.KeycloakOptions;
 
 #nullable disable

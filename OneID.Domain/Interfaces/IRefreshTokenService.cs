@@ -1,6 +1,6 @@
 ﻿using OneID.Domain.Entities.JwtWebTokens;
 
-namespace OneID.Shared.Authentication
+namespace OneID.Domain.Interfaces
 {
     public interface IRefreshTokenService
     {

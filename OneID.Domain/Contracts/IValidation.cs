@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace OneID.Domain.Contracts
+﻿namespace OneID.Domain.Contracts
 {
-    internal interface IValidation
+    public interface IValidation
     {
-        bool Validation();
+        bool IsValid();
     }
 }

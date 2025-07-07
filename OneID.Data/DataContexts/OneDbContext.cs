@@ -5,9 +5,11 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Data.Mappings;
+using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Notifications;
 
 namespace OneID.Data.DataContexts
 {
@@ -18,6 +20,8 @@ namespace OneID.Data.DataContexts
         public DbSet<AccountSagaState> AccountSagaStates => Set<AccountSagaState>();
         public DbSet<AdmissionAudit> AdmissionAudits => Set<AdmissionAudit>();
         public DbSet<RefreshWebToken> RefreshWebTokens => Set<RefreshWebToken>();
+        public DbSet<StoredEvent> StoredEvents => Set<StoredEvent>();
+        public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
 
 
 
@@ -55,6 +59,8 @@ namespace OneID.Data.DataContexts
             builder.ApplyConfiguration(new AdmissionAuditMap());
             builder.ApplyConfiguration(new AccountSagaStateMap());
             builder.ApplyConfiguration(new RefreshWebTokenMap());
+            builder.ApplyConfiguration(new StoredEventMap());
+            builder.ApplyConfiguration(new UserAccountMap());
 
 
             builder.Entity<ApplicationRole>(entity =>
@@ -72,6 +78,9 @@ namespace OneID.Data.DataContexts
             builder.Entity<IdentityUserLogin<string>>().ToTable("tb_oneid_user_logins");
             builder.Entity<IdentityRoleClaim<string>>().ToTable("tb_oneid_role_claims");
             builder.Entity<IdentityUserToken<string>>().ToTable("tb_oneid_user_tokens");
+
+            builder.Ignore<Notification>();
+            builder.Ignore<Event>();
 
         }
     }

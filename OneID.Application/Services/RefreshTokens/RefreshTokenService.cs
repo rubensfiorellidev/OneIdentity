@@ -1,6 +1,6 @@
-﻿using OneID.Application.Interfaces;
+﻿using OneID.Application.Interfaces.Repositories;
 using OneID.Domain.Entities.JwtWebTokens;
-using OneID.Shared.Authentication;
+using OneID.Domain.Interfaces;
 using System.Security.Cryptography;
 
 namespace OneID.Application.Services.RefreshTokens

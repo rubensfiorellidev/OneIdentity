@@ -1,6 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
-using OneID.Application.Interfaces;
+using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 
 namespace OneID.Application.Messaging.Sagas.Consumers
