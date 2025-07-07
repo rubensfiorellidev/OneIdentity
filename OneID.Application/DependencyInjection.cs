@@ -2,8 +2,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using OneID.Application.Builders;
+using OneID.Application.CommandHandlers;
+using OneID.Application.Commands;
 using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
+using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
@@ -47,6 +50,8 @@ namespace OneID.Application
             services.AddScoped<IFactoryEventStrategy, FactoryEventStrategy>();
             services.AddScoped<IEventDispatcher, EventDispatcher>();
             services.AddScoped<IUserAccountBuilder, UserAccountBuilder>();
+            services.AddScoped<ICommandHandler<CreateUserAccountCommand, IResult>, CreateUserAccountCommandHandler>();
+
 
 
             services.AddTransient<ICryptoService>(provider =>

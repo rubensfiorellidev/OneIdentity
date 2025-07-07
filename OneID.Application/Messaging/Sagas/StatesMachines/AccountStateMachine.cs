@@ -131,10 +131,6 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
             During(WaitingKeycloakCreation,
                 When(KeycloakUserCreated)
-                    .Then(context =>
-                    {
-
-                    })
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
