@@ -2,11 +2,12 @@
 using Microsoft.Extensions.Logging;
 using OneID.Application.Commands;
 using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 
 namespace OneID.Application.Messaging.Sagas.Consumers
 {
-    public class UserAccountConsumer : IConsumer<UserAccountPersistenceRequested>
+    public class UserAccountConsumer : IConsumer<CreateUserAccountRequested>
     {
         private readonly ICommandHandler<CreateUserAccountCommand, IResult> _handler;
         private readonly ILogger<UserAccountConsumer> _logger;
@@ -19,7 +20,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task Consume(ConsumeContext<UserAccountPersistenceRequested> context)
+        public async Task Consume(ConsumeContext<CreateUserAccountRequested> context)
         {
             try
             {
@@ -27,25 +28,25 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
                 var command = new CreateUserAccountCommand
                 {
-                    FullName = message.Payload.FullName,
-                    SocialName = message.Payload.SocialName,
-                    Cpf = message.Payload.Cpf,
-                    BirthDate = message.Payload.BirthDate,
-                    DateOfHire = message.Payload.DateOfHire,
-                    Registry = message.Payload.Registry,
-                    MotherName = message.Payload.MotherName,
-                    Company = message.Payload.Company,
-                    Login = message.Payload.Login,
-                    CorporateEmail = message.Payload.CorporateEmail,
-                    PersonalEmail = message.Payload.PersonalEmail,
-                    StatusUserProfile = message.Payload.StatusUserProfile,
-                    TypeUserProfile = message.Payload.TypeUserProfile,
-                    LoginManager = message.Payload.LoginManager,
-                    PositionHeldId = message.Payload.PositionHeldId,
-                    FiscalNumberIdentity = message.Payload.FiscalNumberIdentity,
-                    ContractorCnpj = message.Payload.ContractorCnpj,
-                    ContractorName = message.Payload.ContractorName,
-                    CreatedBy = message.Payload.CreatedBy
+                    FullName = message.DatabasePayload.FullName,
+                    SocialName = message.DatabasePayload.SocialName,
+                    Cpf = message.DatabasePayload.Cpf,
+                    BirthDate = message.DatabasePayload.BirthDate,
+                    DateOfHire = message.DatabasePayload.DateOfHire,
+                    Registry = message.DatabasePayload.Registry,
+                    MotherName = message.DatabasePayload.MotherName,
+                    Company = message.DatabasePayload.Company,
+                    Login = message.DatabasePayload.Login,
+                    CorporateEmail = message.DatabasePayload.CorporateEmail,
+                    PersonalEmail = message.DatabasePayload.PersonalEmail,
+                    StatusUserProfile = message.DatabasePayload.StatusUserAccount,
+                    TypeUserProfile = message.DatabasePayload.TypeUserAccount,
+                    LoginManager = message.DatabasePayload.LoginManager,
+                    PositionHeldId = message.DatabasePayload.PositionHeldId,
+                    FiscalNumberIdentity = message.DatabasePayload.FiscalNumberIdentity,
+                    ContractorCnpj = message.DatabasePayload.ContractorCnpj,
+                    ContractorName = message.DatabasePayload.ContractorName,
+                    CreatedBy = message.DatabasePayload.CreatedBy
                 };
 
 
@@ -55,9 +56,10 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 {
                     await context.Publish(new UserProfilePersisted
                     {
-                        CorrelationId = message.CorrelationId,
-                        DatabaseId = result.Data is Guid dbId ? dbId : Guid.Empty // Se você devolver o ID no Data
+                        CorrelationId = context.Message.CorrelationId,
+                        DatabaseId = result.Data?.ToString() ?? "NotAvailable"
                     });
+
                 }
                 else
                 {

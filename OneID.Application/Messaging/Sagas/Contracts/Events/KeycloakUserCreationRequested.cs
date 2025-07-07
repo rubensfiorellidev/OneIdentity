@@ -7,6 +7,6 @@ namespace OneID.Application.Messaging.Sagas.Contracts.Events
     public record KeycloakUserCreationRequested : CorrelatedBy<Guid>
     {
         public Guid CorrelationId { get; init; }
-        public AdmissionPayload Payload { get; init; }
+        public KeycloakPayload Payload { get; init; }
     }
 }

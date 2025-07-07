@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
+using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.Entities.AuditSagas;
@@ -130,6 +131,10 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
             During(WaitingKeycloakCreation,
                 When(KeycloakUserCreated)
+                    .Then(context =>
+                    {
+
+                    })
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
@@ -142,10 +147,25 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Login = context.Saga.Payload.Username,
                         DatabaseId = "NotAvailable"
                     })
-                    .Publish(context => new UserAccountPersistenceRequested
+                    .Publish(context => new CreateUserAccountRequested
                     {
                         CorrelationId = context.Saga.CorrelationId,
-                        Payload = context.Saga.Payload
+                        DatabasePayload = new UserAccountPayload
+                        {
+                            Login = context.Message.KeycloakPayload.Username,
+                            Password = context.Message.KeycloakPayload.Password,
+                            Email = context.Message.KeycloakPayload.Email,
+                            FirstName = context.Message.KeycloakPayload.Firstname,
+                            LastName = context.Message.KeycloakPayload.Lastname,
+                            Cpf = context.Saga.DatabasePayload.Cpf,
+                            Registry = context.Saga.DatabasePayload.Registry,
+                            Company = context.Saga.DatabasePayload.Company,
+                            BirthDate = context.Saga.DatabasePayload.BirthDate,
+                            DateOfHire = context.Saga.DatabasePayload.DateOfHire,
+                            StatusUserAccount = context.Saga.DatabasePayload.StatusUserAccount,
+                            TypeUserAccount = context.Saga.DatabasePayload.TypeUserAccount,
+                            CreatedBy = context.Saga.DatabasePayload.CreatedBy
+                        }
                     })
                     .TransitionTo(WaitingUserAccountPersistence),
 

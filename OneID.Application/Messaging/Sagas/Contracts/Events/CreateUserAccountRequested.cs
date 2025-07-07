@@ -4,10 +4,10 @@ using OneID.Application.DTOs.Admission;
 #nullable disable
 namespace OneID.Application.Messaging.Sagas.Contracts.Events
 {
-    public record UserAccountPersistenceRequested : CorrelatedBy<Guid>
+    public record CreateUserAccountRequested : CorrelatedBy<Guid>
     {
         public Guid CorrelationId { get; init; }
-        public AdmissionPayload Payload { get; init; }
+        public UserAccountPayload DatabasePayload { get; init; }
     }
 
 }

@@ -33,7 +33,7 @@ namespace OneID.Api.Controllers
 
                 var correlationId = request.CorrelationId == Guid.Empty ? Guid.NewGuid() : request.CorrelationId;
 
-                var payload = new AdmissionPayload
+                var payload = new KeycloakPayload
                 {
                     CorrelationId = correlationId,
                     Firstname = request.Firstname,

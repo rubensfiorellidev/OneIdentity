@@ -95,7 +95,7 @@ namespace OneID.Application.CommandHandlers
 
                             _logger.LogInformation("UserAccount {Login} criado com sucesso e evento registrado.", userAccount.Login);
 
-                            return Result.Success($"{userAccount.FullName} successfully created");
+                            return Result.Success(userAccount.Id.ToString());
                         }
 
                         var failedEvent = new UserAccountCreationFailedEvent(

@@ -1,7 +1,7 @@
 ﻿namespace OneID.Application.DTOs.Admission
 {
 #nullable disable
-    public record AdmissionPayload
+    public record KeycloakPayload
     {
         public Guid CorrelationId { get; set; }
 

@@ -12,7 +12,8 @@ namespace OneID.Application.Messaging.Sagas.Contracts
         public string FaultReason { get; set; }
         public byte[] Version { get; set; }
 
-        public AdmissionPayload Payload { get; set; }
+        public KeycloakPayload Payload { get; set; }
+        public UserAccountPayload DatabasePayload { get; set; }
 
     }
 }
