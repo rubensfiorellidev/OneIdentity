@@ -8,14 +8,14 @@ using OneID.Application.Messaging.Sagas.Contracts.Events;
 namespace OneID.Api.Controllers
 {
     [Route("v1/accounts")]
-    public class AccountController : MainController
+    public class KeycloakController : MainController
     {
-        private readonly ILogger<AccountController> _logger;
+        private readonly ILogger<KeycloakController> _logger;
         private readonly IBus _bus;
 
-        public AccountController(
+        public KeycloakController(
             ISender sender,
-            ILogger<AccountController> logger,
+            ILogger<KeycloakController> logger,
             IBus bus) : base(sender)
         {
             _logger = logger;
