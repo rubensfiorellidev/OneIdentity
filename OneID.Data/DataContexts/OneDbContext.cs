@@ -5,10 +5,10 @@ using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
-using OneID.Data.Mappings;
 using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.JwtWebTokens;
+using OneID.Domain.Entities.Sagas;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Notifications;
 
@@ -23,7 +23,8 @@ namespace OneID.Data.DataContexts
         public DbSet<RefreshWebToken> RefreshWebTokens => Set<RefreshWebToken>();
         public DbSet<StoredEvent> StoredEvents => Set<StoredEvent>();
         public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
-
+        public DbSet<SagaDeduplicationKey> SagaDeduplicationKeys => Set<SagaDeduplicationKey>();
+        public DbSet<SagaDeduplication> SagaDeduplications => Set<SagaDeduplication>();
 
 
 
@@ -55,13 +56,8 @@ namespace OneID.Data.DataContexts
         {
             base.OnModelCreating(builder);
 
-            builder.ApplyConfiguration(new ApplicationUserMap());
-            builder.ApplyConfiguration(new ApplicationRoleMap());
-            builder.ApplyConfiguration(new AdmissionAuditMap());
-            builder.ApplyConfiguration(new AccountSagaStateMap());
-            builder.ApplyConfiguration(new RefreshWebTokenMap());
-            builder.ApplyConfiguration(new StoredEventMap());
-            builder.ApplyConfiguration(new UserAccountMap());
+
+            builder.ApplyConfigurationsFromAssembly(typeof(OneDbContext).Assembly);
 
 
             builder.Entity<ApplicationRole>(entity =>

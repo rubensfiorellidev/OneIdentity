@@ -51,6 +51,7 @@ namespace OneID.Application
             services.AddScoped<IEventDispatcher, EventDispatcher>();
             services.AddScoped<IUserAccountBuilder, UserAccountBuilder>();
             services.AddScoped<ICommandHandler<CreateUserAccountCommand, IResult>, CreateUserAccountCommandHandler>();
+            services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
 
 
 

@@ -52,7 +52,6 @@ namespace OneID.Messaging
                 x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
                 x.AddConsumer<KeycloakUserProvisioningConsumer>();
-                x.AddConsumer<UserAccountConsumer>();
 
 
                 x.UsingRabbitMq((context, cfg) =>
@@ -129,25 +128,6 @@ namespace OneID.Messaging
                         e.ConfigureConsumer<CreateLoginConsumer>(context);
 
                         logger.LogInformation("Fila [create-login] registrada com sucesso.");
-                    });
-
-                    cfg.ReceiveEndpoint("user-profile-persistence-db", e =>
-                    {
-                        e.PrefetchCount = 10;
-                        e.UseInMemoryOutbox(context);
-
-                        e.UseMessageRetry(r =>
-                        {
-                            r.Handle<TimeoutException>();
-                            r.Handle<HttpRequestException>();
-                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
-                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
-                            r.Interval(3, TimeSpan.FromSeconds(10));
-                        });
-
-                        e.ConfigureConsumer<UserAccountConsumer>(context);
-
-                        logger.LogInformation("Fila [user-profile-persistence-db] registrada com sucesso.");
                     });
 
                     cfg.ReceiveEndpoint("admission-audit", e =>

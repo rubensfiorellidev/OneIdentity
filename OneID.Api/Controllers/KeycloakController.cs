@@ -7,7 +7,7 @@ using OneID.Application.Messaging.Sagas.Contracts.Events;
 
 namespace OneID.Api.Controllers
 {
-    [Route("v1/accounts")]
+    [Route("v1/keycloak")]
     public class KeycloakController : MainController
     {
         private readonly ILogger<KeycloakController> _logger;
@@ -36,8 +36,8 @@ namespace OneID.Api.Controllers
                 var payload = new KeycloakPayload
                 {
                     CorrelationId = correlationId,
-                    Firstname = request.Firstname,
-                    Lastname = request.Lastname
+                    Firstname = request.FirstName,
+                    Lastname = request.LastName
 
                 };
 

@@ -9,6 +9,7 @@ using OneID.Data.DataContexts;
 using OneID.Data.Factories;
 using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
+using OneID.Data.Repositories.DeduplicationSagaContext;
 using OneID.Data.Repositories.RefreshTokens;
 using OneID.Data.Repositories.StoredEvents;
 using OneID.Data.Repositories.UsersContext;
@@ -30,6 +31,9 @@ namespace OneID.Data
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IStoredEventRepository, StoredEventRepository>();
             services.AddScoped<IAddUserAccountRepository, AddUserAccountRepository>();
+            services.AddScoped<IAddUserAccountStagingRepository, AddUserAccountStagingRepository>();
+            services.AddScoped<IDeduplicationKeyRepository, DeduplicationKeyRepository>();
+            services.AddScoped<ISagaDeduplicationRepository, SagaDeduplicationRepository>();
 
 
 

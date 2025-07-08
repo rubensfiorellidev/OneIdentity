@@ -98,6 +98,13 @@ namespace OneID.Domain.Results
             return Failure(httpCode, message, additionalData: additionalData);
         }
 
+        public TResult Match<TResult>(
+            Func<IResult, TResult> onSuccess,
+            Func<IResult, TResult> onError)
+        {
+            return IsSuccess ? onSuccess(this) : onError(this);
+        }
+
     }
 
 }
