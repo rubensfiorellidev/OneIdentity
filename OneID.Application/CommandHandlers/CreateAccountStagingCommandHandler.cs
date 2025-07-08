@@ -87,8 +87,8 @@ namespace OneID.Application.CommandHandlers
                 Payload = new KeycloakPayload
                 {
                     CorrelationId = payload.CorrelationId,
-                    Firstname = payload.Firstname,
-                    Lastname = payload.Lastname
+                    Firstname = payload.FirstName,
+                    Lastname = payload.LastName
                 }
             }, cancellationToken);
 
