@@ -13,7 +13,7 @@ namespace OneID.Domain.Entities.UserContext
     {
         private readonly List<Event> _events = [];
 
-        public UserProfile(List<Notification> notifications) : base(notifications)
+        public UserProfile() : base([]) 
         {
         }
 
@@ -51,5 +51,14 @@ namespace OneID.Domain.Entities.UserContext
 
             return contracts.HasNotifications();
         }
+
+        //public static readonly UserProfile NOT_AVAILABLE = new NullUserProfile();
+
+        //private class NullUserProfile : UserProfile
+        //{
+        //    public NullUserProfile() : base("NotAvailable") { }
+
+        //}
+
     }
 }

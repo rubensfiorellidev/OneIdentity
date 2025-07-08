@@ -141,6 +141,4 @@ namespace OneID.Data.Mappings
                    .HasDatabaseName("idx_user_profile_corporate_email");
         }
     }
-
-
 }

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using OneID.Data.Mappings;
+using OneID.Domain.Abstractions.Events;
 using OneID.Domain.Entities;
 using OneID.Domain.Entities.UserContext;
 
@@ -13,7 +14,7 @@ namespace OneID.Data.DataContexts
     {
         public OneIdDbContext() { }
 
-        public DbSet<UserProfile> AccountsClt => Set<UserProfile>();
+        public DbSet<UserProfile> UsersProfile => Set<UserProfile>();
 
         public OneIdDbContext(DbContextOptions<OneIdDbContext> options)
             : base(options)
@@ -42,7 +43,7 @@ namespace OneID.Data.DataContexts
 
             builder.ApplyConfiguration(new ApplicationUserMap());
             builder.ApplyConfiguration(new ApplicationRoleMap());
-
+            builder.ApplyConfiguration(new UserProfileMap());
 
             builder.Entity<ApplicationRole>(entity =>
             {
@@ -59,6 +60,9 @@ namespace OneID.Data.DataContexts
             builder.Entity<IdentityUserLogin<string>>().ToTable("tb_oneid_user_logins");
             builder.Entity<IdentityRoleClaim<string>>().ToTable("tb_oneid_role_claims");
             builder.Entity<IdentityUserToken<string>>().ToTable("tb_oneid_user_tokens");
+
+            builder.Entity<UserProfile>().Ignore(a => a.Notifications);
+            builder.Ignore<Event>();
 
         }
     }
