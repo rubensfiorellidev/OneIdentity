@@ -10,11 +10,11 @@ namespace OneID.Data.Mappings
         {
             builder.ToTable("tb_oneid_roles");
 
-            builder.Property(r => r.Id).HasColumnName("id");
-            builder.Property(r => r.Name).HasColumnName("name").HasMaxLength(256);
-            builder.Property(r => r.NormalizedName).HasColumnName("normalized_name").HasMaxLength(256);
-            builder.Property(r => r.ConcurrencyStamp).HasColumnName("concurrency_stamp");
-            builder.Property(r => r.Description).HasColumnName("description");
+            builder.Property(r => r.Id);
+            builder.Property(r => r.Name).HasMaxLength(256);
+            builder.Property(r => r.NormalizedName).HasMaxLength(256);
+            builder.Property(r => r.ConcurrencyStamp);
+            builder.Property(r => r.Description).HasMaxLength(500);
 
             builder.HasIndex(r => r.NormalizedName)
                 .HasDatabaseName("ix_tb_oneid_roles_normalized_name")

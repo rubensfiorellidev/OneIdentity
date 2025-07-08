@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
+using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Data.Mappings;
 using OneID.Domain.Abstractions.Events;
 using OneID.Domain.Entities;
@@ -10,13 +11,19 @@ using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.DataContexts
 {
-    public sealed class OneIdDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
+    public sealed class OneDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, string>
     {
-        public OneIdDbContext() { }
+        public OneDbContext() { }
 
-        public DbSet<UserProfile> UsersProfile => Set<UserProfile>();
+        public DbSet<AccountSagaState> AccountSagaStates => Set<AccountSagaState>();
+        public DbSet<AdmissionAudit> AdmissionAudits => Set<AdmissionAudit>();
 
-        public OneIdDbContext(DbContextOptions<OneIdDbContext> options)
+
+
+
+
+
+        public OneDbContext(DbContextOptions<OneDbContext> options)
             : base(options)
         {
             ChangeTracker.LazyLoadingEnabled = false;
@@ -43,7 +50,8 @@ namespace OneID.Data.DataContexts
 
             builder.ApplyConfiguration(new ApplicationUserMap());
             builder.ApplyConfiguration(new ApplicationRoleMap());
-            builder.ApplyConfiguration(new UserProfileMap());
+            builder.ApplyConfiguration(new AdmissionAuditMap());
+            builder.ApplyConfiguration(new AccountSagaStateMap());
 
             builder.Entity<ApplicationRole>(entity =>
             {
