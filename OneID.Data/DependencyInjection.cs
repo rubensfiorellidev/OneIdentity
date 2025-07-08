@@ -34,6 +34,7 @@ namespace OneID.Data
             services.AddScoped<IAddUserAccountStagingRepository, AddUserAccountStagingRepository>();
             services.AddScoped<IDeduplicationKeyRepository, DeduplicationKeyRepository>();
             services.AddScoped<ISagaDeduplicationRepository, SagaDeduplicationRepository>();
+            services.AddScoped<IQueryAccountAdmissionStagingRepository, QueryAccountAdmissionStagingRepository>();
 
 
 

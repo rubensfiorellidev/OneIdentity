@@ -33,6 +33,20 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.CpfHash)
                    .HasMaxLength(128);
 
+            builder.Property(x => x.BirthDate)
+                   .HasColumnType("date");
+
+            builder.Property(x => x.Registry)
+                   .HasMaxLength(50);
+
+            builder.Property(x => x.MotherName)
+                   .HasMaxLength(200);
+
+            builder.Property(x => x.Company)
+                   .HasMaxLength(150);
+
+            builder.Property(x => x.LoginManager)
+                   .HasMaxLength(100);
 
             builder.Property(x => x.FiscalNumberIdentity)
                    .HasMaxLength(50);
@@ -88,6 +102,16 @@ namespace OneID.Data.Mappings
                    .IsRequired();
 
             builder.Property(x => x.Status)
+                   .HasMaxLength(20)
+                   .IsRequired();
+
+            builder.Property(x => x.StatusUserAccount)
+                   .HasConversion<string>()
+                   .HasMaxLength(20)
+                   .IsRequired();
+
+            builder.Property(x => x.TypeUserAccount)
+                   .HasConversion<string>()
                    .HasMaxLength(20)
                    .IsRequired();
 

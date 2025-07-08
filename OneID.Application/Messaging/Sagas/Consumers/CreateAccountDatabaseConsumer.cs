@@ -63,15 +63,15 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithSocialName(staging.SocialName)
                     .WithCpf(staging.Cpf)
                     .WithBirthDate(staging.BirthDate)
-                    .WithDateOfHire(staging.DateOfHire)
+                    .WithDateOfHire(staging.StartDate)
                     .WithRegistry(staging.Registry)
                     .WithMotherName(staging.MotherName)
                     .WithCompany(staging.Company)
                     .WithLogin(staging.Login)
                     .WithCorporateEmail(staging.CorporateEmail)
                     .WithPersonalEmail(staging.PersonalEmail)
-                    .WithStatusUserProfile(staging.StatusUserProfile)
-                    .WithTypeUserProfile(staging.TypeUserProfile)
+                    .WithStatusUserProfile(staging.StatusUserAccount)
+                    .WithTypeUserProfile(staging.TypeUserAccount)
                     .WithLoginManager(staging.LoginManager)
                     .WithPositionHeldId(staging.PositionHeldId)
                     .WithFiscalNumberIdentity(staging.FiscalNumberIdentity)
@@ -152,7 +152,6 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 {
                     CorrelationId = correlationId,
                     FaultReason = "Erro inesperado"
-
                 });
 
                 throw;

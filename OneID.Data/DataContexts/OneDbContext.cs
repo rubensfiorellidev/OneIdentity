@@ -25,6 +25,7 @@ namespace OneID.Data.DataContexts
         public DbSet<UserAccount> UserAccounts => Set<UserAccount>();
         public DbSet<SagaDeduplicationKey> SagaDeduplicationKeys => Set<SagaDeduplicationKey>();
         public DbSet<SagaDeduplication> SagaDeduplications => Set<SagaDeduplication>();
+        public DbSet<AccountAdmissionStaging> AccountAdmissionStagings => Set<AccountAdmissionStaging>();
 
 
 
