@@ -1,6 +1,5 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
-using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.Entities.AuditSagas;
@@ -15,13 +14,19 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
         public State WaitingUserAccountPersistence { get; private set; }
         public State WaitingLoginResult { get; private set; }
+        public State WaitingCpfValidation { get; private set; }
         public State WaitingKeycloakCreation { get; private set; }
+        public State WaitingDatabaseResult { get; private set; }
         public State Completed { get; private set; }
         public State Faulted { get; private set; }
 
         public Event<StartCreateAccountSaga> StartSaga { get; private set; }
         public Event<LoginCreated> LoginCreated { get; private set; }
         public Event<LoginFailed> LoginFailed { get; private set; }
+        public Event<AccountCpfValidated> CpfValidated { get; private set; }
+        public Event<AccountCpfValidationFailed> CpfValidationFailed { get; private set; }
+        public Event<AccountDatabaseCreated> DatabaseCreated { get; private set; }
+        public Event<AccountDatabaseCreationFailed> DatabaseFailed { get; private set; }
         public Event<KeycloakUserCreated> KeycloakUserCreated { get; private set; }
         public Event<KeycloakUserFailed> KeycloakUserFailed { get; private set; }
         public Event<AccountSagaFailed> SagaFailed { get; private set; }
@@ -43,6 +48,11 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
             Event(() => SagaFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => UserProfilePersisted, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => UserProfilePersistenceFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => CpfValidated, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => CpfValidationFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => DatabaseCreated, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => DatabaseFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
+
 
 
 
@@ -131,6 +141,12 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
 
             During(WaitingKeycloakCreation,
                 When(KeycloakUserCreated)
+                    .Then(context =>
+                    {
+                        context.Saga.Payload.Username = context.Message.KeycloakPayload.Username;
+                        context.Saga.Payload.Password = context.Message.KeycloakPayload.Password;
+                        context.Saga.Payload.Email = context.Message.KeycloakPayload.Email;
+                    })
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
@@ -138,55 +154,78 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Completed),
                         EventName = "Usuário provisionado no Keycloak",
-                        Description = "Usuário provisionado com sucesso no Keycloak.",
+                        Description = "Usuário provisionado com sucesso no Keycloak. Iniciando validação do CPF.",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.Payload.Username,
                         DatabaseId = "NotAvailable"
                     })
-                    .Publish(context => new CreateUserAccountRequested
+                    .Publish(context => new AccountCpfValidationRequested
                     {
                         CorrelationId = context.Saga.CorrelationId,
-                        DatabasePayload = new UserAccountPayload
-                        {
-                            Login = context.Message.KeycloakPayload.Username,
-                            Password = context.Message.KeycloakPayload.Password,
-                            Email = context.Message.KeycloakPayload.Email,
-                            FirstName = context.Message.KeycloakPayload.Firstname,
-                            LastName = context.Message.KeycloakPayload.Lastname,
-                            Cpf = context.Saga.DatabasePayload.Cpf,
-                            Registry = context.Saga.DatabasePayload.Registry,
-                            Company = context.Saga.DatabasePayload.Company,
-                            BirthDate = context.Saga.DatabasePayload.BirthDate,
-                            DateOfHire = context.Saga.DatabasePayload.DateOfHire,
-                            StatusUserAccount = context.Saga.DatabasePayload.StatusUserAccount,
-                            TypeUserAccount = context.Saga.DatabasePayload.TypeUserAccount,
-                            CreatedBy = context.Saga.DatabasePayload.CreatedBy
-                        }
+                        Cpf = context.Saga.DatabasePayload.Cpf,
+                        FullName = context.Saga.DatabasePayload.FullName,
+                        PositionHeldId = context.Saga.DatabasePayload.PositionHeldId
                     })
-                    .TransitionTo(WaitingUserAccountPersistence),
+                    .TransitionTo(WaitingCpfValidation),
 
-                When(KeycloakUserFailed)
-                        .Then(context =>
-                        {
-                            context.Saga.FaultReason = context.Message.FaultReason;
-                        })
-                        .Publish(context => new AdmissionAudit
-                        {
-                            CorrelationId = context.Saga.CorrelationId,
-                            Firstname = context.Saga.Payload.Firstname,
-                            Lastname = context.Saga.Payload.Lastname,
-                            CurrentState = nameof(Faulted),
-                            EventName = "Falha no Keycloak",
-                            Description = $"Erro: {context.Message.FaultReason}",
-                            ProvisioningDate = DateTimeOffset.UtcNow,
-                            Login = context.Saga.Payload.Username,
-                            DatabaseId = "NotAvailable"
-                        })
-                        .TransitionTo(Faulted)
-                );
+                    When(KeycloakUserFailed)
+                            .Then(context =>
+                            {
+                                context.Saga.FaultReason = context.Message.FaultReason;
+                            })
+                            .Publish(context => new AdmissionAudit
+                            {
+                                CorrelationId = context.Saga.CorrelationId,
+                                Firstname = context.Saga.Payload.Firstname,
+                                Lastname = context.Saga.Payload.Lastname,
+                                CurrentState = nameof(Faulted),
+                                EventName = "Falha no Keycloak",
+                                Description = $"Erro: {context.Message.FaultReason}",
+                                ProvisioningDate = DateTimeOffset.UtcNow,
+                                Login = context.Saga.Payload.Username,
+                                DatabaseId = "NotAvailable"
+                            })
+                            .TransitionTo(Faulted)
+            );
 
-            During(WaitingUserAccountPersistence,
-                When(UserProfilePersisted)
+            During(WaitingCpfValidation,
+                When(CpfValidated)
+                    .Publish(context => new AdmissionAudit
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        CurrentState = nameof(WaitingDatabaseResult),
+                        EventName = "CPF validado",
+                        Description = "CPF validado com sucesso. Iniciando criação da conta no sistema.",
+                        ProvisioningDate = DateTimeOffset.UtcNow,
+                        Login = context.Saga.Login,
+                        DatabaseId = "InProcess"
+                    })
+                    .Publish(context => new CreateAccountDatabaseCommand
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        Login = context.Saga.Login
+                    })
+                    .TransitionTo(WaitingDatabaseResult),
+
+                When(CpfValidationFailed)
+                    .Then(context => context.Saga.FaultReason = context.Message.FaultReason)
+                    .Publish(context => new AdmissionAudit
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        CurrentState = nameof(Faulted),
+                        EventName = "Falha na validação do CPF",
+                        Description = $"Não foi possível validar o CPF: {context.Message.FaultReason}",
+                        ProvisioningDate = DateTimeOffset.UtcNow,
+                        Login = context.Saga.Login,
+                        DatabaseId = "NotAvailable"
+                    })
+                    .TransitionTo(Faulted)
+            );
+
+
+            During(WaitingDatabaseResult,
+                When(DatabaseCreated)
+                    .Then(context => context.Saga.DatabaseId = context.Message.DatabaseId)
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
@@ -201,19 +240,15 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     })
                     .TransitionTo(Completed),
 
-                When(UserProfilePersistenceFailed)
-                    .Then(context =>
-                    {
-                        context.Saga.FaultReason = context.Message.FaultReason;
-                        _logger.LogError("Falha ao persistir UserAccount: {Reason}", context.Message.FaultReason);
-                    })
+                When(DatabaseFailed)
+                    .Then(context => context.Saga.FaultReason = context.Message.FaultReason)
                     .Publish(context => new AdmissionAudit
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Firstname = context.Saga.Payload.Firstname,
                         Lastname = context.Saga.Payload.Lastname,
                         CurrentState = nameof(Faulted),
-                        EventName = "Falha ao persistir UserAccount",
+                        EventName = "Falha na criação da conta",
                         Description = $"Erro: {context.Message.FaultReason}",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.Payload.Username,
