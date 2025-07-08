@@ -53,7 +53,7 @@ namespace OneID.Application.CommandHandlers
                 return Result.Conflict("Esse CorrelationId já existe.");
             }
 
-            var staging = new AccountPjAdmissionStaging
+            var staging = new AccountAdmissionStaging
             {
                 CorrelationId = payload.CorrelationId,
                 FullName = payload.FullName,

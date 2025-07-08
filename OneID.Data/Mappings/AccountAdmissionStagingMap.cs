@@ -4,11 +4,11 @@ using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.Mappings
 {
-    internal class AccountPjAdmissionStagingMap : IEntityTypeConfiguration<AccountPjAdmissionStaging>
+    internal class AccountAdmissionStagingMap : IEntityTypeConfiguration<AccountAdmissionStaging>
     {
-        public void Configure(EntityTypeBuilder<AccountPjAdmissionStaging> builder)
+        public void Configure(EntityTypeBuilder<AccountAdmissionStaging> builder)
         {
-            builder.ToTable("tb_oneid_account_pj_admission_staging");
+            builder.ToTable("tb_oneid_account_admission_staging");
 
             builder.HasKey(x => x.CorrelationId);
 
@@ -17,6 +17,12 @@ namespace OneID.Data.Mappings
 
             builder.Property(x => x.FullName)
                    .HasMaxLength(300);
+
+            builder.Property(x => x.FirstName)
+                   .HasMaxLength(50);
+
+            builder.Property(x => x.LastName)
+                   .HasMaxLength(100);
 
             builder.Property(x => x.SocialName)
                    .HasMaxLength(150);
@@ -27,8 +33,6 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.CpfHash)
                    .HasMaxLength(128);
 
-            builder.Property(x => x.ForeignWorker)
-                   .IsRequired();
 
             builder.Property(x => x.FiscalNumberIdentity)
                    .HasMaxLength(50);
@@ -39,11 +43,13 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.StartDate)
                    .HasColumnType("date");
 
-            builder.Property(x => x.EndDate)
-                   .HasColumnType("date");
 
             builder.Property(x => x.ContractorCnpj)
                    .HasMaxLength(18);
+
+            builder.Property(x => x.ContractorCnpjHash)
+                   .HasMaxLength(180);
+
 
             builder.Property(x => x.ContractorName)
                    .HasMaxLength(200);
@@ -51,32 +57,12 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.PositionHeldId)
                    .HasMaxLength(100);
 
-            builder.Property(x => x.RegionalId)
-                   .HasMaxLength(100);
-
-            builder.Property(x => x.RegionalName)
-                   .HasMaxLength(150);
-
-            builder.Property(x => x.RegionalState)
-                   .HasMaxLength(2);
-
-            builder.Property(x => x.ManagerId)
-                   .HasMaxLength(100);
-
-            builder.Property(x => x.CostCenterId)
-                   .HasMaxLength(100);
-
-            builder.Property(x => x.DepartmentId)
-                   .HasMaxLength(100);
 
             builder.Property(x => x.Login)
                    .HasMaxLength(100);
 
             builder.Property(x => x.LoginHash)
                    .HasMaxLength(128);
-
-            builder.Property(x => x.EmailAccess)
-                   .IsRequired();
 
             builder.Property(x => x.PersonalEmail)
                    .HasMaxLength(150);
@@ -90,8 +76,6 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.CorporateEmailHash)
                    .HasMaxLength(128);
 
-            builder.Property(x => x.VpnAccess)
-                   .IsRequired();
 
             builder.Property(x => x.Comments)
                    .HasMaxLength(500);

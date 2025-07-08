@@ -4,6 +4,6 @@ namespace OneID.Application.Interfaces.Repositories
 {
     public interface IAddUserAccountStagingRepository
     {
-        Task SaveAsync(AccountPjAdmissionStaging entity, CancellationToken cancellationToken);
+        Task SaveAsync(AccountAdmissionStaging entity, CancellationToken cancellationToken);
     }
 }
