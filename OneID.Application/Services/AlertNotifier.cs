@@ -3,6 +3,7 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.SES;
 
+#nullable disable
 namespace OneID.Application.Services
 {
     public class AlertNotifier : IAlertNotifier
