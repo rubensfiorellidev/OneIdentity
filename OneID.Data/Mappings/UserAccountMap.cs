@@ -16,6 +16,9 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100)
                    .IsRequired();
 
+            builder.Property(x => x.CorrelationId)
+               .IsRequired();
+
             builder.Property(u => u.FullName)
                    .HasMaxLength(300);
 

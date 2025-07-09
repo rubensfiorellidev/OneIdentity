@@ -5,7 +5,7 @@ using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.Repositories.AdmissionContext
 {
-    public class QueryAccountAdmissionStagingRepository : IQueryAccountAdmissionStagingRepository
+    public sealed class QueryAccountAdmissionStagingRepository : IQueryAccountAdmissionStagingRepository
     {
         private readonly IOneDbContextFactory _dbContextFactory;
 
@@ -19,8 +19,8 @@ namespace OneID.Data.Repositories.AdmissionContext
             await using var dbContext = _dbContextFactory.CreateDbContext();
 
             return await dbContext.AccountAdmissionStagings
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.CorrelationId == correlationId, cancellationToken);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.CorrelationId == correlationId, cancellationToken);
 
         }
     }

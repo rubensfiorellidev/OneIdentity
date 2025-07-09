@@ -13,6 +13,9 @@ namespace OneID.Domain.Entities.UserContext
         private readonly List<Event> _events = [];
         private readonly List<Notification> _notifications = [];
 
+        public Guid CorrelationId { get; private set; }
+
+
         public string Id { get; private set; }
         public DateTimeOffset ProvisioningAt { get; private set; }
         public DateTimeOffset? UpdatedAt { get; private set; }

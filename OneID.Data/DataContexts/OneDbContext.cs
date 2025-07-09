@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Domain.Abstractions.EventsContext;
+using OneID.Domain.Entities.AlertsContext;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Entities.Sagas;
@@ -26,6 +27,7 @@ namespace OneID.Data.DataContexts
         public DbSet<SagaDeduplicationKey> SagaDeduplicationKeys => Set<SagaDeduplicationKey>();
         public DbSet<SagaDeduplication> SagaDeduplications => Set<SagaDeduplication>();
         public DbSet<AccountAdmissionStaging> AccountAdmissionStagings => Set<AccountAdmissionStaging>();
+        public DbSet<AlertSettings> AlertSettings => Set<AlertSettings>();
 
 
 
