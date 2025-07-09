@@ -3,13 +3,14 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.AlertsContext;
 
+#nullable disable
 namespace OneID.Data.Repositories.AdmissionContext
 {
-    public class AlertSettingsService : IAlertSettingsRepository
+    public class AlertSettingsRepository : IAlertSettingsRepository
     {
         private readonly IOneDbContextFactory _dbContextFactory;
 
-        public AlertSettingsService(IOneDbContextFactory dbContextFactory)
+        public AlertSettingsRepository(IOneDbContextFactory dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }
@@ -29,6 +30,13 @@ namespace OneID.Data.Repositories.AdmissionContext
             return settings;
         }
 
+        public async Task<bool> ExistsAsync(CancellationToken ct = default)
+        {
+            await using var dbContext = _dbContextFactory.CreateDbContext();
+
+            return await dbContext.AlertSettings.AnyAsync(ct);
+        }
+
         public async Task UpdateAsync(AlertSettings updated, CancellationToken ct = default)
         {
             await using var dbContext = _dbContextFactory.CreateDbContext();
@@ -43,5 +51,21 @@ namespace OneID.Data.Repositories.AdmissionContext
             await dbContext.SaveChangesAsync(ct);
 
         }
+
+        public async Task AddAsync(AlertSettings entity, CancellationToken ct = default)
+        {
+            await using var dbContext = _dbContextFactory.CreateDbContext();
+
+            await dbContext.AlertSettings.AddAsync(entity, ct);
+            await dbContext.SaveChangesAsync(ct);
+        }
+
+        public async Task<AlertSettings> GetByIdAsync(string id, CancellationToken ct)
+        {
+            await using var dbContext = _dbContextFactory.CreateDbContext();
+
+            return await dbContext.AlertSettings.FirstOrDefaultAsync(x => x.Id == id, ct);
+        }
+
     }
 }

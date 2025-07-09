@@ -35,6 +35,7 @@ namespace OneID.Data
             services.AddScoped<IDeduplicationKeyRepository, DeduplicationKeyRepository>();
             services.AddScoped<ISagaDeduplicationRepository, SagaDeduplicationRepository>();
             services.AddScoped<IQueryAccountAdmissionStagingRepository, QueryAccountAdmissionStagingRepository>();
+            services.AddScoped<IAlertSettingsRepository, AlertSettingsRepository>();
 
 
 
