@@ -5,6 +5,9 @@ namespace OneID.Application.Interfaces.Builders
 {
     public interface IUserAccountBuilder
     {
+        IUserAccountBuilder WithCorrelationId(Guid correlationId);
+        IUserAccountBuilder WithFirstName(string firstName);
+        IUserAccountBuilder WithLastName(string lastName);
         IUserAccountBuilder WithFullName(string fullName);
         IUserAccountBuilder WithSocialName(string socialName);
         IUserAccountBuilder WithCpf(string cpf);

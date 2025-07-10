@@ -120,6 +120,20 @@ namespace OneID.Domain.Entities.UserContext
             return Id.GetHashCode();
         }
 
+        public void SetFirstName(string firstName)
+        {
+            FirstName = firstName;
+        }
+
+        public void SetLastname(string lastName)
+        {
+            LastName = lastName;
+        }
+
+        public void SetCorrelationId(Guid correlationId)
+        {
+            CorrelationId = correlationId;
+        }
         public void SetFullName(string fullName)
         {
             if (string.IsNullOrWhiteSpace(fullName))
@@ -213,43 +227,55 @@ namespace OneID.Domain.Entities.UserContext
         }
 
         public void ApplyHashes(string cpfHash,
-                                string corporateEmailHash,
-                                string loginHash,
-                                string fiscalNumberIdentityHash,
-                                string contractorCnpjHash)
+                        string corporateEmailHash,
+                        string loginHash,
+                        string fiscalNumberIdentityHash,
+                        string contractorCnpjHash)
         {
             if (string.IsNullOrWhiteSpace(cpfHash))
                 throw new ArgumentException("CPF hash cannot be null or empty", nameof(cpfHash));
-            if (string.IsNullOrWhiteSpace(corporateEmailHash))
-                throw new ArgumentException("Corporate Email hash cannot be null or empty", nameof(corporateEmailHash));
-            if (string.IsNullOrWhiteSpace(loginHash))
-                throw new ArgumentException("Login hash cannot be null or empty", nameof(loginHash));
-            if (string.IsNullOrWhiteSpace(fiscalNumberIdentityHash))
-                throw new ArgumentException("Fiscal Number Identity hash cannot be null or empty", nameof(fiscalNumberIdentityHash));
-            if (string.IsNullOrWhiteSpace(contractorCnpjHash))
-                throw new ArgumentException("Contractor CNPJ hash cannot be null or empty", nameof(contractorCnpjHash));
 
             CpfHash = cpfHash;
-            CorporateEmailHash = corporateEmailHash;
-            LoginHash = loginHash;
-            FiscalNumberIdentityHash = fiscalNumberIdentityHash;
-            ContractorCnpjHash = contractorCnpjHash;
+
+            if (!string.IsNullOrWhiteSpace(corporateEmailHash))
+                CorporateEmailHash = corporateEmailHash;
+
+            if (!string.IsNullOrWhiteSpace(loginHash))
+                LoginHash = loginHash;
+
+            if (!string.IsNullOrWhiteSpace(fiscalNumberIdentityHash))
+                FiscalNumberIdentityHash = fiscalNumberIdentityHash;
+
+            if (!string.IsNullOrWhiteSpace(contractorCnpjHash))
+                ContractorCnpjHash = contractorCnpjHash;
         }
 
         public void ApplyCrytos(string cpf,
-                                string corporateEmail,
-                                string login,
-                                string registry,
-                                string fiscalNumberIdentity,
-                                string contractorCnpj)
+                        string corporateEmail,
+                        string login,
+                        string registry,
+                        string fiscalNumberIdentity,
+                        string contractorCnpj)
         {
-            Cpf = cpf;
-            CorporateEmail = corporateEmail;
-            Login = login;
-            Registry = registry;
-            FiscalNumberIdentity = fiscalNumberIdentity;
-            ContractorCnpj = contractorCnpj;
+            if (!string.IsNullOrWhiteSpace(cpf))
+                Cpf = cpf;
+
+            if (!string.IsNullOrWhiteSpace(corporateEmail))
+                CorporateEmail = corporateEmail;
+
+            if (!string.IsNullOrWhiteSpace(login))
+                Login = login;
+
+            if (!string.IsNullOrWhiteSpace(registry))
+                Registry = registry;
+
+            if (!string.IsNullOrWhiteSpace(fiscalNumberIdentity))
+                FiscalNumberIdentity = fiscalNumberIdentity;
+
+            if (!string.IsNullOrWhiteSpace(contractorCnpj))
+                ContractorCnpj = contractorCnpj;
         }
+
 
     }
 }

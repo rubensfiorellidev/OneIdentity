@@ -32,7 +32,13 @@ namespace OneID.Data.Mappings
                     .HasDefaultValueSql("CURRENT_TIMESTAMP AT TIME ZONE 'UTC'")
                     .IsRequired();
 
-            builder.OwnsOne(x => x.Payload, payload =>
+            builder.OwnsOne(x => x.KeycloakData, payload =>
+            {
+                payload.ToJson();
+
+            });
+
+            builder.OwnsOne(x => x.AccountData, payload =>
             {
                 payload.ToJson();
 

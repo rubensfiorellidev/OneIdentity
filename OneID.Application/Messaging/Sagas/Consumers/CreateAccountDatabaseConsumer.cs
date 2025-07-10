@@ -59,6 +59,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 }
 
                 var userAccount = _builder
+                    .WithCorrelationId(correlationId)
+                    .WithFirstName(staging.FirstName)
+                    .WithLastName(staging.LastName)
                     .WithFullName(staging.FullName)
                     .WithSocialName(staging.SocialName)
                     .WithCpf(staging.Cpf)
@@ -99,6 +102,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 var contractorHash = await _hashService.ComputeSha3HashAsync(userAccount.ContractorCnpj);
 
                 userAccount.ApplyHashes(cpfHash, emailHash, loginHash, fiscalHash, contractorHash);
+
 
                 var result = await _repository.AddAsync(userAccount, context.CancellationToken);
                 if (!result.IsSuccess)

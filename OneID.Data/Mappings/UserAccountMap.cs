@@ -32,10 +32,10 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100);
 
             builder.Property(u => u.Cpf)
-                   .HasMaxLength(14);
+                   .HasMaxLength(150);
 
             builder.Property(u => u.CpfHash)
-                   .HasMaxLength(128);
+                   .HasMaxLength(256);
 
             builder.Property(u => u.BirthDate)
                    .HasColumnType("date");
@@ -47,7 +47,7 @@ namespace OneID.Data.Mappings
                    .HasColumnType("date");
 
             builder.Property(u => u.Registry)
-                   .HasMaxLength(50);
+                   .HasMaxLength(150);
 
             builder.Property(u => u.MotherName)
                    .HasMaxLength(150);
@@ -85,13 +85,13 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100);
 
             builder.Property(u => u.FiscalNumberIdentity)
-                   .HasMaxLength(50);
+                   .HasMaxLength(255);
 
             builder.Property(u => u.FiscalNumberIdentityHash)
                    .HasMaxLength(255);
 
             builder.Property(u => u.ContractorCnpj)
-                   .HasMaxLength(18);
+                   .HasMaxLength(255);
 
             builder.Property(u => u.ContractorCnpjHash)
                    .HasMaxLength(256);

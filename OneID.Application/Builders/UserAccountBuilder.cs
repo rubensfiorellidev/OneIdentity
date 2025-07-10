@@ -7,7 +7,11 @@ namespace OneID.Application.Builders
 {
     public class UserAccountBuilder : IUserAccountBuilder
     {
+        private Guid _correlationId;
+
         private string _id = $"{Ulid.NewUlid()}";
+        private string _firstName;
+        private string _lastName;
         private string _fullName;
         private string _socialName;
         private string _cpf;
@@ -27,6 +31,24 @@ namespace OneID.Application.Builders
         private string _contractorCnpj;
         private string _contractorName;
         private string _createdBy;
+
+
+        public IUserAccountBuilder WithCorrelationId(Guid correlationId)
+        {
+            _correlationId = correlationId;
+            return this;
+        }
+        public IUserAccountBuilder WithFirstName(string firstName)
+        {
+            _firstName = firstName;
+            return this;
+        }
+
+        public IUserAccountBuilder WithLastName(string lastName)
+        {
+            _lastName = lastName;
+            return this;
+        }
 
         public IUserAccountBuilder WithFullName(string fullName)
         {
@@ -141,6 +163,9 @@ namespace OneID.Application.Builders
         {
             var user = new UserAccount(_id, _createdBy);
 
+            user.SetCorrelationId(_correlationId);
+            user.SetFirstName(_firstName);
+            user.SetLastname(_lastName);
             user.SetFullName(_fullName);
             user.SetSocialName(_socialName);
             user.SetCpf(_cpf);
@@ -161,6 +186,7 @@ namespace OneID.Application.Builders
 
             return user;
         }
+
 
     }
 

@@ -1,5 +1,6 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
+using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 
@@ -28,14 +29,23 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     msg.Payload.Username,
                     msg.Payload.Password,
                     msg.Payload.Email,
-                    msg.Payload.Firstname,
-                    msg.Payload.Lastname,
+                    msg.Payload.FirstName,
+                    msg.Payload.LastName,
                     context.CancellationToken
                 );
 
                 await context.Publish(new KeycloakUserCreated
                 {
-                    CorrelationId = msg.CorrelationId
+                    CorrelationId = msg.CorrelationId,
+                    KeycloakPayload = new KeycloakPayload
+                    {
+                        Username = msg.Payload.Username,
+                        Password = msg.Payload.Password,
+                        Email = msg.Payload.Email
+                    },
+                    Cpf = msg.Cpf,
+                    FullName = msg.FullName,
+                    PositionHeldId = msg.PositionHeldId
                 });
 
                 _logger.LogInformation("Usuário criado no Keycloak - CorrelationId: {CorrelationId}", msg.CorrelationId);

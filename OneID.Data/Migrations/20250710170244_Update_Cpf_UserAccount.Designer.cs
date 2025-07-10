@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250710170244_Update_Cpf_UserAccount")]
+    partial class Update_Cpf_UserAccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -675,8 +678,8 @@ namespace OneID.Data.Migrations
                         .HasColumnType("character varying(150)");
 
                     b.Property<string>("ContractorCnpj")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(18)
+                        .HasColumnType("character varying(18)");
 
                     b.Property<string>("ContractorCnpjHash")
                         .HasMaxLength(256)
@@ -698,12 +701,12 @@ namespace OneID.Data.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Cpf")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("CpfHash")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("CreatedBy")
                         .HasMaxLength(100)
@@ -720,8 +723,8 @@ namespace OneID.Data.Migrations
                         .HasColumnType("character varying(100)");
 
                     b.Property<string>("FiscalNumberIdentity")
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("FiscalNumberIdentityHash")
                         .HasMaxLength(255)
@@ -769,8 +772,8 @@ namespace OneID.Data.Migrations
                         .HasColumnType("timestamptz");
 
                     b.Property<string>("Registry")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("SocialName")
                         .HasMaxLength(100)

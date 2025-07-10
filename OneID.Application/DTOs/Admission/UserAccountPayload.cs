@@ -13,7 +13,7 @@ namespace OneID.Application.DTOs.Admission
         public string Password { get; init; }
         public string Cpf { get; init; }
         public DateTime BirthDate { get; init; }
-        public DateTime DateOfHire { get; init; }
+        public DateTime StartDate { get; init; }
         public string Registry { get; init; }
         public string MotherName { get; init; }
         public string Company { get; init; }

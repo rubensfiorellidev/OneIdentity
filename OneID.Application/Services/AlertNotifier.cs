@@ -22,19 +22,19 @@ namespace OneID.Application.Services
             _alertSettingsRepository = alertSettingsRepository;
         }
 
-        public async Task SendCriticalAlertAsync(string subject, string message, IEnumerable<string>? recipients = null)
+        public async Task SendCriticalAlertAsync(string subject, string message, IEnumerable<string> recipients = null)
         {
             var settings = await _alertSettingsRepository.GetAsync();
             await SendAsync(subject, message, recipients ?? settings.CriticalRecipients, "CRITICAL");
         }
 
-        public async Task SendWarningAlertAsync(string subject, string message, IEnumerable<string>? recipients = null)
+        public async Task SendWarningAlertAsync(string subject, string message, IEnumerable<string> recipients = null)
         {
             var settings = await _alertSettingsRepository.GetAsync();
             await SendAsync(subject, message, recipients ?? settings.WarningRecipients, "WARNING");
         }
 
-        public async Task SendInfoAlertAsync(string subject, string message, IEnumerable<string>? recipients = null)
+        public async Task SendInfoAlertAsync(string subject, string message, IEnumerable<string> recipients = null)
         {
             var settings = await _alertSettingsRepository.GetAsync();
             await SendAsync(subject, message, recipients ?? settings.InfoRecipients, "INFO");

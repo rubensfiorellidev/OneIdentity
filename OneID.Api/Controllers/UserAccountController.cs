@@ -1,21 +1,39 @@
-﻿using MediatR;
+﻿using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Commands;
 using OneID.Application.DTOs.Admission;
+using OneID.Application.Interfaces.Repositories;
+using OneID.Application.Interfaces.Services;
+using OneID.Application.Messaging.Sagas.Contracts.Events;
+using OneID.Domain.Enums;
 
+#nullable disable
 namespace OneID.Api.Controllers
 {
-    [Route("v1/accounts")]
+    [Route("v1/staging")]
     public class UserAccountController : MainController
     {
         private readonly ILogger<UserAccountController> _logger;
+        private readonly IBus _bus;
+        private readonly IHashService _hashService;
+        private readonly IDeduplicationKeyRepository _keyRepository;
+        private readonly IDeduplicationRepository _deduplicationRepository;
 
         public UserAccountController(
             ISender sender,
-            ILogger<UserAccountController> logger) : base(sender)
+            ILogger<UserAccountController> logger,
+            IHashService hashService,
+            IDeduplicationKeyRepository keyRepository,
+            IDeduplicationRepository deduplicationRepository,
+            IBus bus) : base(sender)
         {
             _logger = logger;
+            _hashService = hashService;
+            _keyRepository = keyRepository;
+            _deduplicationRepository = deduplicationRepository;
+            _bus = bus;
         }
 
         [HttpPost("start-provisioning")]
@@ -27,12 +45,79 @@ namespace OneID.Api.Controllers
                 if (!ModelState.IsValid)
                     return UnprocessableEntity(ModelState);
 
-                var command = new CreateAccountStagingCommand(request);
-                var result = await Sender.Send(command, cancellationToken);
+                var correlationId = Guid.NewGuid();
+                var cpfHash = await _hashService.ComputeSha3HashAsync(request.Cpf);
 
-                return result.Match(
-                    success => Accepted(new { success.Message, success.Data }),
-                    error => Problem(detail: error.Message, statusCode: error.HttpCode ?? 500)
+                if (await _keyRepository.ExistsAsync(cpfHash, "create-account", cancellationToken))
+                {
+                    return Conflict(new
+                    {
+                        Message = "Já existe um processo de admissão em andamento para esse CPF.",
+                        cpfHash
+                    });
+                }
+
+                if (await _deduplicationRepository.ExistsAsync(correlationId, cancellationToken))
+                {
+                    return Conflict(new
+                    {
+                        Message = "Esse CorrelationId já existe.",
+                        correlationId
+                    });
+                }
+
+                await _keyRepository.SaveAsync(cpfHash, "create-account-clt", cancellationToken);
+                await _deduplicationRepository.SaveAsync(correlationId, "create-account-clt", cancellationToken);
+
+                var stagingCommand = new CreateAccountStagingCommand(request with { CorrelationId = correlationId });
+                var stagingResult = await Sender.Send(stagingCommand, cancellationToken);
+
+                if (!stagingResult.IsSuccess)
+                    return Problem(detail: stagingResult.Message, statusCode: stagingResult.HttpCode ?? 500);
+
+                var enrichedRequest = stagingResult.Data as AccountRequest;
+
+                await _bus.Publish(new AccountDatabaseCreationRequested
+                {
+                    CorrelationId = correlationId,
+                    DatabasePayload = new UserAccountPayload
+                    {
+                        FirstName = enrichedRequest.FirstName,
+                        LastName = enrichedRequest.LastName,
+                        FullName = $"{enrichedRequest.FirstName} {enrichedRequest.LastName}",
+                        SocialName = enrichedRequest.SocialName,
+                        Email = enrichedRequest.PersonalEmail,
+                        Password = null,
+                        Cpf = enrichedRequest.Cpf,
+                        BirthDate = enrichedRequest.BirthDate,
+                        StartDate = enrichedRequest.StartDate,
+                        Registry = enrichedRequest.Registry,
+                        MotherName = enrichedRequest.MotherName,
+                        Company = enrichedRequest.Company,
+                        Login = enrichedRequest.Login,
+                        CorporateEmail = enrichedRequest.CorporateEmail,
+                        PersonalEmail = enrichedRequest.PersonalEmail,
+                        StatusUserAccount = EnumStatusUserAccount.Inactive,
+                        TypeUserAccount = enrichedRequest.TypeUserAccount,
+                        LoginManager = enrichedRequest.LoginManager,
+                        PositionHeldId = enrichedRequest.PositionHeldId,
+                        FiscalNumberIdentity = enrichedRequest.FiscalNumberIdentity,
+                        ContractorCnpj = enrichedRequest.ContractorCnpj,
+                        ContractorName = enrichedRequest.ContractorName,
+                        CreatedBy = enrichedRequest.CreatedBy
+                    }
+
+                }, cancellationToken);
+
+                _logger.LogInformation("Saga de criação de conta iniciada - CorrelationId: {CorrelationId}", correlationId);
+
+                return stagingResult.Match(
+                     success => Accepted(new
+                     {
+                         Message = "Processo iniciado. Acompanhe os eventos de auditoria.",
+                         CorrelationId = correlationId
+                     }),
+                     error => Problem(detail: error.Message, statusCode: error.HttpCode ?? 500)
                 );
 
             }

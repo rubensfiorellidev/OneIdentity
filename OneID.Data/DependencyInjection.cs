@@ -24,18 +24,22 @@ namespace OneID.Data
         #region Data
         public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
         {
+            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+
             services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
             services.AddScoped<ILoginExistsUserRepository, LoginExistsUserRepository>();
-            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IStoredEventRepository, StoredEventRepository>();
             services.AddScoped<IAddUserAccountRepository, AddUserAccountRepository>();
             services.AddScoped<IAddUserAccountStagingRepository, AddUserAccountStagingRepository>();
             services.AddScoped<IDeduplicationKeyRepository, DeduplicationKeyRepository>();
-            services.AddScoped<ISagaDeduplicationRepository, SagaDeduplicationRepository>();
+            services.AddScoped<IDeduplicationRepository, SagaDeduplicationRepository>();
             services.AddScoped<IQueryAccountAdmissionStagingRepository, QueryAccountAdmissionStagingRepository>();
             services.AddScoped<IAlertSettingsRepository, AlertSettingsRepository>();
+            services.AddScoped<IQueryUserAccountRepository, QueryUserAccountRepository>();
+            services.AddScoped<IAdmissionAlertRepository, AdmissionAlertRepository>();
+
 
 
 

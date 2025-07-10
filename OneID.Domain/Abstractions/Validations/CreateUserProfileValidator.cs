@@ -8,8 +8,8 @@ namespace OneID.Domain.Abstractions.Validations
         {
 
             var validationResult = new ContractValidations<UserAccount>()
-                .NameIsOK(account.FullName, 50, 10,
-                      "O Nome completo deve ter entre 10 e 50 caracteres.", nameof(account.FullName))
+                .NameIsOK(account.FullName, 50, 5,
+                      "O Nome completo deve ter entre 5 e 50 caracteres.", nameof(account.FullName))
                 .CpfIsOK(account.Cpf, false, "Número de CPF inválido!", nameof(account.Cpf))
                 .BirthDateIsOK(account.BirthDate, "Verifique a data de nascimento...", nameof(account.BirthDate))
                 .DateOfHireIsOK(account.DateOfHire,

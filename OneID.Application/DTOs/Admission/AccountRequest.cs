@@ -1,4 +1,6 @@
-﻿namespace OneID.Application.DTOs.Admission
+﻿using OneID.Domain.Enums;
+
+namespace OneID.Application.DTOs.Admission
 {
 #nullable disable
     public record AccountRequest
@@ -11,6 +13,12 @@
         public string SocialName { get; init; }
         public string Cpf { get; init; }
         public string CpfHash { get; init; }
+        public DateTime BirthDate { get; init; }
+        public string Registry { get; init; }
+        public string MotherName { get; init; }
+        public string Company { get; init; }
+        public EnumTypeUserAccount TypeUserAccount { get; init; }
+        public string LoginManager { get; init; }
         public string FiscalNumberIdentity { get; init; }
         public string FiscalNumberIdentityHash { get; init; }
         public DateTime StartDate { get; init; }

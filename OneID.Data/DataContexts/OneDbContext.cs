@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
-using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Entities.AlertsContext;
@@ -81,8 +80,6 @@ namespace OneID.Data.DataContexts
 
             builder.Ignore<Notification>();
             builder.Ignore<Event>();
-            builder.Ignore<UserAccountPayload>();
-
         }
     }
 

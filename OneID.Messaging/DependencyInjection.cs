@@ -52,6 +52,9 @@ namespace OneID.Messaging
                 x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
                 x.AddConsumer<KeycloakUserProvisioningConsumer>();
+                x.AddConsumer<AccountCpfValidationConsumer>();
+                x.AddConsumer<CreateAccountDatabaseConsumer>();
+
 
 
                 x.UsingRabbitMq((context, cfg) =>
@@ -168,6 +171,43 @@ namespace OneID.Messaging
                         logger.LogInformation("Fila [keycloak-provisioning] registrada com sucesso.");
                     });
 
+                    cfg.ReceiveEndpoint("cpf-validation", e =>
+                    {
+                        e.PrefetchCount = 10;
+                        e.UseInMemoryOutbox(context);
+
+                        e.UseMessageRetry(r =>
+                        {
+                            r.Interval(3, TimeSpan.FromSeconds(5));
+                            r.Handle<TimeoutException>();
+                            r.Handle<HttpRequestException>();
+                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
+                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                        });
+
+                        e.ConfigureConsumer<AccountCpfValidationConsumer>(context);
+
+                        logger.LogInformation("Fila [cpf-validation] registrada com sucesso.");
+                    });
+
+                    cfg.ReceiveEndpoint("create-account-database", e =>
+                    {
+                        e.PrefetchCount = 10;
+                        e.UseInMemoryOutbox(context);
+
+                        e.UseMessageRetry(r =>
+                        {
+                            r.Interval(3, TimeSpan.FromSeconds(5));
+                            r.Handle<TimeoutException>();
+                            r.Handle<HttpRequestException>();
+                            r.Handle<NpgsqlException>(ex => ex.IsTransient);
+                            r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
+                        });
+
+                        e.ConfigureConsumer<CreateAccountDatabaseConsumer>(context);
+
+                        logger.LogInformation("Fila [create-account-database] registrada com sucesso.");
+                    });
 
                 });
             });

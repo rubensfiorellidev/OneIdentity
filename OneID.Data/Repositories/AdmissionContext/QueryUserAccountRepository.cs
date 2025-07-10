@@ -1,15 +1,15 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Data.Factories;
+using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.Repositories.AdmissionContext
 {
     public class QueryUserAccountRepository : IQueryUserAccountRepository
     {
-        private readonly OneDbContextFactory _dbContextFactory;
+        private readonly IOneDbContextFactory _dbContextFactory;
 
-        public QueryUserAccountRepository(OneDbContextFactory dbContextFactory)
+        public QueryUserAccountRepository(IOneDbContextFactory dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }

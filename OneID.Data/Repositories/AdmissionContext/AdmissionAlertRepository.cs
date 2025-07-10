@@ -1,14 +1,14 @@
 ﻿using OneID.Application.Interfaces.Repositories;
-using OneID.Data.Factories;
+using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.Repositories.AdmissionContext
 {
-    public sealed class AdmissionCltAlertRepository : IAdmissionAlertRepository
+    public sealed class AdmissionAlertRepository : IAdmissionAlertRepository
     {
-        private readonly OneDbContextFactory _dbContextFactory;
+        private readonly IOneDbContextFactory _dbContextFactory;
 
-        public AdmissionCltAlertRepository(OneDbContextFactory dbContextFactory)
+        public AdmissionAlertRepository(IOneDbContextFactory dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }

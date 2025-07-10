@@ -9,18 +9,18 @@ namespace OneID.Data.Mappings
         public void Configure(EntityTypeBuilder<AdmissionAudit> builder)
         {
             builder
-              .ToTable("tb_oneid_automatic_admission_audit");
+              .ToTable("tb_oneid_admission_audit");
 
             builder
                 .HasKey(x => x.Id);
 
             builder
-                .Property(a => a.Firstname)
+                .Property(a => a.FirstName)
                 .IsRequired()
                 .HasMaxLength(128);
 
             builder
-                .Property(a => a.Lastname)
+                .Property(a => a.LastName)
                 .IsRequired()
                 .HasMaxLength(128);
 
@@ -50,7 +50,7 @@ namespace OneID.Data.Mappings
 
             builder
                 .Property(a => a.Login)
-                .IsRequired()
+                .IsRequired(false)
                 .HasMaxLength(100);
 
         }

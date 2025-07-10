@@ -1,11 +1,12 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
 using OneID.Application.Interfaces.Repositories;
+using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.Entities.AuditSagas;
 
 namespace OneID.Application.Messaging.Sagas.Consumers
 {
-    public class AdmissionAuditConsumer : IConsumer<AdmissionAudit>
+    public class AdmissionAuditConsumer : IConsumer<AdmissionAuditRequested>
     {
         private readonly IAdmissionAuditRepository _repository;
         private readonly ILogger<AdmissionAuditConsumer> _logger;
@@ -17,7 +18,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             _repository = repository;
         }
 
-        public async Task Consume(ConsumeContext<AdmissionAudit> context)
+        public async Task Consume(ConsumeContext<AdmissionAuditRequested> context)
         {
 
             try
@@ -26,7 +27,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
                 var audit = new AdmissionAudit
                 {
-                    Id = $"AUDIT{Ulid.NewUlid()}",
+                    Id = $"{Ulid.NewUlid()}",
                     CorrelationId = message.CorrelationId,
                     DatabaseId = message.DatabaseId,
                     CurrentState = message.CurrentState,
@@ -34,8 +35,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     ProvisioningDate = message.ProvisioningDate,
                     Description = message.Description,
                     Login = message.Login,
-                    Firstname = message.Firstname,
-                    Lastname = message.Lastname
+                    FirstName = message.FirstName,
+                    LastName = message.LastName
 
                 };
 
