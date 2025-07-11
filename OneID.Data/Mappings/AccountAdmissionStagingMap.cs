@@ -68,7 +68,7 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.ContractorName)
                    .HasMaxLength(200);
 
-            builder.Property(x => x.PositionHeldId)
+            builder.Property(x => x.JobTitleId)
                    .HasMaxLength(100);
 
 

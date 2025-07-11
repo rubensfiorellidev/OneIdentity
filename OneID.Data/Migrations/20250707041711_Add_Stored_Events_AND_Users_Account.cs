@@ -61,7 +61,7 @@ namespace OneID.Data.Migrations
                     TypeUserAccount = table.Column<int>(type: "integer", maxLength: 50, nullable: false),
                     IsInactive = table.Column<bool>(type: "boolean", nullable: false),
                     LoginManager = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    PositionHeldId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    JobTitleId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     FiscalNumberIdentity = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     FiscalNumberIdentityHash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     ContractorCnpj = table.Column<string>(type: "character varying(18)", maxLength: 18, nullable: true),

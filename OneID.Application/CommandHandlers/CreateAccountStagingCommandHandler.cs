@@ -65,7 +65,7 @@ namespace OneID.Application.CommandHandlers
                 StartDate = request.StartDate,
                 ContractorCnpj = request.ContractorCnpj,
                 ContractorName = request.ContractorName,
-                PositionHeldId = request.PositionHeldId,
+                JobTitleId = request.JobTitleId,
                 Login = request.Login,
                 LoginHash = request.LoginHash,
                 PersonalEmail = request.PersonalEmail,

@@ -11,6 +11,6 @@ namespace OneID.Application.Messaging.Sagas.Contracts.Events
 
         public string Cpf { get; init; }
         public string FullName { get; init; }
-        public string PositionHeldId { get; init; }
+        public string JobTitleId { get; init; }
     }
 }

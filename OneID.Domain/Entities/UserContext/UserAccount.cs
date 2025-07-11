@@ -45,7 +45,7 @@ namespace OneID.Domain.Entities.UserContext
         // Dados Corporativos
         public string Registry { get; private set; }
         public string Company { get; private set; }
-        public string PositionHeldId { get; private set; }
+        public string JobTitleId { get; private set; }
         public string ContractorCnpj { get; private set; }
         public string ContractorCnpjHash { get; private set; }
         public string ContractorName { get; private set; }
@@ -154,7 +154,7 @@ namespace OneID.Domain.Entities.UserContext
         public void SetStatusUserProfile(EnumStatusUserAccount status) => StatusUserAccount = status;
         public void SetTypeUserProfile(EnumTypeUserAccount type) => TypeUserAccount = type;
         public void SetLoginManager(string loginManager) => LoginManager = loginManager;
-        public void SetPositionHeldId(string positionHeldId) => PositionHeldId = positionHeldId;
+        public void SetJobTitleId(string jobTitleId) => JobTitleId = jobTitleId;
         public void SetFiscalNumberIdentity(string fiscalNumberIdentity) => FiscalNumberIdentity = fiscalNumberIdentity;
         public void SetContractor(string contractorCnpj, string contractorName)
         {

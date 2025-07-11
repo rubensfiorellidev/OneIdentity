@@ -23,7 +23,7 @@ namespace OneID.Application.Commands
         public EnumStatusUserAccount StatusUserProfile { get; init; }
         public EnumTypeUserAccount TypeUserProfile { get; init; }
         public string LoginManager { get; init; }
-        public string PositionHeldId { get; init; }
+        public string JobTitleId { get; init; }
         public string FiscalNumberIdentity { get; init; }
         public string ContractorCnpj { get; init; }
         public string ContractorName { get; init; }

@@ -100,7 +100,7 @@ namespace OneID.Api.Controllers
                         StatusUserAccount = EnumStatusUserAccount.Inactive,
                         TypeUserAccount = enrichedRequest.TypeUserAccount,
                         LoginManager = enrichedRequest.LoginManager,
-                        PositionHeldId = enrichedRequest.PositionHeldId,
+                        JobTitleId = enrichedRequest.JobTitleId,
                         FiscalNumberIdentity = enrichedRequest.FiscalNumberIdentity,
                         ContractorCnpj = enrichedRequest.ContractorCnpj,
                         ContractorName = enrichedRequest.ContractorName,

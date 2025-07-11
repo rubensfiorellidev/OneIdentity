@@ -26,7 +26,7 @@ namespace OneID.Application.Builders
         private EnumStatusUserAccount _statusUserProfile;
         private EnumTypeUserAccount _typeUserProfile;
         private string _loginManager;
-        private string _positionHeldId;
+        private string _jobTitleId;
         private string _fiscalNumberIdentity;
         private string _contractorCnpj;
         private string _contractorName;
@@ -134,9 +134,9 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IUserAccountBuilder WithPositionHeldId(string positionHeldId)
+        public IUserAccountBuilder WithJobTitleId(string jobTitleId)
         {
-            _positionHeldId = positionHeldId;
+            _jobTitleId = jobTitleId;
             return this;
         }
 
@@ -180,7 +180,7 @@ namespace OneID.Application.Builders
             user.SetStatusUserProfile(_statusUserProfile);
             user.SetTypeUserProfile(_typeUserProfile);
             user.SetLoginManager(_loginManager);
-            user.SetPositionHeldId(_positionHeldId);
+            user.SetJobTitleId(_jobTitleId);
             user.SetFiscalNumberIdentity(_fiscalNumberIdentity);
             user.SetContractor(_contractorCnpj, _contractorName);
 

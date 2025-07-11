@@ -26,7 +26,7 @@ namespace OneID.Data.Migrations
                     Id = table.Column<string>(type: "text", nullable: false),
                     CpfHash = table.Column<string>(type: "text", nullable: true),
                     FullName = table.Column<string>(type: "text", nullable: true),
-                    PositionHeldId = table.Column<string>(type: "text", nullable: true),
+                    JobTitleId = table.Column<string>(type: "text", nullable: true),
                     WarningMessage = table.Column<string>(type: "text", nullable: true),
                     CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
                 },

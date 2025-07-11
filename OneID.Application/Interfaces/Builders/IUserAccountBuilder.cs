@@ -22,7 +22,7 @@ namespace OneID.Application.Interfaces.Builders
         IUserAccountBuilder WithStatusUserProfile(EnumStatusUserAccount status);
         IUserAccountBuilder WithTypeUserProfile(EnumTypeUserAccount type);
         IUserAccountBuilder WithLoginManager(string loginManager);
-        IUserAccountBuilder WithPositionHeldId(string positionHeldId);
+        IUserAccountBuilder WithJobTitleId(string jobTitleId);
         IUserAccountBuilder WithFiscalNumberIdentity(string fiscalNumberIdentity);
         IUserAccountBuilder WithContractor(string contractorCnpj, string contractorName);
         IUserAccountBuilder WithCreatedBy(string createdBy);

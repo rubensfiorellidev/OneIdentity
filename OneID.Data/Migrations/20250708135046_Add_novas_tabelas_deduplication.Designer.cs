@@ -426,7 +426,7 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -680,7 +680,7 @@ namespace OneID.Data.Migrations
                     b.Property<string>("PersonalEmailHash")
                         .HasColumnType("text");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 

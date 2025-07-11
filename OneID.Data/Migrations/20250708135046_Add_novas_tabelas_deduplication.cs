@@ -27,7 +27,7 @@ namespace OneID.Data.Migrations
                     ContractorCnpj = table.Column<string>(type: "character varying(18)", maxLength: 18, nullable: true),
                     ContractorCnpjHash = table.Column<string>(type: "character varying(180)", maxLength: 180, nullable: true),
                     ContractorName = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
-                    PositionHeldId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    JobTitleId = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Login = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     LoginHash = table.Column<string>(type: "character varying(128)", maxLength: 128, nullable: true),
                     PersonalEmail = table.Column<string>(type: "character varying(150)", maxLength: 150, nullable: true),

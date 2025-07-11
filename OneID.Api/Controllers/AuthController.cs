@@ -82,8 +82,9 @@ namespace OneID.Api.Controllers
             claims[JwtClaims.Sub] = user.Id;
             claims[JwtClaims.UniqueName] = user.Login;
 
-            var token = await _jwtProvider.GenerateTokenAsync(user.Login);
-            return Ok(token);
+            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
+            return Ok(new { token });
+
         }
 
 

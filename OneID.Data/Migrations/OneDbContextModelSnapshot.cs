@@ -448,7 +448,7 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -507,7 +507,7 @@ namespace OneID.Data.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("text");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasColumnType("text");
 
                     b.Property<string>("WarningMessage")
@@ -702,7 +702,7 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -878,7 +878,7 @@ namespace OneID.Data.Migrations
                             b1.Property<string>("PersonalEmail")
                                 .HasColumnType("text");
 
-                            b1.Property<string>("PositionHeldId")
+                            b1.Property<string>("JobTitleId")
                                 .HasColumnType("text");
 
                             b1.Property<string>("Registry")

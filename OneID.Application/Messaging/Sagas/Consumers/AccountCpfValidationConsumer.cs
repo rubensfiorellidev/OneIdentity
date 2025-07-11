@@ -52,7 +52,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                         {
                             CpfHash = cpfHash,
                             FullName = context.Message.FullName,
-                            PositionHeldId = context.Message.PositionHeldId,
+                            JobTitleId = context.Message.JobTitleId,
                             WarningMessage = "CPF já cadastrado."
 
                         }, ct);

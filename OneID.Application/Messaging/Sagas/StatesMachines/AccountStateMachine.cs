@@ -163,7 +163,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         CorrelationId = context.Saga.CorrelationId,
                         Cpf = context.Message.Cpf,
                         FullName = context.Message.FullName,
-                        PositionHeldId = context.Message.PositionHeldId
+                        JobTitleId = context.Message.JobTitleId
                     })
                     .TransitionTo(WaitingCpfValidation),
 

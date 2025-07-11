@@ -45,7 +45,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     },
                     Cpf = msg.Cpf,
                     FullName = msg.FullName,
-                    PositionHeldId = msg.PositionHeldId
+                    JobTitleId = msg.JobTitleId
                 });
 
                 _logger.LogInformation("Usuário criado no Keycloak - CorrelationId: {CorrelationId}", msg.CorrelationId);

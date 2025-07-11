@@ -90,7 +90,7 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.LoginManager)
                    .HasMaxLength(100);
 
-            builder.Property(u => u.PositionHeldId)
+            builder.Property(u => u.JobTitleId)
                    .HasMaxLength(100);
 
             builder.Property(u => u.FiscalNumberIdentity)

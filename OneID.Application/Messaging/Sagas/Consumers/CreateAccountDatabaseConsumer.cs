@@ -76,7 +76,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithStatusUserProfile(staging.StatusUserAccount)
                     .WithTypeUserProfile(staging.TypeUserAccount)
                     .WithLoginManager(staging.LoginManager)
-                    .WithPositionHeldId(staging.PositionHeldId)
+                    .WithJobTitleId(staging.JobTitleId)
                     .WithFiscalNumberIdentity(staging.FiscalNumberIdentity)
                     .WithContractor(staging.ContractorCnpj, staging.ContractorName)
                     .WithCreatedBy(staging.CreatedBy)

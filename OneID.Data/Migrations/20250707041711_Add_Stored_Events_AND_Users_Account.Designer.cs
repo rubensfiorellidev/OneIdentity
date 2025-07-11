@@ -512,7 +512,7 @@ namespace OneID.Data.Migrations
                     b.Property<string>("PersonalEmailHash")
                         .HasColumnType("text");
 
-                    b.Property<string>("PositionHeldId")
+                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 

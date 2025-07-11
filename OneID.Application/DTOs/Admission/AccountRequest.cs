@@ -26,7 +26,7 @@ namespace OneID.Application.DTOs.Admission
         public string ContractorCnpj { get; init; }
         public string ContractorCnpjHash { get; init; }
         public string ContractorName { get; init; }
-        public string PositionHeldId { get; init; }
+        public string JobTitleId { get; init; }
         public string Login { get; init; }
         public string LoginHash { get; init; }
         public string PersonalEmail { get; init; }
