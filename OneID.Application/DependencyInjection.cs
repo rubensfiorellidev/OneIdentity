@@ -49,6 +49,7 @@ namespace OneID.Application
             services.AddScoped<IUserAccountBuilder, UserAccountBuilder>();
             services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
             services.AddScoped<IAlertNotifier, AlertNotifier>();
+            services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>();
 
 
 

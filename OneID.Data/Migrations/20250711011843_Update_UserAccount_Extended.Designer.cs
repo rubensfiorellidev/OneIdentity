@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250711011843_Update_UserAccount_Extended")]
+    partial class Update_UserAccount_Extended
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -449,54 +452,6 @@ namespace OneID.Data.Migrations
                     b.ToTable("tb_oneid_roles", (string)null);
                 });
 
-            modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUser", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("tb_oneid_service_user", (string)null);
-                });
-
-            modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUserClaim", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ServiceUserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ServiceUserId");
-
-                    b.ToTable("tb_oneid_service_user_claims", (string)null);
-                });
-
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserAccount", b =>
                 {
                     b.Property<string>("Id")
@@ -822,15 +777,6 @@ namespace OneID.Data.Migrations
                     b.Navigation("KeycloakData");
                 });
 
-            modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUserClaim", b =>
-                {
-                    b.HasOne("OneID.Domain.Entities.UserContext.ServiceUser", null)
-                        .WithMany("Claims")
-                        .HasForeignKey("ServiceUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserClaim", b =>
                 {
                     b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
@@ -863,11 +809,6 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.Role", b =>
                 {
                     b.Navigation("Users");
-                });
-
-            modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUser", b =>
-                {
-                    b.Navigation("Claims");
                 });
 
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserAccount", b =>

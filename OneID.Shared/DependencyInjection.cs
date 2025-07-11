@@ -5,7 +5,6 @@ using Amazon.SimpleEmail;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
@@ -18,8 +17,6 @@ using OneID.Application.Abstractions;
 using OneID.Application.Interfaces.SES;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
-using OneID.Data.DataContexts;
-using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
 using System.IO.Compression;
@@ -73,10 +70,6 @@ namespace OneID.Shared
             var rsa = RSA.Create();
             rsa.FromXmlString(xmlKey);
             var rsaKey = new RsaSecurityKey(rsa);
-
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-               .AddEntityFrameworkStores<OneDbContext>()
-               .AddDefaultTokenProviders();
 
             services.AddAuthentication(options =>
             {

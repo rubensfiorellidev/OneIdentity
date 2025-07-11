@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using OneID.Data.Interfaces;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
@@ -26,11 +28,13 @@ namespace OneID.Shared.Authentication
         private readonly string _publicKeyPath;
         private readonly string _metadataPath;
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
+        private readonly IOneDbContextFactory _contextFactory;
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
                            IHttpContextAccessor httpContextAccessor,
-                           ILogger<JwtProvider> logger)
+                           ILogger<JwtProvider> logger,
+                           IOneDbContextFactory contextFactory)
         {
             _jwtOptions = jwtOptions.Value;
             _refreshTokenService = refreshTokenService;
@@ -52,6 +56,7 @@ namespace OneID.Shared.Authentication
             }
 
             _logger = logger;
+            _contextFactory = contextFactory;
         }
         public async Task<string> EnsureKeysAsync()
         {
@@ -278,6 +283,18 @@ namespace OneID.Shared.Authentication
                 File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
                 _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
             }
+        }
+
+        private async Task<List<Claim>> GetUserClaimsAsync(string userId)
+        {
+            await using var db = _contextFactory.CreateDbContext();
+
+            var claims = await db.UserClaims
+                .Where(c => c.UserAccountId == userId)
+                .Select(c => new Claim(c.Type, c.Value))
+                .ToListAsync();
+
+            return claims;
         }
 
     }

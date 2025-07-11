@@ -17,7 +17,7 @@ namespace OneID.Data.Repositories.UsersContext
         {
             await using var dbContext = _contextFactory.CreateDbContext();
 
-            return await dbContext.Users
+            return await dbContext.UserAccounts
                 .AnyAsync(u => u.LoginCrypt == login, cancellationToken);
         }
     }

@@ -17,7 +17,7 @@ namespace OneID.Data.Mappings
                    .IsRequired();
 
             builder.Property(x => x.CorrelationId)
-               .IsRequired();
+                   .IsRequired();
 
             builder.Property(u => u.FullName)
                    .HasMaxLength(300);
@@ -61,6 +61,9 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.LoginHash)
                    .HasMaxLength(256);
 
+            builder.Property(u => u.LoginCrypt)
+                   .HasMaxLength(512);
+
             builder.Property(u => u.CorporateEmail)
                    .HasMaxLength(150);
 
@@ -69,6 +72,12 @@ namespace OneID.Data.Mappings
 
             builder.Property(u => u.PersonalEmail)
                    .HasMaxLength(150);
+
+            builder.Property(u => u.PersonalEmailHash)
+                   .HasMaxLength(256);
+
+            builder.Property(u => u.PhoneNumber)
+                   .HasMaxLength(100);
 
             builder.Property(u => u.StatusUserAccount)
                    .HasMaxLength(50);
@@ -105,14 +114,33 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.ProvisioningAt)
                    .HasColumnType("timestamptz");
 
-            builder.Property(u => u.UpdatedBy).HasMaxLength(100);
-            builder.Property(u => u.UpdatedAt).HasColumnType("timestamptz");
+            builder.Property(u => u.UpdatedBy)
+                   .HasMaxLength(100);
 
+            builder.Property(u => u.UpdatedAt)
+                   .HasColumnType("timestamptz");
+
+            builder.Property(u => u.LastLoginAt)
+                   .HasColumnType("timestamptz");
+
+            builder.Property(u => u.KeycloakUserId)
+                   .HasMaxLength(150);
+
+            // Indexes
             builder.HasIndex(u => u.Cpf).HasDatabaseName("idx_user_account_cpf");
             builder.HasIndex(u => u.Login).HasDatabaseName("idx_user_account_login");
             builder.HasIndex(u => u.CorporateEmail).HasDatabaseName("idx_user_account_corporate_email");
 
+            // Relacionamentos com Roles e Claims
+            builder.HasMany(u => u.Roles)
+                   .WithOne(ur => ur.User)
+                   .HasForeignKey(ur => ur.UserAccountId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
+            builder.HasMany(u => u.Claims)
+                   .WithOne(c => c.User)
+                   .HasForeignKey(c => c.UserAccountId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 
