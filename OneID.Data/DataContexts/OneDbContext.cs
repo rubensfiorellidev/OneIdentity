@@ -6,6 +6,7 @@ using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Entities.AlertsContext;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.JwtWebTokens;
+using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Notifications;
@@ -36,6 +37,9 @@ namespace OneID.Data.DataContexts
         public DbSet<AlertSettings> AlertSettings => Set<AlertSettings>();
         public DbSet<ServiceUser> ServiceUsers => Set<ServiceUser>();
         public DbSet<ServiceUserClaim> ServiceUserClaims => Set<ServiceUserClaim>();
+        public DbSet<AccessPackage> AccessPackages => Set<AccessPackage>();
+        public DbSet<AccessPackageItem> AccessPackageItems => Set<AccessPackageItem>();
+        public DbSet<AccessPackageCondition> AccessPackageConditions => Set<AccessPackageCondition>();
 
 
 
