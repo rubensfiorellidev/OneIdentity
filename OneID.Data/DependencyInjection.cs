@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;
 using OneID.Application.Interfaces.Repositories;
+using OneID.Application.Interfaces.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
@@ -39,6 +40,9 @@ namespace OneID.Data
             services.AddScoped<IAlertSettingsRepository, AlertSettingsRepository>();
             services.AddScoped<IQueryUserAccountRepository, QueryUserAccountRepository>();
             services.AddScoped<IAdmissionAlertRepository, AdmissionAlertRepository>();
+            services.AddScoped<IAccessPackageQueryRepository, AccessPackageQueryRepository>();
+            services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
+
 
 
 

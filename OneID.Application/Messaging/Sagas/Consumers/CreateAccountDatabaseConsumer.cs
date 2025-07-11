@@ -21,6 +21,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
         private readonly ISensitiveDataEncryptionServiceUserAccount _encryptionService;
         private readonly IEventDispatcher _dispatcher;
         private readonly IQueryAccountAdmissionStagingRepository _stagingRepository;
+        private readonly IAccessPackageClaimService _claimService;
+        private readonly IUserClaimWriterRepository _claimWriter;
+
 
         public CreateAccountDatabaseConsumer(
             IUserAccountBuilder builder,
@@ -29,7 +32,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             IHashService hashService,
             ISensitiveDataEncryptionServiceUserAccount encryptionService,
             IEventDispatcher dispatcher,
-            IQueryAccountAdmissionStagingRepository stagingRepository)
+            IQueryAccountAdmissionStagingRepository stagingRepository,
+            IAccessPackageClaimService claimService,
+            IUserClaimWriterRepository claimWriter)
         {
             _builder = builder;
             _repository = repository;
@@ -38,6 +43,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             _encryptionService = encryptionService;
             _dispatcher = dispatcher;
             _stagingRepository = stagingRepository;
+            _claimService = claimService;
+            _claimWriter = claimWriter;
         }
 
         public async Task Consume(ConsumeContext<CreateAccountDatabaseCommand> context)
@@ -105,6 +112,19 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
 
                 var result = await _repository.AddAsync(userAccount, context.CancellationToken);
+
+                if (!result.IsSuccess)
+                {
+                    return;
+                }
+
+                var resolvedClaims = await _claimService.ResolveClaimsForUserAsync(userAccount, context.CancellationToken);
+
+                if (resolvedClaims.Any())
+                {
+                    await _claimWriter.AddRangeAsync(resolvedClaims, context.CancellationToken);
+                }
+
                 if (!result.IsSuccess)
                 {
                     var failedEvent = new UserAccountCreationFailedEvent(

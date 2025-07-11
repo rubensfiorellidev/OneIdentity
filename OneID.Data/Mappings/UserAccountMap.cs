@@ -40,7 +40,7 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.BirthDate)
                    .HasColumnType("date");
 
-            builder.Property(u => u.DateOfHire)
+            builder.Property(u => u.StartDate)
                    .HasColumnType("date");
 
             builder.Property(u => u.DateOfFired)
@@ -91,6 +91,9 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100);
 
             builder.Property(u => u.JobTitleId)
+                   .HasMaxLength(100);
+
+            builder.Property(u => u.Department)
                    .HasMaxLength(100);
 
             builder.Property(u => u.FiscalNumberIdentity)

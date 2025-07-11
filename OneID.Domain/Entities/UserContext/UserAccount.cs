@@ -46,10 +46,11 @@ namespace OneID.Domain.Entities.UserContext
         public string Registry { get; private set; }
         public string Company { get; private set; }
         public string JobTitleId { get; private set; }
+        public string Department { get; private set; }
         public string ContractorCnpj { get; private set; }
         public string ContractorCnpjHash { get; private set; }
         public string ContractorName { get; private set; }
-        public DateTime DateOfHire { get; private set; }
+        public DateTime StartDate { get; private set; }
         public DateTime? DateOfFired { get; private set; }
 
         // Status e Tipo
@@ -142,7 +143,7 @@ namespace OneID.Domain.Entities.UserContext
             Cpf = cpf;
         }
         public void SetBirthDate(DateTime birthDate) => BirthDate = birthDate;
-        public void SetDateOfHire(DateTime dateOfHire) => DateOfHire = dateOfHire;
+        public void SetDateOfHire(DateTime dateOfHire) => StartDate = dateOfHire;
         public void SetDateOfFired(DateTime? dateOfFired) => DateOfFired = dateOfFired;
         public void SetRegistry(string registry) => Registry = registry;
         public void SetMotherName(string motherName) => MotherName = motherName;

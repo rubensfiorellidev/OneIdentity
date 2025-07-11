@@ -12,8 +12,8 @@ namespace OneID.Domain.Abstractions.Validations
                       "O Nome completo deve ter entre 5 e 50 caracteres.", nameof(account.FullName))
                 .CpfIsOK(account.Cpf, false, "Número de CPF inválido!", nameof(account.Cpf))
                 .BirthDateIsOK(account.BirthDate, "Verifique a data de nascimento...", nameof(account.BirthDate))
-                .DateOfHireIsOK(account.DateOfHire,
-                      "A data de contratação não pode ser menor que a data de hoje!", nameof(account.DateOfHire))
+                .DateOfHireIsOK(account.StartDate,
+                      "A data de contratação não pode ser menor que a data de hoje!", nameof(account.StartDate))
                 .NameIsOK(account.MotherName, 50, 10,
                       "O Nome completo da mãe deve ter entre 10 e 50 caracteres.", nameof(account.MotherName))
                 .CompanyIsOk(account.Company, 50, 4,

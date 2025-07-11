@@ -50,7 +50,7 @@ namespace OneID.Application
             services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
             services.AddScoped<IAlertNotifier, AlertNotifier>();
             services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>();
-
+            services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
 
 
 

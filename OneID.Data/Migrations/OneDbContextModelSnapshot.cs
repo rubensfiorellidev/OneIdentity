@@ -420,6 +420,10 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
 
+                    b.Property<string>("JobTitleId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -447,10 +451,6 @@ namespace OneID.Data.Migrations
                     b.Property<string>("PersonalEmailHash")
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
-
-                    b.Property<string>("JobTitleId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
 
                     b.Property<string>("Registry")
                         .HasMaxLength(50)
@@ -659,6 +659,10 @@ namespace OneID.Data.Migrations
                     b.Property<bool>("IsInactive")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("JobTitleId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
                     b.Property<string>("KeycloakUserId")
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
@@ -699,10 +703,6 @@ namespace OneID.Data.Migrations
                         .HasColumnType("character varying(256)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -789,40 +789,7 @@ namespace OneID.Data.Migrations
 
             modelBuilder.Entity("OneID.Application.Messaging.Sagas.Contracts.AccountSagaState", b =>
                 {
-                    b.OwnsOne("OneID.Application.DTOs.Admission.KeycloakPayload", "KeycloakData", b1 =>
-                        {
-                            b1.Property<Guid>("AccountSagaStateCorrelationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<Guid>("CorrelationId")
-                                .HasColumnType("uuid");
-
-                            b1.Property<string>("Email")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("FirstName")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("LastName")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("Password")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("Username")
-                                .HasColumnType("text");
-
-                            b1.HasKey("AccountSagaStateCorrelationId");
-
-                            b1.ToTable("tb_oneid_account_saga_state");
-
-                            b1.ToJson("KeycloakData");
-
-                            b1.WithOwner()
-                                .HasForeignKey("AccountSagaStateCorrelationId");
-                        });
-
-                    b.OwnsOne("OneID.Application.DTOs.Admission.UserAccountPayload", "AccountData", b1 =>
+                    b.OwnsOne("OneID.Application.Messaging.Sagas.Contracts.AccountSagaState.AccountData#OneID.Application.DTOs.Admission.UserAccountPayload", "AccountData", b1 =>
                         {
                             b1.Property<Guid>("AccountSagaStateCorrelationId")
                                 .HasColumnType("uuid");
@@ -860,6 +827,9 @@ namespace OneID.Data.Migrations
                             b1.Property<string>("FullName")
                                 .HasColumnType("text");
 
+                            b1.Property<string>("JobTitleId")
+                                .HasColumnType("text");
+
                             b1.Property<string>("LastName")
                                 .HasColumnType("text");
 
@@ -876,9 +846,6 @@ namespace OneID.Data.Migrations
                                 .HasColumnType("text");
 
                             b1.Property<string>("PersonalEmail")
-                                .HasColumnType("text");
-
-                            b1.Property<string>("JobTitleId")
                                 .HasColumnType("text");
 
                             b1.Property<string>("Registry")
@@ -898,9 +865,42 @@ namespace OneID.Data.Migrations
 
                             b1.HasKey("AccountSagaStateCorrelationId");
 
-                            b1.ToTable("tb_oneid_account_saga_state");
+                            b1.ToTable("tb_oneid_account_saga_state", (string)null);
 
                             b1.ToJson("AccountData");
+
+                            b1.WithOwner()
+                                .HasForeignKey("AccountSagaStateCorrelationId");
+                        });
+
+                    b.OwnsOne("OneID.Application.Messaging.Sagas.Contracts.AccountSagaState.KeycloakData#OneID.Application.DTOs.Admission.KeycloakPayload", "KeycloakData", b1 =>
+                        {
+                            b1.Property<Guid>("AccountSagaStateCorrelationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<Guid>("CorrelationId")
+                                .HasColumnType("uuid");
+
+                            b1.Property<string>("Email")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("FirstName")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("LastName")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Password")
+                                .HasColumnType("text");
+
+                            b1.Property<string>("Username")
+                                .HasColumnType("text");
+
+                            b1.HasKey("AccountSagaStateCorrelationId");
+
+                            b1.ToTable("tb_oneid_account_saga_state", (string)null);
+
+                            b1.ToJson("KeycloakData");
 
                             b1.WithOwner()
                                 .HasForeignKey("AccountSagaStateCorrelationId");
