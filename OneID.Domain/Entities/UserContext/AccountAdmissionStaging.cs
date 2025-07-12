@@ -30,6 +30,9 @@ namespace OneID.Domain.Entities.UserContext
         public string ContractorCnpjHash { get; set; }
         public string ContractorName { get; set; }
         public string JobTitleId { get; set; }
+        public string DepartmentId { get; set; }
+        public string DepartmentName { get; set; }
+        public string JobTitleName { get; set; }
         public string Login { get; set; }
         public string LoginHash { get; set; }
         public string LoginManager { get; set; }

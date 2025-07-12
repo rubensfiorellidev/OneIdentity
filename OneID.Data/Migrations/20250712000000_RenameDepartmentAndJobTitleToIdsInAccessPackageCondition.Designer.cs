@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250712000000_RenameDepartmentAndJobTitleToIdsInAccessPackageCondition")]
+    partial class RenameDepartmentAndJobTitleToIdsInAccessPackageCondition
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -794,9 +797,6 @@ namespace OneID.Data.Migrations
                     b.Property<string>("UserAccountId")
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(250)
@@ -805,8 +805,6 @@ namespace OneID.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserAccountId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("tb_oneid_user_claims", (string)null);
                 });
@@ -819,14 +817,9 @@ namespace OneID.Data.Migrations
                     b.Property<string>("RoleId")
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("character varying(100)");
-
                     b.HasKey("UserAccountId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("tb_oneid_user_roles", (string)null);
                 });
@@ -988,14 +981,10 @@ namespace OneID.Data.Migrations
 
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserClaim", b =>
                 {
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", null)
-                        .WithMany()
+                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
+                        .WithMany("Claims")
                         .HasForeignKey("UserAccountId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -1008,15 +997,11 @@ namespace OneID.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", null)
-                        .WithMany()
+                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
+                        .WithMany("Roles")
                         .HasForeignKey("UserAccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("Role");
 
@@ -1036,6 +1021,13 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUser", b =>
                 {
                     b.Navigation("Claims");
+                });
+
+            modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserAccount", b =>
+                {
+                    b.Navigation("Claims");
+
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

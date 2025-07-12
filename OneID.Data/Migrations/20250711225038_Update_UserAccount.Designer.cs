@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250711225038_Update_UserAccount")]
+    partial class Update_UserAccount
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,20 +259,10 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("DepartmentId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("JobTitle")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<string>("JobTitleId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
 
                     b.HasKey("Id");
 
@@ -414,14 +407,6 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("DepartmentId")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("DepartmentName")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
-
                     b.Property<string>("FirstName")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -441,10 +426,6 @@ namespace OneID.Data.Migrations
                     b.Property<string>("JobTitleId")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
-
-                    b.Property<string>("JobTitleName")
-                        .HasMaxLength(150)
-                        .HasColumnType("character varying(150)");
 
                     b.Property<string>("LastName")
                         .HasMaxLength(100)
@@ -794,9 +775,6 @@ namespace OneID.Data.Migrations
                     b.Property<string>("UserAccountId")
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("character varying(100)");
-
                     b.Property<string>("Value")
                         .IsRequired()
                         .HasMaxLength(250)
@@ -805,8 +783,6 @@ namespace OneID.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserAccountId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("tb_oneid_user_claims", (string)null);
                 });
@@ -819,14 +795,9 @@ namespace OneID.Data.Migrations
                     b.Property<string>("RoleId")
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("character varying(100)");
-
                     b.HasKey("UserAccountId", "RoleId");
 
                     b.HasIndex("RoleId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("tb_oneid_user_roles", (string)null);
                 });
@@ -988,14 +959,10 @@ namespace OneID.Data.Migrations
 
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserClaim", b =>
                 {
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", null)
-                        .WithMany()
+                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
+                        .WithMany("Claims")
                         .HasForeignKey("UserAccountId")
                         .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -1008,15 +975,11 @@ namespace OneID.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", null)
-                        .WithMany()
+                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
+                        .WithMany("Roles")
                         .HasForeignKey("UserAccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.HasOne("OneID.Domain.Entities.UserContext.UserAccount", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
 
                     b.Navigation("Role");
 
@@ -1036,6 +999,13 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUser", b =>
                 {
                     b.Navigation("Claims");
+                });
+
+            modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserAccount", b =>
+                {
+                    b.Navigation("Claims");
+
+                    b.Navigation("Roles");
                 });
 #pragma warning restore 612, 618
         }

@@ -6,7 +6,7 @@ namespace OneID.Domain.Entities.UserContext
         public string Id { get; private set; }
         public string UserAccountId { get; private set; }
 
-        public string Type { get; private set; }     // ex: "department", "access_level"
+        public string Type { get; private set; }
         public string Value { get; private set; }
 
         public UserAccount User { get; private set; }

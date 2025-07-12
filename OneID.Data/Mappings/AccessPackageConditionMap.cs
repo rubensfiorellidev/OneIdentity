@@ -24,9 +24,17 @@ namespace OneID.Data.Mappings
                 .IsRequired()
                 .HasMaxLength(100);
 
+            builder.Property(c => c.DepartmentId)
+               .IsRequired()
+               .HasMaxLength(50);
+
             builder.Property(c => c.JobTitle)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            builder.Property(c => c.JobTitleId)
+               .IsRequired()
+               .HasMaxLength(50);
 
             builder.HasOne(c => c.AccessPackage)
                    .WithMany()

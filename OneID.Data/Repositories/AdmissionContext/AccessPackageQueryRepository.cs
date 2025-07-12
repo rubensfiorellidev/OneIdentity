@@ -14,15 +14,14 @@ namespace OneID.Data.Repositories.AdmissionContext
             _contextFactory = contextFactory;
         }
 
-        public async Task<IEnumerable<AccessPackageItemDto>> GetAccessPackageItemsByUserContextAsync(
-            string department,
-            string jobTitle,
-            CancellationToken cancellationToken)
+        public async Task<IEnumerable<AccessPackageItemDto>> GetAccessPackageItemsByUserContextAsync(string departmentId,
+                                                                                                     string jobTitleId,
+                                                                                                     CancellationToken cancellationToken)
         {
             await using var db = _contextFactory.CreateDbContext();
 
             var packageIds = await db.AccessPackageConditions
-                .Where(x => x.Department == department && x.JobTitle == jobTitle)
+                .Where(x => x.DepartmentId == departmentId && x.JobTitleId == jobTitleId)
                 .Select(x => x.AccessPackageId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
@@ -39,6 +38,7 @@ namespace OneID.Data.Repositories.AdmissionContext
                 })
                 .ToListAsync(cancellationToken);
         }
-    }
 
+
+    }
 }

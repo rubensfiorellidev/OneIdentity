@@ -71,6 +71,14 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.JobTitleId)
                    .HasMaxLength(100);
 
+            builder.Property(x => x.JobTitleName)
+                   .HasMaxLength(150);
+
+            builder.Property(x => x.DepartmentId)
+                   .HasMaxLength(100);
+
+            builder.Property(x => x.DepartmentName)
+                   .HasMaxLength(150);
 
             builder.Property(x => x.Login)
                    .HasMaxLength(100);

@@ -15,11 +15,13 @@ namespace OneID.Application.Services
 
         public async Task<IEnumerable<UserClaim>> ResolveClaimsForUserAsync(UserAccount user, CancellationToken cancellationToken)
         {
+            //busca os packages conforme cargo X departamento
             var items = await _queryRepository.GetAccessPackageItemsByUserContextAsync(
-                user.Department,
+                user.DepartmentId,
                 user.JobTitleId,
                 cancellationToken);
 
+            //monta a claim
             var claims = items.Select(item =>
                 new UserClaim(
                     user.Id,

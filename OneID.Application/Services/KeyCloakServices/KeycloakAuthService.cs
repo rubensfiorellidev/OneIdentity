@@ -2,7 +2,6 @@
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Domain.Entities.KeycloakOptions;
 using OneID.Domain.Entities.TokenResults;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 #nullable disable
 namespace OneID.Application.Services.KeyCloakServices
@@ -12,15 +11,15 @@ namespace OneID.Application.Services.KeyCloakServices
         private readonly HttpClient _httpClient;
         private readonly KeycloakOptions _options;
 
-        public KeycloakAuthService(IOptions<KeycloakOptions> options)
+        public KeycloakAuthService(HttpClient httpClient, IOptions<KeycloakOptions> options)
         {
+            _httpClient = httpClient;
             _options = options.Value;
-            _httpClient = new HttpClient();
         }
 
         public async Task<KeycloakTokenResult> AuthenticateAsync(string username, string password)
         {
-            var url = $"{_options.BaseUrl}/realms/{_options.Realm}/protocol/openid-connect/token";
+            var url = $"realms/{_options.Realm}/protocol/openid-connect/token";
 
             var parameters = new Dictionary<string, string>
         {
@@ -37,21 +36,13 @@ namespace OneID.Application.Services.KeyCloakServices
             var json = await response.Content.ReadAsStringAsync();
             var payload = JsonDocument.Parse(json).RootElement;
 
-            var accessToken = payload.GetProperty("access_token").GetString();
-            var refreshToken = payload.GetProperty("refresh_token").GetString();
-
-            var handler = new JwtSecurityTokenHandler();
-            var jwt = handler.ReadJwtToken(accessToken);
-
-
             return new KeycloakTokenResult
             {
-                AccessToken = accessToken,
-                RefreshToken = refreshToken,
+                AccessToken = payload.GetProperty("access_token").GetString(),
+                RefreshToken = payload.GetProperty("refresh_token").GetString(),
                 ExpiresIn = payload.GetProperty("expires_in").GetInt32(),
                 RefreshExpiresIn = payload.GetProperty("refresh_expires_in").GetInt32()
             };
-
         }
     }
 

@@ -93,7 +93,13 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.JobTitleId)
                    .HasMaxLength(100);
 
-            builder.Property(u => u.Department)
+            builder.Property(u => u.JobTitleName)
+                   .HasMaxLength(150);
+
+            builder.Property(u => u.DepartmentId)
+                   .HasMaxLength(100);
+
+            builder.Property(u => u.DepartmentName)
                    .HasMaxLength(100);
 
             builder.Property(u => u.FiscalNumberIdentity)
@@ -134,16 +140,6 @@ namespace OneID.Data.Mappings
             builder.HasIndex(u => u.Login).HasDatabaseName("idx_user_account_login");
             builder.HasIndex(u => u.CorporateEmail).HasDatabaseName("idx_user_account_corporate_email");
 
-            // Relacionamentos com Roles e Claims
-            builder.HasMany(u => u.Roles)
-                   .WithOne(ur => ur.User)
-                   .HasForeignKey(ur => ur.UserAccountId)
-                   .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasMany(u => u.Claims)
-                   .WithOne(c => c.User)
-                   .HasForeignKey(c => c.UserAccountId)
-                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 

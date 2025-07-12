@@ -75,10 +75,10 @@ namespace OneID.Data.DataContexts
 
                 entity.HasKey(x => new { x.UserAccountId, x.RoleId });
 
-                entity.HasOne(x => x.User)
-                      .WithMany(u => u.Roles)
-                      .HasForeignKey(x => x.UserAccountId)
-                      .OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne<UserAccount>()
+                    .WithMany()
+                    .HasForeignKey(x => x.UserAccountId)
+                    .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(x => x.Role)
                       .WithMany(r => r.Users)
@@ -126,10 +126,11 @@ namespace OneID.Data.DataContexts
                       .HasMaxLength(250)
                       .IsRequired();
 
-                entity.HasOne(x => x.User)
-                      .WithMany(u => u.Claims)
+                entity.HasOne<UserAccount>()
+                      .WithMany()
                       .HasForeignKey(x => x.UserAccountId)
                       .OnDelete(DeleteBehavior.Cascade);
+
             });
 
             // Mapeamento de ServiceUserClaim

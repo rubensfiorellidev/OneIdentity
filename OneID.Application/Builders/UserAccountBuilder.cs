@@ -27,6 +27,9 @@ namespace OneID.Application.Builders
         private EnumTypeUserAccount _typeUserProfile;
         private string _loginManager;
         private string _jobTitleId;
+        private string _jobTitle;
+        private string _departmentId;
+        private string _department;
         private string _fiscalNumberIdentity;
         private string _contractorCnpj;
         private string _contractorName;
@@ -139,6 +142,22 @@ namespace OneID.Application.Builders
             _jobTitleId = jobTitleId;
             return this;
         }
+        public IUserAccountBuilder WithJobTitle(string jobTitle)
+        {
+            _jobTitle = jobTitle;
+            return this;
+        }
+        public IUserAccountBuilder WithDepartmentId(string departmentId)
+        {
+            _departmentId = departmentId;
+            return this;
+        }
+
+        public IUserAccountBuilder WithDepartment(string department)
+        {
+            _department = department;
+            return this;
+        }
 
         public IUserAccountBuilder WithFiscalNumberIdentity(string fiscalNumberIdentity)
         {
@@ -181,6 +200,9 @@ namespace OneID.Application.Builders
             user.SetTypeUserProfile(_typeUserProfile);
             user.SetLoginManager(_loginManager);
             user.SetJobTitleId(_jobTitleId);
+            user.SetJobTitle(_jobTitle);
+            user.SetDepartmentId(_departmentId);
+            user.SetDepartment(_department);
             user.SetFiscalNumberIdentity(_fiscalNumberIdentity);
             user.SetContractor(_contractorCnpj, _contractorName);
 

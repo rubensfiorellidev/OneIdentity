@@ -46,7 +46,9 @@ namespace OneID.Domain.Entities.UserContext
         public string Registry { get; private set; }
         public string Company { get; private set; }
         public string JobTitleId { get; private set; }
-        public string Department { get; private set; }
+        public string JobTitleName { get; private set; }
+        public string DepartmentId { get; private set; }
+        public string DepartmentName { get; private set; }
         public string ContractorCnpj { get; private set; }
         public string ContractorCnpjHash { get; private set; }
         public string ContractorName { get; private set; }
@@ -68,10 +70,6 @@ namespace OneID.Domain.Entities.UserContext
 
         // Integrações externas
         public string KeycloakUserId { get; private set; }
-
-        // Navegações
-        public List<UserRole> Roles { get; private set; } = new();
-        public List<UserClaim> Claims { get; private set; } = new();
 
         public IReadOnlyCollection<Event> Events => _events.AsReadOnly();
         public IReadOnlyCollection<Notification> Notifications => _notifications.AsReadOnly();
@@ -156,6 +154,9 @@ namespace OneID.Domain.Entities.UserContext
         public void SetTypeUserProfile(EnumTypeUserAccount type) => TypeUserAccount = type;
         public void SetLoginManager(string loginManager) => LoginManager = loginManager;
         public void SetJobTitleId(string jobTitleId) => JobTitleId = jobTitleId;
+        public void SetJobTitle(string jobTitle) => JobTitleName = jobTitle;
+        public void SetDepartmentId(string departimentId) => DepartmentId = departimentId;
+        public void SetDepartment(string department) => DepartmentName = department;
         public void SetFiscalNumberIdentity(string fiscalNumberIdentity) => FiscalNumberIdentity = fiscalNumberIdentity;
         public void SetContractor(string contractorCnpj, string contractorName)
         {
