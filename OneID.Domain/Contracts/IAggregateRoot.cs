@@ -1,10 +1,9 @@
 ﻿using OneID.Domain.Abstractions.EventsContext;
-using OneID.Domain.Contracts.Validations;
 using OneID.Domain.Notifications;
 
 namespace OneID.Domain.Contracts
 {
-    public interface IAggregateRoot : IValidation, IContract
+    public interface IAggregateRoot
     {
         string Id { get; }
 

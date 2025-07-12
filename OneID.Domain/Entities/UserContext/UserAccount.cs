@@ -1,14 +1,14 @@
 ﻿using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Abstractions.Validations;
 using OneID.Domain.Contracts;
+using OneID.Domain.Contracts.Validations;
 using OneID.Domain.Enums;
 using OneID.Domain.Notifications;
 
 #nullable disable
-
 namespace OneID.Domain.Entities.UserContext
 {
-    public class UserAccount : IAggregateRoot, IAuditableEntity
+    public class UserAccount : IAggregateRoot, IAuditableEntity, IContract, IValidation
     {
         private readonly List<Event> _events = [];
         private readonly List<Notification> _notifications = [];
