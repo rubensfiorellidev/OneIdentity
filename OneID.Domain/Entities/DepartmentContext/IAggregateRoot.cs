@@ -1,10 +1,9 @@
 ﻿using OneID.Domain.Abstractions.EventsContext;
-using OneID.Domain.Contracts.Validations;
 using OneID.Domain.Notifications;
 
-namespace OneID.Domain.Contracts
+namespace OneID.Domain.Entities.DepartmentContext
 {
-    public interface IAggregateRoot : IValidation, IContract
+    internal interface IAggregateRoot
     {
         string Id { get; }
 
@@ -13,8 +12,8 @@ namespace OneID.Domain.Contracts
 
         void AddEvent(Event domainEvent);
         void ClearEvents();
+
         void AddNotification(Notification notification);
         void AddNotifications(IEnumerable<Notification> notifications);
     }
-
 }

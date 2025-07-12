@@ -8,7 +8,7 @@ using OneID.Domain.Notifications;
 
 namespace OneID.Domain.Entities.UserContext
 {
-    public class UserAccount : IAggregateRoot
+    public class UserAccount : IAggregateRoot, IAuditableEntity
     {
         private readonly List<Event> _events = [];
         private readonly List<Notification> _notifications = [];

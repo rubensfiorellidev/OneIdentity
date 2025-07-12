@@ -80,9 +80,11 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100);
 
             builder.Property(u => u.StatusUserAccount)
+                   .HasConversion<string>()
                    .HasMaxLength(50);
 
             builder.Property(u => u.TypeUserAccount)
+                   .HasConversion<string>()
                    .HasMaxLength(50);
 
             builder.Property(u => u.IsInactive);
@@ -134,6 +136,9 @@ namespace OneID.Data.Mappings
 
             builder.Property(u => u.KeycloakUserId)
                    .HasMaxLength(150);
+
+            builder.Ignore(u => u.Events);
+            builder.Ignore(u => u.Notifications);
 
             // Indexes
             builder.HasIndex(u => u.Cpf).HasDatabaseName("idx_user_account_cpf");
