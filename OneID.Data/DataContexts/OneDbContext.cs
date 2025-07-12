@@ -6,6 +6,7 @@ using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Entities.AlertsContext;
 using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.DepartmentContext;
+using OneID.Domain.Entities.JobTitleContext;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
@@ -42,6 +43,8 @@ namespace OneID.Data.DataContexts
         public DbSet<AccessPackageItem> AccessPackageItems => Set<AccessPackageItem>();
         public DbSet<AccessPackageCondition> AccessPackageConditions => Set<AccessPackageCondition>();
         public DbSet<Department> Departments => Set<Department>();
+        public DbSet<JobTitle> JobTitles => Set<JobTitle>();
+
 
 
 

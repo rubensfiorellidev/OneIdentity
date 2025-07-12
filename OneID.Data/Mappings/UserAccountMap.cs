@@ -1,5 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using OneID.Domain.Entities.DepartmentContext;
+using OneID.Domain.Entities.JobTitleContext;
 using OneID.Domain.Entities.UserContext;
 
 namespace OneID.Data.Mappings
@@ -139,6 +141,16 @@ namespace OneID.Data.Mappings
 
             builder.Ignore(u => u.Events);
             builder.Ignore(u => u.Notifications);
+
+            builder.HasOne<JobTitle>()
+                   .WithMany()
+                   .HasForeignKey(x => x.JobTitleId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne<Department>()
+                   .WithMany()
+                   .HasForeignKey(x => x.DepartmentId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             // Indexes
             builder.HasIndex(u => u.Cpf).HasDatabaseName("idx_user_account_cpf");
