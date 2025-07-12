@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Enums;
+﻿using OneID.Domain.ValueObjects;
 
 namespace OneID.Application.DTOs.Admission
 {
@@ -17,7 +17,7 @@ namespace OneID.Application.DTOs.Admission
         public string Registry { get; init; }
         public string MotherName { get; init; }
         public string Company { get; init; }
-        public EnumTypeUserAccount TypeUserAccount { get; init; }
+        public TypeUserAccount TypeUserAccount { get; init; }
         public string LoginManager { get; init; }
         public string FiscalNumberIdentity { get; init; }
         public string FiscalNumberIdentityHash { get; init; }
@@ -38,6 +38,8 @@ namespace OneID.Application.DTOs.Admission
         public string CorporateEmailHash { get; init; }
         public string Comments { get; init; }
         public string CreatedBy { get; init; }
+
+        public string TotpCode { get; init; }
 
     }
 }

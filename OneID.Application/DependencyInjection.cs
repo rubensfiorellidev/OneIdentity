@@ -75,6 +75,8 @@ namespace OneID.Application
 
             services.AddTransient<IHashService, Sha3HashService>();
             services.AddTransient<ISensitiveDataEncryptionServiceUserAccount, SensitiveDataEncryptionServiceUserAccount>();
+            services.AddTransient<ISensitiveDataDecryptionServiceUserAccount, SensitiveDataDecryptionServiceUserAccount>();
+
 
             return services;
         }

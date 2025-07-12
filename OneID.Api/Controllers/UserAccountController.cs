@@ -7,7 +7,7 @@ using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
-using OneID.Domain.Enums;
+using OneID.Domain.ValueObjects;
 
 #nullable disable
 namespace OneID.Api.Controllers
@@ -97,7 +97,7 @@ namespace OneID.Api.Controllers
                         Login = enrichedRequest.Login,
                         CorporateEmail = enrichedRequest.CorporateEmail,
                         PersonalEmail = enrichedRequest.PersonalEmail,
-                        StatusUserAccount = EnumStatusUserAccount.Inactive,
+                        StatusUserAccount = UserAccountStatus.Inactive,
                         TypeUserAccount = enrichedRequest.TypeUserAccount,
                         LoginManager = enrichedRequest.LoginManager,
                         JobTitleId = enrichedRequest.JobTitleId,

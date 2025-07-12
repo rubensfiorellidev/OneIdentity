@@ -1,4 +1,5 @@
-﻿namespace OneID.Domain.ValueObjects
+﻿#nullable disable
+namespace OneID.Domain.ValueObjects
 {
     public sealed class UserAccountStatus : ValueObject
     {
@@ -7,6 +8,7 @@
 
         public string Value { get; }
 
+        public UserAccountStatus() => Value = null!;
         private UserAccountStatus(string value) => Value = value;
 
         public static UserAccountStatus From(string value)

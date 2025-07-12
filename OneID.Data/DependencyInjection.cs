@@ -23,9 +23,9 @@ namespace OneID.Data
     public static class DependencyInjection
     {
         #region Data
-        public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration)
+        public static IServiceCollection AddData(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
         {
-            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+            services.AddDbContextInfra(configuration, environment);
 
             services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
             services.AddScoped<ILoginExistsUserRepository, LoginExistsUserRepository>();
@@ -44,31 +44,35 @@ namespace OneID.Data
             services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
 
 
+            return services;
+        }
 
-
-
-            services.AddDbContextFactory<OneDbContext>((serviceProvider, opts) =>
+        public static IServiceCollection AddDbContextInfra(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+        {
+            services.AddDbContextFactory<OneDbContext>((serviceProvider, options) =>
             {
-                var env = serviceProvider.GetRequiredService<IHostEnvironment>();
-                var config = serviceProvider.GetRequiredService<IConfiguration>();
-
-                string connectionString = env.IsDevelopment()
-                    ? config.GetConnectionString("NPSqlConnection")
-                    : env.IsEnvironment("Staging")
-                        ? config.GetConnectionString("NPSqlConnectionStaging")
-                        : config.GetConnectionString("NPSqlConnectionProduction");
+                string connectionString = environment.IsDevelopment()
+                    ? configuration.GetConnectionString("NPSqlConnection")
+                    : environment.IsEnvironment("Staging")
+                        ? configuration.GetConnectionString("NPSqlConnectionStaging")
+                        : configuration.GetConnectionString("NPSqlConnectionProduction");
 
                 var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
                 var dataSource = dataSourceBuilder.Build();
 
-                opts.UseNpgsql(dataSource, npgsqlOptions =>
+                options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
                     npgsqlOptions.MigrationsAssembly(typeof(OneDbContext).Assembly.FullName);
                     npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), null);
                 });
 
-                opts.EnableSensitiveDataLogging(false);
+                options.EnableSensitiveDataLogging(environment.IsDevelopment());
+
             });
+
+
+
+            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
 
             return services;
         }

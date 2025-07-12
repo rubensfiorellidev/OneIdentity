@@ -2,12 +2,30 @@ using OneID.Application;
 using OneID.Data;
 using OneID.Messaging;
 using OneID.Shared;
+using OneID.Shared.Tools;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 var environment = builder.Environment.EnvironmentName;
 
+builder.Configuration
+    .AddJsonFile("appsettings.json", false, true)
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true, true)
+    .AddEnvironmentVariables();
 
-builder.Services.AddData(builder.Configuration);
+builder.Host.UseSerilog((context, services, config) =>
+{
+    config.ReadFrom.Configuration(context.Configuration)
+          .ReadFrom.Services(services);
+});
+
+builder.Services.AddLogging(loggingBuilder =>
+{
+    loggingBuilder.AddSerilog();
+});
+
+
+builder.Services.AddData(builder.Configuration, builder.Environment);
 builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddMassTrasitConfig();
@@ -16,15 +34,17 @@ builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddApiPipelineConfiguration();
 
 
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<SanitizeInputFilter>();
+})
+.AddNewtonsoftJson(options =>
+{
+    options.SerializerSettings.Converters.Add(new TypeUserAccountNewtonsoftConverter());
+});
 
-builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
-
-builder.Configuration
-    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-    .AddJsonFile($"appsettings.Development.json", optional: true, reloadOnChange: true)
-    .AddEnvironmentVariables();
 
 builder.Services.AddHttpClient("CloudFrontClient", client =>
 {
@@ -41,6 +61,17 @@ builder.Services.AddHsts(options =>
 
 
 var app = builder.Build();
+
+var environmentName = app.Environment.EnvironmentName;
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var logger = loggerFactory.CreateLogger<Program>();
+
+logger.LogInformation("Application is running in {Environment} environment.", environmentName);
+logger.LogInformation("Application is running in {TimeZone} TimeZone.", TimeZoneInfo.Local.Id);
+logger.LogInformation("Application started at {Now} (Local).", DateTime.Now);
+logger.LogInformation("Application started at {UtcNow} (UTC).", DateTime.UtcNow);
+
+app.UseSerilogRequestLogging();
 
 if (app.Environment.IsDevelopment())
 {
@@ -78,3 +109,4 @@ app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
+Log.CloseAndFlush();

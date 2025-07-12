@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.Keycloak;
+using OneID.Application.Interfaces.SensitiveData;
+using OneID.Application.Interfaces.Services;
 using OneID.Data.Interfaces;
 using OneID.Shared.Authentication;
 using OtpNet;
+using System.IdentityModel.Tokens.Jwt;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -21,6 +24,8 @@ namespace OneID.Api.Controllers
         private readonly ILogger<AuthController> _logger;
         private readonly IOneDbContextFactory _contextFactory;
         private readonly IKeycloakAuthService _authService;
+        private readonly IHashService _hashService;
+        private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
@@ -28,12 +33,16 @@ namespace OneID.Api.Controllers
                               JwtProvider jwtProvider,
                               ILogger<AuthController> logger,
                               IOneDbContextFactory contextFactory,
-                              IKeycloakAuthService authService) : base(sender)
+                              IKeycloakAuthService authService,
+                              IHashService hashService,
+                              ISensitiveDataDecryptionServiceUserAccount decryptionService) : base(sender)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
             _contextFactory = contextFactory;
             _authService = authService;
+            _hashService = hashService;
+            _decryptionService = decryptionService;
         }
 
         [HttpPost("request-token")]
@@ -56,39 +65,48 @@ namespace OneID.Api.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
         {
-            // Valida escopo mínimo do token TOTP
             var accessScope = HttpContext.User.FindFirst("access_scope")?.Value;
             if (accessScope != "token_request_only")
                 return Forbid("Token não autorizado para login.");
 
-            // 🔐 Autentica no Keycloak
             var keycloakToken = await _authService.AuthenticateAsync(request.Login, request.Password);
             if (keycloakToken == null)
                 return Unauthorized("Login ou senha inválidos.");
 
-            var keycloakUserId = keycloakToken.Sub; // ou preferred_username dependendo do seu mapeamento
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(keycloakToken.AccessToken);
 
-            // 🎯 Busca claims do seu banco
+            var keycloakUserId = jwt.Claims.FirstOrDefault(c => c.Type == "sub")?.Value;
+            var preferredUsername = jwt.Claims.FirstOrDefault(c => c.Type == "preferred_username")?.Value;
+            var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
+            var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
+
+            if (string.IsNullOrWhiteSpace(keycloakUserId))
+                return Unauthorized("Token inválido. Sub não encontrado.");
+
+            var loginHash = await _hashService.ComputeSha3HashAsync(request.Login);
+
             await using var db = _contextFactory.CreateDbContext();
-            var user = await db.UserAccounts.FirstOrDefaultAsync(u => u.Login == request.Login);
+            var user = await db.UserAccounts.FirstOrDefaultAsync(u => u.LoginHash == loginHash);
 
             if (user is null)
                 return Unauthorized("Usuário autenticado, mas não registrado no sistema.");
 
-            var claims = await db.UserClaims
-                .Where(c => c.UserAccountId == user.Id)
-                .ToDictionaryAsync(c => c.Type, c => (object)c.Value);
+            var decryptedUser = await _decryptionService.DecryptSensitiveDataAsync(user);
 
-            claims[JwtClaims.Sub] = user.Id;
-            claims[JwtClaims.UniqueName] = user.Login;
+            var authResult = await _jwtProvider.GenerateTokenAsync(
+                decryptedUser.Id,
+                preferredUsername,
+                email,
+                name
+            );
 
-            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
-            return Ok(new { token });
-
+            return Ok(new
+            {
+                token = authResult.Jwtoken,
+                refreshToken = authResult.RefreshToken
+            });
         }
-
-
-
         private async Task<Dictionary<string, object>> GetServiceUserClaimsAsync(string serviceUserId)
         {
             await using var db = _contextFactory.CreateDbContext();
@@ -106,5 +124,6 @@ namespace OneID.Api.Controllers
     public class AuthRequest
     {
         public string TotpCode { get; set; }
+
     }
 }

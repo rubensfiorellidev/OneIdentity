@@ -77,11 +77,11 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithRegistry(staging.Registry)
                     .WithMotherName(staging.MotherName)
                     .WithCompany(staging.Company)
-                    .WithLogin(staging.Login)
-                    .WithCorporateEmail(staging.CorporateEmail)
+                    .WithLogin(context.Message.Login)
+                    .WithCorporateEmail(context.Message.CorporateEmail) //null
                     .WithPersonalEmail(staging.PersonalEmail)
-                    .WithStatusUserProfile(staging.StatusUserAccount)
-                    .WithTypeUserProfile(staging.TypeUserAccount)
+                    .WithStatusUserAccount(staging.StatusUserAccount)
+                    .WithTypeUserAccount(staging.TypeUserAccount)
                     .WithLoginManager(staging.LoginManager)
                     .WithJobTitleId(staging.JobTitleId)
                     .WithJobTitle(staging.JobTitleName)
@@ -103,8 +103,6 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     return;
                 }
 
-                userAccount = await _encryptionService.EncryptSensitiveDataAsync(userAccount);
-
                 var cpfHash = await _hashService.ComputeSha3HashAsync(userAccount.Cpf);
                 var emailHash = await _hashService.ComputeSha3HashAsync(userAccount.CorporateEmail);
                 var loginHash = await _hashService.ComputeSha3HashAsync(userAccount.Login);
@@ -113,6 +111,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
                 userAccount.ApplyHashes(cpfHash, emailHash, loginHash, fiscalHash, contractorHash);
 
+                userAccount = await _encryptionService.EncryptSensitiveDataAsync(userAccount);
 
                 var result = await _repository.AddAsync(userAccount, context.CancellationToken);
 

@@ -119,13 +119,13 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IUserAccountBuilder WithStatusUserProfile(UserAccountStatus status)
+        public IUserAccountBuilder WithStatusUserAccount(UserAccountStatus status)
         {
             _statusUserProfile = status;
             return this;
         }
 
-        public IUserAccountBuilder WithTypeUserProfile(TypeUserAccount type)
+        public IUserAccountBuilder WithTypeUserAccount(TypeUserAccount type)
         {
             _typeUserProfile = type;
             return this;

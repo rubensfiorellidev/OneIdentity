@@ -12,6 +12,7 @@ using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Notifications;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Data.DataContexts
 {
@@ -47,6 +48,14 @@ namespace OneID.Data.DataContexts
 
 
 
+        private static void IgnoreValueObjects(ModelBuilder builder)
+        {
+            builder.Ignore<Notification>();
+            builder.Ignore<Event>();
+            builder.Ignore<TypeUserAccount>();
+            builder.Ignore<UserAccountStatus>();
+
+        }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -67,11 +76,10 @@ namespace OneID.Data.DataContexts
         {
             base.OnModelCreating(builder);
 
+            IgnoreValueObjects(builder);
+
             builder.ApplyConfigurationsFromAssembly(typeof(OneDbContext).Assembly);
 
-            // Ignorar tipos de domínio
-            builder.Ignore<Notification>();
-            builder.Ignore<Event>();
 
             // Mapeamento de UserRole
             builder.Entity<UserRole>(entity =>

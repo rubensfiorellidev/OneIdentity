@@ -80,6 +80,7 @@ namespace OneID.Application.CommandHandlers
                 MotherName = request.MotherName,
                 Registry = request.Registry,
                 LoginManager = request.LoginManager,
+                TypeUserAccount = request.TypeUserAccount,
 
                 CreatedBy = request.CreatedBy,
                 CreatedAt = DateTimeOffset.UtcNow,

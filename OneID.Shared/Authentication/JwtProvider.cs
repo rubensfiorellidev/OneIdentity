@@ -67,14 +67,15 @@ namespace OneID.Shared.Authentication
 
             return await File.ReadAllTextAsync(_publicKeyPath);
         }
-        public async Task<AuthResult> GenerateTokenAsync(string upn)
+        public async Task<AuthResult> GenerateTokenAsync(string userId,
+                                                         string preferredUsername = null,
+                                                         string email = null,
+                                                         string name = null)
         {
             var handler = new JsonWebTokenHandler();
-
             RsaSecurityKey key = GetRSAKey();
 
             string keyId = GenerateKeyId(key);
-
             var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
             jwk.KeyId = keyId;
             jwk.Alg = SecurityAlgorithms.RsaSha256;
@@ -86,14 +87,23 @@ namespace OneID.Shared.Authentication
             var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
 
             var claims = new List<Claim>
-        {
-            new(JwtClaims.Sub, upn),
-            new(JwtClaims.UniqueName, upn),
-            new(JwtClaims.Jti, Ulid.NewUlid().ToString()),
-            new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new("ip", ipAddress),
-            new("user_agent", userAgent)
-        };
+            {
+                new(JwtClaims.Sub, userId),
+                new(JwtClaims.UniqueName, preferredUsername ?? userId),
+                new(JwtClaims.Jti, Ulid.NewUlid().ToString()),
+                new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+                new("ip", ipAddress),
+                new("user_agent", userAgent)
+            };
+
+            if (!string.IsNullOrWhiteSpace(email))
+                claims.Add(new Claim("email", email));
+
+            if (!string.IsNullOrWhiteSpace(name))
+                claims.Add(new Claim("name", name));
+
+            var customClaims = await GetUserClaimsAsync(userId);
+            claims.AddRange(customClaims);
 
             var descriptor = new SecurityTokenDescriptor
             {
@@ -107,7 +117,7 @@ namespace OneID.Shared.Authentication
 
             var jws = handler.CreateToken(descriptor);
 
-            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(upn, jws);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(userId, jws);
 
             return new AuthResult
             {
@@ -208,7 +218,7 @@ namespace OneID.Shared.Authentication
 
             return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
-        public string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan validFor)
+        public string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor)
         {
             var handler = new JsonWebTokenHandler();
             var key = GetRSAKey();
@@ -223,7 +233,7 @@ namespace OneID.Shared.Authentication
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.Add(validFor),
+                Expires = DateTime.UtcNow.Add(validFor ?? _jwtOptions.AccessTokenTotpExpires),
                 Subject = claimsIdentity,
                 SigningCredentials = signingCredentials
             };

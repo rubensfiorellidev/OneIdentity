@@ -1,5 +1,5 @@
 ﻿using OneID.Application.Interfaces.CQRS;
-using OneID.Domain.Enums;
+using OneID.Domain.ValueObjects;
 
 #nullable disable
 namespace OneID.Application.Commands
@@ -20,8 +20,8 @@ namespace OneID.Application.Commands
         public string Login { get; init; }
         public string CorporateEmail { get; init; }
         public string PersonalEmail { get; init; }
-        public EnumStatusUserAccount StatusUserProfile { get; init; }
-        public EnumTypeUserAccount TypeUserProfile { get; init; }
+        public UserAccountStatus StatusUserAccount { get; init; }
+        public TypeUserAccount TypeUserAccount { get; init; }
         public string LoginManager { get; init; }
         public string JobTitleId { get; init; }
         public string FiscalNumberIdentity { get; init; }
