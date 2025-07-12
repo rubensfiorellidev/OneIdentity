@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using OneID.Domain.Entities.DepartmentContext;
 using OneID.Domain.Entities.JobTitleContext;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Data.Mappings
 {
@@ -81,13 +82,20 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.PhoneNumber)
                    .HasMaxLength(100);
 
-            builder.Property(u => u.StatusUserAccount)
-                   .HasConversion<string>()
-                   .HasMaxLength(50);
+            builder.Property(x => x.StatusUserAccount)
+                   .HasConversion(
+                        v => v.Value,
+                        v => UserAccountStatus.From(v)
+                   )
+                   .HasColumnName("StatusUserAccount");
 
-            builder.Property(u => u.TypeUserAccount)
-                   .HasConversion<string>()
-                   .HasMaxLength(50);
+            builder.Property(x => x.TypeUserAccount)
+                   .HasConversion(
+                        v => v.Value,
+                        v => TypeUserAccount.From(v)
+                   )
+                   .HasColumnName("TypeUserAccount");
+
 
             builder.Property(u => u.IsInactive);
 

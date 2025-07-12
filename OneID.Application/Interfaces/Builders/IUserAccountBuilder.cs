@@ -1,5 +1,5 @@
 ﻿using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Enums;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Application.Interfaces.Builders
 {
@@ -19,8 +19,8 @@ namespace OneID.Application.Interfaces.Builders
         IUserAccountBuilder WithLogin(string login);
         IUserAccountBuilder WithCorporateEmail(string corporateEmail);
         IUserAccountBuilder WithPersonalEmail(string personalEmail);
-        IUserAccountBuilder WithStatusUserProfile(EnumStatusUserAccount status);
-        IUserAccountBuilder WithTypeUserProfile(EnumTypeUserAccount type);
+        IUserAccountBuilder WithStatusUserProfile(UserAccountStatus status);
+        IUserAccountBuilder WithTypeUserProfile(TypeUserAccount type);
         IUserAccountBuilder WithLoginManager(string loginManager);
         IUserAccountBuilder WithJobTitle(string jobTitleName);
         IUserAccountBuilder WithJobTitleId(string jobTitleId);

@@ -2,8 +2,8 @@
 using OneID.Domain.Abstractions.Validations;
 using OneID.Domain.Contracts;
 using OneID.Domain.Contracts.Validations;
-using OneID.Domain.Enums;
 using OneID.Domain.Notifications;
+using OneID.Domain.ValueObjects;
 
 #nullable disable
 namespace OneID.Domain.Entities.UserContext
@@ -21,7 +21,6 @@ namespace OneID.Domain.Entities.UserContext
         public string CreatedBy { get; private set; }
         public string UpdatedBy { get; private set; }
 
-        // Dados Pessoais
         public string FullName { get; private set; }
         public string FirstName { get; private set; }
         public string LastName { get; private set; }
@@ -29,20 +28,17 @@ namespace OneID.Domain.Entities.UserContext
         public string MotherName { get; private set; }
         public DateTime BirthDate { get; private set; }
 
-        // Documentos e Identificação
         public string Cpf { get; private set; }
         public string CpfHash { get; private set; }
         public string FiscalNumberIdentity { get; private set; }
         public string FiscalNumberIdentityHash { get; private set; }
 
-        // Dados de Contato
         public string PersonalEmail { get; private set; }
         public string PersonalEmailHash { get; private set; }
         public string CorporateEmail { get; private set; }
         public string CorporateEmailHash { get; private set; }
         public string PhoneNumber { get; private set; }
 
-        // Dados Corporativos
         public string Registry { get; private set; }
         public string Company { get; private set; }
         public string JobTitleId { get; private set; }
@@ -55,20 +51,17 @@ namespace OneID.Domain.Entities.UserContext
         public DateTime StartDate { get; private set; }
         public DateTime? DateOfFired { get; private set; }
 
-        // Status e Tipo
-        public EnumStatusUserAccount StatusUserAccount { get; private set; }
-        public EnumTypeUserAccount TypeUserAccount { get; private set; }
+        public UserAccountStatus StatusUserAccount { get; private set; }
+        public TypeUserAccount TypeUserAccount { get; private set; }
         public bool IsInactive { get; private set; }
         public bool IsActive => !IsInactive;
 
-        // Login e segurança
         public string Login { get; private set; }
         public string LoginHash { get; private set; }
         public string LoginCrypt { get; private set; }
         public string LoginManager { get; private set; }
         public DateTimeOffset? LastLoginAt { get; private set; }
 
-        // Integrações externas
         public string KeycloakUserId { get; private set; }
 
         public IReadOnlyCollection<Event> Events => _events.AsReadOnly();
@@ -87,7 +80,6 @@ namespace OneID.Domain.Entities.UserContext
             IsInactive = true;
         }
 
-        // Ativação e Atualizações
         public void Activate(string updatedBy)
         {
             if (!IsInactive)
@@ -150,8 +142,6 @@ namespace OneID.Domain.Entities.UserContext
         public void SetCorporateEmail(string corporateEmail) => CorporateEmail = corporateEmail;
         public void SetPersonalEmail(string personalEmail) => PersonalEmail = personalEmail;
         public void SetPhoneNumber(string phoneNumber) => PhoneNumber = phoneNumber;
-        public void SetStatusUserProfile(EnumStatusUserAccount status) => StatusUserAccount = status;
-        public void SetTypeUserProfile(EnumTypeUserAccount type) => TypeUserAccount = type;
         public void SetLoginManager(string loginManager) => LoginManager = loginManager;
         public void SetJobTitleId(string jobTitleId) => JobTitleId = jobTitleId;
         public void SetJobTitle(string jobTitle) => JobTitleName = jobTitle;
@@ -164,7 +154,20 @@ namespace OneID.Domain.Entities.UserContext
             ContractorName = contractorName;
         }
 
-        // Aplicar hashes e criptos (com serviços externos)
+        public void SetStatusUserAccount(UserAccountStatus status)
+        {
+            ArgumentNullException.ThrowIfNull(status);
+
+            StatusUserAccount = status;
+        }
+
+        public void SetTypeUserAccount(TypeUserAccount type)
+        {
+            ArgumentNullException.ThrowIfNull(type);
+
+            TypeUserAccount = type;
+        }
+
         public void ApplyHashes(string cpfHash, string corporateEmailHash, string loginHash, string fiscalNumberIdentityHash, string contractorCnpjHash)
         {
             if (string.IsNullOrWhiteSpace(cpfHash))

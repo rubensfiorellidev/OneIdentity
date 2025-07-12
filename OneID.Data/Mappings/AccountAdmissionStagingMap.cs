@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Data.Mappings
 {
@@ -114,14 +115,20 @@ namespace OneID.Data.Mappings
                    .IsRequired();
 
             builder.Property(x => x.StatusUserAccount)
-                   .HasConversion<string>()
-                   .HasMaxLength(20)
+                   .HasConversion(
+                        v => v.Value,
+                        v => UserAccountStatus.From(v)
+                   )
+                   .HasColumnName("StatusUserAccount")
                    .IsRequired();
 
             builder.Property(x => x.TypeUserAccount)
-                   .HasConversion<string>()
-                   .HasMaxLength(20)
-                   .IsRequired();
+                .HasConversion(
+                    v => v.Value,
+                    v => TypeUserAccount.From(v)
+                )
+                .HasColumnName("TypeUserAccount")
+                .IsRequired();
 
             builder.HasIndex(x => x.CpfHash).HasDatabaseName("idx_admission_staging_cpfhash");
             builder.HasIndex(x => x.LoginHash).HasDatabaseName("idx_admission_staging_loginhash");

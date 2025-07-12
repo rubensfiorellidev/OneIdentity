@@ -1,6 +1,6 @@
 ﻿using OneID.Application.Interfaces.Builders;
 using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Enums;
+using OneID.Domain.ValueObjects;
 
 #nullable disable
 namespace OneID.Application.Builders
@@ -23,8 +23,8 @@ namespace OneID.Application.Builders
         private string _login;
         private string _corporateEmail;
         private string _personalEmail;
-        private EnumStatusUserAccount _statusUserProfile;
-        private EnumTypeUserAccount _typeUserProfile;
+        private UserAccountStatus _statusUserProfile;
+        private TypeUserAccount _typeUserProfile;
         private string _loginManager;
         private string _jobTitleId;
         private string _jobTitle;
@@ -119,13 +119,13 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IUserAccountBuilder WithStatusUserProfile(EnumStatusUserAccount status)
+        public IUserAccountBuilder WithStatusUserProfile(UserAccountStatus status)
         {
             _statusUserProfile = status;
             return this;
         }
 
-        public IUserAccountBuilder WithTypeUserProfile(EnumTypeUserAccount type)
+        public IUserAccountBuilder WithTypeUserProfile(TypeUserAccount type)
         {
             _typeUserProfile = type;
             return this;
@@ -196,8 +196,8 @@ namespace OneID.Application.Builders
             user.SetLogin(_login);
             user.SetCorporateEmail(_corporateEmail);
             user.SetPersonalEmail(_personalEmail);
-            user.SetStatusUserProfile(_statusUserProfile);
-            user.SetTypeUserProfile(_typeUserProfile);
+            user.SetStatusUserAccount(_statusUserProfile);
+            user.SetTypeUserAccount(_typeUserProfile);
             user.SetLoginManager(_loginManager);
             user.SetJobTitleId(_jobTitleId);
             user.SetJobTitle(_jobTitle);

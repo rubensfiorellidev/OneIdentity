@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Enums;
+﻿using OneID.Domain.ValueObjects;
 
 namespace OneID.Domain.Entities.UserContext
 {
@@ -45,7 +45,7 @@ namespace OneID.Domain.Entities.UserContext
         public DateTimeOffset CreatedAt { get; set; }
         public string Status { get; set; }
 
-        public EnumStatusUserAccount StatusUserAccount { get; set; } = EnumStatusUserAccount.Inactive;
-        public EnumTypeUserAccount TypeUserAccount { get; set; }
+        public UserAccountStatus StatusUserAccount { get; set; } = UserAccountStatus.Inactive;
+        public TypeUserAccount TypeUserAccount { get; set; }
     }
 }
