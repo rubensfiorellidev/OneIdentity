@@ -58,7 +58,6 @@ namespace OneID.Domain.Entities.UserContext
 
         public string Login { get; private set; }
         public string LoginHash { get; private set; }
-        public string LoginCrypt { get; private set; }
         public string LoginManager { get; private set; }
         public DateTimeOffset? LastLoginAt { get; private set; }
 
@@ -169,26 +168,41 @@ namespace OneID.Domain.Entities.UserContext
             TypeUserAccount = type;
         }
 
-        public void ApplyHashes(string cpfHash, string corporateEmailHash, string loginHash, string fiscalNumberIdentityHash, string contractorCnpjHash)
+        public void ApplyHashes(string cpfHash,
+                                string corporateEmailHash,
+                                string personalEmailHash,
+                                string loginHash,
+                                string fiscalNumberIdentityHash,
+                                string contractorCnpjHash)
         {
             if (string.IsNullOrWhiteSpace(cpfHash))
                 throw new ArgumentException("CPF hash cannot be null or empty", nameof(cpfHash));
 
             CpfHash = cpfHash;
             CorporateEmailHash = corporateEmailHash;
+            PersonalEmailHash = personalEmailHash;
             LoginHash = loginHash;
             FiscalNumberIdentityHash = fiscalNumberIdentityHash;
             ContractorCnpjHash = contractorCnpjHash;
         }
 
-        public void ApplyCrytos(string cpf, string corporateEmail, string login, string registry, string fiscalNumberIdentity, string contractorCnpj)
+        public void ApplyCrytos(string cpf,
+                                string corporateEmail,
+                                string personalEmail,
+                                string login,
+                                string registry,
+                                string fiscalNumberIdentity,
+                                string contractorCnpj,
+                                string loginManager)
         {
             Cpf = cpf;
             CorporateEmail = corporateEmail;
+            PersonalEmail = personalEmail;
             Login = login;
             Registry = registry;
             FiscalNumberIdentity = fiscalNumberIdentity;
             ContractorCnpj = contractorCnpj;
+            LoginManager = loginManager;
         }
 
         // Validação e eventos

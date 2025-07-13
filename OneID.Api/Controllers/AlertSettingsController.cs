@@ -1,6 +1,6 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.Alerts;
+using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Domain.Entities.AlertsContext;
 
@@ -10,7 +10,7 @@ namespace OneID.Api.Controllers
     public class AlertSettingsController : MainController
     {
         private readonly IAlertSettingsRepository _alertSettingsRepository;
-        public AlertSettingsController(ISender sender, IAlertSettingsRepository alertSettingsRepository) : base(sender)
+        public AlertSettingsController(ICommandDispatcher dispatcher, IAlertSettingsRepository alertSettingsRepository) : base(dispatcher)
         {
             _alertSettingsRepository = alertSettingsRepository;
         }

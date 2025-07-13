@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250713034124_Update_AccountUser_nullable_false_departmentid_jobtitleid")]
+    partial class Update_AccountUser_nullable_false_departmentid_jobtitleid
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -552,10 +555,6 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("character varying(128)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
                     b.Property<string>("Registry")
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
@@ -789,6 +788,10 @@ namespace OneID.Data.Migrations
                     b.Property<string>("Login")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<string>("LoginCrypt")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<string>("LoginHash")
                         .HasMaxLength(256)

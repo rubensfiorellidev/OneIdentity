@@ -19,6 +19,7 @@ namespace OneID.Application.Interfaces.Builders
         IUserAccountBuilder WithLogin(string login);
         IUserAccountBuilder WithCorporateEmail(string corporateEmail);
         IUserAccountBuilder WithPersonalEmail(string personalEmail);
+        IUserAccountBuilder WithPhoneNumber(string phoneNumber);
         IUserAccountBuilder WithStatusUserAccount(UserAccountStatus status);
         IUserAccountBuilder WithTypeUserAccount(TypeUserAccount type);
         IUserAccountBuilder WithLoginManager(string loginManager);

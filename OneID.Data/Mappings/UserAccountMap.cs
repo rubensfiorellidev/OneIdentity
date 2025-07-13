@@ -64,9 +64,6 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.LoginHash)
                    .HasMaxLength(256);
 
-            builder.Property(u => u.LoginCrypt)
-                   .HasMaxLength(512);
-
             builder.Property(u => u.CorporateEmail)
                    .HasMaxLength(150);
 
@@ -103,12 +100,14 @@ namespace OneID.Data.Mappings
                    .HasMaxLength(100);
 
             builder.Property(u => u.JobTitleId)
-                   .HasMaxLength(100);
+                    .IsRequired(false)
+                    .HasMaxLength(100);
 
             builder.Property(u => u.JobTitleName)
                    .HasMaxLength(150);
 
             builder.Property(u => u.DepartmentId)
+                   .IsRequired(false)
                    .HasMaxLength(100);
 
             builder.Property(u => u.DepartmentName)
@@ -152,12 +151,12 @@ namespace OneID.Data.Mappings
             builder.HasOne<JobTitle>()
                    .WithMany()
                    .HasForeignKey(x => x.JobTitleId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasOne<Department>()
                    .WithMany()
                    .HasForeignKey(x => x.DepartmentId)
-                   .OnDelete(DeleteBehavior.Restrict);
+                   .OnDelete(DeleteBehavior.SetNull);
 
             // Indexes
             builder.HasIndex(u => u.Cpf).HasDatabaseName("idx_user_account_cpf");

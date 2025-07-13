@@ -38,6 +38,7 @@ namespace OneID.Domain.Entities.UserContext
         public string LoginManager { get; set; }
         public string PersonalEmail { get; set; }
         public string PersonalEmailHash { get; set; }
+        public string PhoneNumber { get; set; }
         public string CorporateEmail { get; set; }
         public string CorporateEmailHash { get; set; }
         public string Comments { get; set; }

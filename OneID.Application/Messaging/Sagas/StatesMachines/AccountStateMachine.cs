@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
 using OneID.Application.Commands;
+using OneID.Application.DTOs.Admission;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.Helpers;
@@ -90,12 +91,22 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .Then(context =>
                     {
                         var pwd = PasswordTempGenerator.GenerateTemporaryPassword();
+                        var corporateEmail = $"{context.Message.Login}@oneidsecure.com";
+
                         context.Saga.KeycloakData = context.Saga.KeycloakData with
                         {
                             Username = context.Message.Login,
                             Password = pwd,
-                            Email = $"{context.Message.Login}@company.com"
+                            Email = corporateEmail
+
                         };
+
+                        context.Saga.AccountData = new UserAccountPayload
+                        {
+                            Login = context.Message.Login,
+                            CorporateEmail = corporateEmail
+                        };
+
                     })
                     .Publish(context => new AdmissionAuditRequested
                     {
@@ -206,7 +217,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     {
                         CorrelationId = context.Saga.CorrelationId,
                         Login = context.Saga.KeycloakData.Username,
-                        KeycloakUserId = context.Saga.KeycloakData.KeycloakUserId
+                        KeycloakUserId = context.Saga.KeycloakData.KeycloakUserId,
+                        CorporateEmail = context.Saga.AccountData.CorporateEmail
                     })
                     .TransitionTo(WaitingDatabaseResult),
 

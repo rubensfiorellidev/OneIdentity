@@ -20,6 +20,7 @@ namespace OneID.Application.DTOs.Admission
         public string Login { get; init; }
         public string CorporateEmail { get; init; }
         public string PersonalEmail { get; init; }
+        public string PhoneNumber { get; init; }
         public UserAccountStatus StatusUserAccount { get; init; }
         public TypeUserAccount TypeUserAccount { get; init; }
         public string LoginManager { get; init; }

@@ -23,6 +23,7 @@ namespace OneID.Application.Builders
         private string _login;
         private string _corporateEmail;
         private string _personalEmail;
+        private string _phoneNumber;
         private UserAccountStatus _statusUserProfile;
         private TypeUserAccount _typeUserProfile;
         private string _loginManager;
@@ -120,6 +121,12 @@ namespace OneID.Application.Builders
             return this;
         }
 
+        public IUserAccountBuilder WithPhoneNumber(string phoneNumber)
+        {
+            _phoneNumber = phoneNumber;
+            return this;
+        }
+
         public IUserAccountBuilder WithStatusUserAccount(UserAccountStatus status)
         {
             _statusUserProfile = status;
@@ -204,6 +211,7 @@ namespace OneID.Application.Builders
             user.SetLogin(_login);
             user.SetCorporateEmail(_corporateEmail);
             user.SetPersonalEmail(_personalEmail);
+            user.SetPhoneNumber(_phoneNumber);
             user.SetStatusUserAccount(_statusUserProfile);
             user.SetTypeUserAccount(_typeUserProfile);
             user.SetLoginManager(_loginManager);

@@ -1,7 +1,10 @@
 ﻿#nullable disable
+using OneID;
+
+#nullable disable
 using OneID.Application.Interfaces.Services;
 
-namespace OneID.Domain.Results
+namespace OneID.Application.Results
 {
     public class Result : IResult
     {

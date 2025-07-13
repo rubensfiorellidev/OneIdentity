@@ -99,6 +99,8 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.CorporateEmailHash)
                    .HasMaxLength(128);
 
+            builder.Property(x => x.PhoneNumber)
+                 .HasMaxLength(50);
 
             builder.Property(x => x.Comments)
                    .HasMaxLength(500);

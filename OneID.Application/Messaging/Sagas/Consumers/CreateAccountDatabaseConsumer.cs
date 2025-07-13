@@ -78,8 +78,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithMotherName(staging.MotherName)
                     .WithCompany(staging.Company)
                     .WithLogin(context.Message.Login)
-                    .WithCorporateEmail(context.Message.CorporateEmail) //null
+                    .WithCorporateEmail(context.Message.CorporateEmail)
                     .WithPersonalEmail(staging.PersonalEmail)
+                    .WithPhoneNumber(staging.PhoneNumber)
                     .WithStatusUserAccount(staging.StatusUserAccount)
                     .WithTypeUserAccount(staging.TypeUserAccount)
                     .WithLoginManager(staging.LoginManager)
@@ -92,6 +93,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithCreatedBy(staging.CreatedBy)
                     .WithKeycloakUserId(context.Message.KeycloakUserId)
                     .Build();
+
+
 
                 if (!userAccount.IsValid())
                 {
@@ -106,11 +109,12 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
                 var cpfHash = await _hashService.ComputeSha3HashAsync(userAccount.Cpf);
                 var emailHash = await _hashService.ComputeSha3HashAsync(userAccount.CorporateEmail);
+                var personalEmailHash = await _hashService.ComputeSha3HashAsync(userAccount.PersonalEmail);
                 var loginHash = await _hashService.ComputeSha3HashAsync(userAccount.Login);
                 var fiscalHash = await _hashService.ComputeSha3HashAsync(userAccount.FiscalNumberIdentity);
                 var contractorHash = await _hashService.ComputeSha3HashAsync(userAccount.ContractorCnpj);
 
-                userAccount.ApplyHashes(cpfHash, emailHash, loginHash, fiscalHash, contractorHash);
+                userAccount.ApplyHashes(cpfHash, emailHash, personalEmailHash, loginHash, fiscalHash, contractorHash);
 
                 userAccount = await _encryptionService.EncryptSensitiveDataAsync(userAccount);
 

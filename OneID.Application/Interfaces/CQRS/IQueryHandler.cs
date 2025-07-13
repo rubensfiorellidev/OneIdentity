@@ -1,11 +1,8 @@
-﻿using MediatR;
-
-namespace OneID.Application.Interfaces.CQRS
+﻿namespace OneID.Application.Interfaces.CQRS
 {
     public interface IQueryHandler<TQuery, TResponse>
-        : IRequestHandler<TQuery, TResponse> where TQuery
-        : IQuery<TResponse>
+    where TQuery : IQuery<TResponse>
     {
-
+        Task<TResponse> Handle(TQuery query, CancellationToken cancellationToken);
     }
 }

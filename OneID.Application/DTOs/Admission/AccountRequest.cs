@@ -36,9 +36,8 @@ namespace OneID.Application.DTOs.Admission
         public string PersonalEmailHash { get; init; }
         public string CorporateEmail { get; init; }
         public string CorporateEmailHash { get; init; }
+        public string PhoneNumber { get; init; }
         public string Comments { get; init; }
-        public string CreatedBy { get; init; }
-
         public string TotpCode { get; init; }
 
     }

@@ -14,11 +14,15 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using OneID.Application.Abstractions;
+using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.SES;
+using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
+using OneID.Shared.Services;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
@@ -44,13 +48,33 @@ namespace OneID.Shared
             services.AddAWSService<IAmazonSimpleEmailService>();
             services.Configure<SesSettings>(configuration.GetSection("SesSettings"));
             services.AddSingleton<ISesEmailSender, SesEmailSender>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
-            services.AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
-                cfg.AddOpenBehavior(typeof(RequestLoggingPipelineBehavior<,>));
-            });
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));
+
+
+            services.AddScoped<ICommandDispatcher, CommandDispatcher>();
+            services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
 
             return services;
@@ -117,7 +141,6 @@ namespace OneID.Shared
 
             return services;
         }
-
         #endregion
 
         #region Pipeline

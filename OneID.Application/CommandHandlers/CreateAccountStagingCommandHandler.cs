@@ -7,8 +7,8 @@ using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
+using OneID.Application.Results;
 using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers
 {
@@ -75,6 +75,7 @@ namespace OneID.Application.CommandHandlers
                 PersonalEmailHash = request.PersonalEmailHash,
                 CorporateEmail = request.CorporateEmail,
                 CorporateEmailHash = request.CorporateEmailHash,
+                PhoneNumber = request.PhoneNumber,
                 BirthDate = request.BirthDate,
                 Company = request.Company,
                 MotherName = request.MotherName,
@@ -82,7 +83,7 @@ namespace OneID.Application.CommandHandlers
                 LoginManager = request.LoginManager,
                 TypeUserAccount = request.TypeUserAccount,
 
-                CreatedBy = request.CreatedBy,
+                CreatedBy = command.CreatedBy,
                 CreatedAt = DateTimeOffset.UtcNow,
                 Status = "Pending"
             };

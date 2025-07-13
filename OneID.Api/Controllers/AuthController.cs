@@ -1,9 +1,10 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OneID.Application.DTOs.Auth;
+using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
@@ -26,16 +27,18 @@ namespace OneID.Api.Controllers
         private readonly IKeycloakAuthService _authService;
         private readonly IHashService _hashService;
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
+        private readonly ICurrentUserService _currentUser;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
-        public AuthController(ISender sender,
+        public AuthController(ICommandDispatcher dispatcher,
                               JwtProvider jwtProvider,
                               ILogger<AuthController> logger,
                               IOneDbContextFactory contextFactory,
                               IKeycloakAuthService authService,
                               IHashService hashService,
-                              ISensitiveDataDecryptionServiceUserAccount decryptionService) : base(sender)
+                              ISensitiveDataDecryptionServiceUserAccount decryptionService,
+                              ICurrentUserService currentUser) : base(dispatcher)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
@@ -43,6 +46,7 @@ namespace OneID.Api.Controllers
             _authService = authService;
             _hashService = hashService;
             _decryptionService = decryptionService;
+            _currentUser = currentUser;
         }
 
         [HttpPost("request-token")]
@@ -65,7 +69,7 @@ namespace OneID.Api.Controllers
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
         {
-            var accessScope = HttpContext.User.FindFirst("access_scope")?.Value;
+            var accessScope = _currentUser.GetClaim("access_scope");
             if (accessScope != "token_request_only")
                 return Forbid("Token não autorizado para login.");
 

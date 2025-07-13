@@ -26,6 +26,10 @@ namespace OneID.Application.Services.AesCryptoServices
                 ? _cryptoService.Decrypt(account.CorporateEmail)
                 : account.CorporateEmail;
 
+            var decryptedPersonalEmail = !string.IsNullOrWhiteSpace(account.PersonalEmail)
+                ? _cryptoService.Decrypt(account.PersonalEmail)
+                : account.PersonalEmail;
+
             var decryptedLogin = !string.IsNullOrWhiteSpace(account.Login)
                 ? _cryptoService.Decrypt(account.Login)
                 : account.Login;
@@ -42,13 +46,20 @@ namespace OneID.Application.Services.AesCryptoServices
                 ? _cryptoService.Decrypt(account.ContractorCnpj)
                 : account.ContractorCnpj;
 
+            var decryptedLoginManager = !string.IsNullOrWhiteSpace(account.LoginManager)
+                ? _cryptoService.Decrypt(account.LoginManager)
+                : account.LoginManager;
+
             account.ApplyCrytos(
                 decryptedCpf,
                 decryptedCorporateEmail,
+                decryptedPersonalEmail,
                 decryptedLogin,
                 decryptedRegistry,
                 decryptedFiscalNumber,
-                decryptedContractorCnpj
+                decryptedContractorCnpj,
+                decryptedLoginManager
+
             );
 
             return Task.FromResult(account);

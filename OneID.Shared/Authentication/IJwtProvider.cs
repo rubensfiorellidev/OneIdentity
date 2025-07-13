@@ -1,5 +1,6 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using OneID.Domain.Results;
+using OneID.Application.Results;
+
 
 #nullable disable
 namespace OneID.Shared.Authentication

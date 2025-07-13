@@ -1,13 +1,14 @@
 ﻿using MassTransit;
-using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Commands;
 using OneID.Application.DTOs.Admission;
+using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.ValueObjects;
+using System.Security.Claims;
 
 #nullable disable
 namespace OneID.Api.Controllers
@@ -21,13 +22,14 @@ namespace OneID.Api.Controllers
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
 
+
         public UserAccountController(
-            ISender sender,
+            ICommandDispatcher dispatcher,
             ILogger<UserAccountController> logger,
             IHashService hashService,
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
-            IBus bus) : base(sender)
+            IBus bus) : base(dispatcher)
         {
             _logger = logger;
             _hashService = hashService;
@@ -69,8 +71,16 @@ namespace OneID.Api.Controllers
                 await _keyRepository.SaveAsync(cpfHash, "create-account-clt", cancellationToken);
                 await _deduplicationRepository.SaveAsync(correlationId, "create-account-clt", cancellationToken);
 
-                var stagingCommand = new CreateAccountStagingCommand(request with { CorrelationId = correlationId });
-                var stagingResult = await Sender.Send(stagingCommand, cancellationToken);
+                var loggedUser = User.FindFirst("preferred_username")?.Value
+                    ?? User.FindFirst(ClaimTypes.Name)?.Value
+                    ?? "unknown";
+
+                var stagingCommand = new CreateAccountStagingCommand(
+                    request with { CorrelationId = correlationId },
+                    loggedUser
+                );
+
+                var stagingResult = await Dispatcher.DispatchAsync(stagingCommand, cancellationToken);
 
                 if (!stagingResult.IsSuccess)
                     return Problem(detail: stagingResult.Message, statusCode: stagingResult.HttpCode ?? 500);
@@ -97,6 +107,7 @@ namespace OneID.Api.Controllers
                         Login = enrichedRequest.Login,
                         CorporateEmail = enrichedRequest.CorporateEmail,
                         PersonalEmail = enrichedRequest.PersonalEmail,
+                        PhoneNumber = enrichedRequest.PhoneNumber,
                         StatusUserAccount = UserAccountStatus.Inactive,
                         TypeUserAccount = enrichedRequest.TypeUserAccount,
                         LoginManager = enrichedRequest.LoginManager,
@@ -104,7 +115,7 @@ namespace OneID.Api.Controllers
                         FiscalNumberIdentity = enrichedRequest.FiscalNumberIdentity,
                         ContractorCnpj = enrichedRequest.ContractorCnpj,
                         ContractorName = enrichedRequest.ContractorName,
-                        CreatedBy = enrichedRequest.CreatedBy
+                        CreatedBy = loggedUser
                     }
 
                 }, cancellationToken);

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using OneID.Application.Builders;
 using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
+using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
@@ -58,6 +59,8 @@ namespace OneID.Application
             services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
             services.AddScoped<IAlertNotifier, AlertNotifier>();
             services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
+            services.AddScoped<ICommandDispatcher, CommandDispatcher>();
+
 
             services.AddTransient<ICryptoService>(provider =>
             {
