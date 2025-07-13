@@ -24,12 +24,12 @@ namespace OneID.Api.Controllers
 
 
         public UserAccountController(
-            ICommandDispatcher dispatcher,
+            ISender send,
             ILogger<UserAccountController> logger,
             IHashService hashService,
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
-            IBus bus) : base(dispatcher)
+            IBus bus) : base(send)
         {
             _logger = logger;
             _hashService = hashService;
@@ -80,7 +80,7 @@ namespace OneID.Api.Controllers
                     loggedUser
                 );
 
-                var stagingResult = await Dispatcher.DispatchAsync(stagingCommand, cancellationToken);
+                var stagingResult = await Send.SendAsync(stagingCommand, cancellationToken);
 
                 if (!stagingResult.IsSuccess)
                     return Problem(detail: stagingResult.Message, statusCode: stagingResult.HttpCode ?? 500);

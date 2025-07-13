@@ -73,7 +73,7 @@ namespace OneID.Shared
             services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));
 
 
-            services.AddScoped<ICommandDispatcher, CommandDispatcher>();
+            services.AddScoped<ISender, Sender>();
             services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
 

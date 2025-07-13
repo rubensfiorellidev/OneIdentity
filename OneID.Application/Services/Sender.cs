@@ -4,16 +4,16 @@ using OneID.Application.Interfaces.Services;
 
 namespace OneID.Application.Services
 {
-    public class CommandDispatcher : ICommandDispatcher
+    public class Sender : ISender
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public CommandDispatcher(IServiceProvider serviceProvider)
+        public Sender(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
         }
 
-        public Task<IResult> DispatchAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
+        public Task<IResult> SendAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
             where TCommand : ICommand<IResult>
         {
             var handler = _serviceProvider.GetRequiredService<ICommandHandler<TCommand, IResult>>();

@@ -10,7 +10,7 @@ namespace OneID.Api.Controllers
     public class EmailTestController : MainController
     {
         private readonly ISesEmailSender _emailSender;
-        public EmailTestController(ICommandDispatcher dispatcher, ISesEmailSender emailSender) : base(dispatcher)
+        public EmailTestController(ISender dispatcher, ISesEmailSender emailSender) : base(dispatcher)
         {
             _emailSender = emailSender;
         }

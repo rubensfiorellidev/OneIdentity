@@ -10,7 +10,7 @@ namespace OneID.Api.Controllers
     public class AlertSettingsController : MainController
     {
         private readonly IAlertSettingsRepository _alertSettingsRepository;
-        public AlertSettingsController(ICommandDispatcher dispatcher, IAlertSettingsRepository alertSettingsRepository) : base(dispatcher)
+        public AlertSettingsController(ISender dispatcher, IAlertSettingsRepository alertSettingsRepository) : base(dispatcher)
         {
             _alertSettingsRepository = alertSettingsRepository;
         }

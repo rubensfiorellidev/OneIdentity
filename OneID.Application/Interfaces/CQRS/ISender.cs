@@ -8,9 +8,9 @@ namespace OneID.Application.Interfaces.CQRS
         Task<IResult> Handle(TCommand command, CancellationToken cancellationToken);
     }
 
-    public interface ICommandDispatcher
+    public interface ISender
     {
-        Task<IResult> DispatchAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
+        Task<IResult> SendAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
             where TCommand : ICommand<IResult>;
     }
 

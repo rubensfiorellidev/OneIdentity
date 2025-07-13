@@ -31,14 +31,14 @@ namespace OneID.Api.Controllers
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
-        public AuthController(ICommandDispatcher dispatcher,
+        public AuthController(ISender send,
                               JwtProvider jwtProvider,
                               ILogger<AuthController> logger,
                               IOneDbContextFactory contextFactory,
                               IKeycloakAuthService authService,
                               IHashService hashService,
                               ISensitiveDataDecryptionServiceUserAccount decryptionService,
-                              ICurrentUserService currentUser) : base(dispatcher)
+                              ICurrentUserService currentUser) : base(send)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;

@@ -59,7 +59,7 @@ namespace OneID.Application
             services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
             services.AddScoped<IAlertNotifier, AlertNotifier>();
             services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
-            services.AddScoped<ICommandDispatcher, CommandDispatcher>();
+            services.AddScoped<ISender, Sender>();
 
 
             services.AddTransient<ICryptoService>(provider =>

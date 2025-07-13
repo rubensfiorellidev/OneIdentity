@@ -7,8 +7,8 @@ namespace OneID.Api.Controllers
     [ApiController]
     public abstract class MainController : ControllerBase
     {
-        protected readonly ICommandDispatcher Dispatcher;
-        protected MainController(ICommandDispatcher dispatcher) => Dispatcher = dispatcher;
+        protected readonly ISender Send;
+        protected MainController(ISender send) => Send = send;
 
         protected IActionResult CreateResponse(int httpCode, string message, bool success, object result = null)
         {
