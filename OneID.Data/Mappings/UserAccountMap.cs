@@ -144,8 +144,7 @@ namespace OneID.Data.Mappings
             builder.Property(u => u.LastLoginAt)
                    .HasColumnType("timestamptz");
 
-            builder.Property(u => u.KeycloakUserId)
-                   .HasMaxLength(150);
+            builder.Property(u => u.KeycloakUserId);
 
             builder.Ignore(u => u.Events);
             builder.Ignore(u => u.Notifications);

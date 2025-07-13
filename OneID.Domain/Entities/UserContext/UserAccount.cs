@@ -62,7 +62,7 @@ namespace OneID.Domain.Entities.UserContext
         public string LoginManager { get; private set; }
         public DateTimeOffset? LastLoginAt { get; private set; }
 
-        public string KeycloakUserId { get; private set; }
+        public Guid KeycloakUserId { get; private set; }
 
         public IReadOnlyCollection<Event> Events => _events.AsReadOnly();
         public IReadOnlyCollection<Notification> Notifications => _notifications.AsReadOnly();
@@ -106,11 +106,12 @@ namespace OneID.Domain.Entities.UserContext
 
         public void SetLastLoginAt(DateTimeOffset lastLogin) => LastLoginAt = lastLogin;
 
-        public void SetKeycloakUserId(string keycloakUserId)
+        public void SetKeycloakUserId(Guid keycloakUserId)
         {
-            if (string.IsNullOrWhiteSpace(KeycloakUserId))
+            if (KeycloakUserId == Guid.Empty)
                 KeycloakUserId = keycloakUserId;
         }
+
 
         public void SetCorrelationId(Guid correlationId) => CorrelationId = correlationId;
 

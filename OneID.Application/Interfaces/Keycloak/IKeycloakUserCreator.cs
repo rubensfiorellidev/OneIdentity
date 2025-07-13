@@ -2,7 +2,7 @@
 {
     public interface IKeycloakUserCreator
     {
-        Task CreateUserAsync(
+        Task<Guid> CreateUserAsync(
                 string username,
                 string password,
                 string email,

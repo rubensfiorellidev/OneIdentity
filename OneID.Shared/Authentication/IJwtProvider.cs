@@ -6,7 +6,7 @@ namespace OneID.Shared.Authentication
 {
     public interface IJwtProvider
     {
-        Task<AuthResult> GenerateTokenAsync(string userId, string preferredUsername = null, string email = null, string name = null);
+        Task<AuthResult> GenerateTokenAsync(Guid keycloakUserId, string preferredUsername = null, string email = null, string name = null);
         Task<string> EnsureKeysAsync();
         string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor);
         public RsaSecurityKey GetPublicKey();

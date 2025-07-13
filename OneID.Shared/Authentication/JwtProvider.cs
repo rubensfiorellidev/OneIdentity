@@ -67,7 +67,7 @@ namespace OneID.Shared.Authentication
 
             return await File.ReadAllTextAsync(_publicKeyPath);
         }
-        public async Task<AuthResult> GenerateTokenAsync(string userId,
+        public async Task<AuthResult> GenerateTokenAsync(Guid keycloakUserId,
                                                          string preferredUsername = null,
                                                          string email = null,
                                                          string name = null)
@@ -85,6 +85,14 @@ namespace OneID.Shared.Authentication
             var httpContext = _httpContextAccessor.HttpContext;
             var ipAddress = GetClientIpAddress(httpContext);
             var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
+
+            await using var db = _contextFactory.CreateDbContext();
+
+            var user = await db.UserAccounts
+                .FirstOrDefaultAsync(u => u.KeycloakUserId == keycloakUserId)
+                ?? throw new SecurityTokenException("Usuário não encontrado com base no KeycloakUserId");
+
+            var userId = user.Id;
 
             var claims = new List<Claim>
             {

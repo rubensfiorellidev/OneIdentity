@@ -25,7 +25,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
 
             try
             {
-                await _creator.CreateUserAsync(
+                var keycloakUserId = await _creator.CreateUserAsync(
                     msg.Payload.Username,
                     msg.Payload.Password,
                     msg.Payload.Email,
@@ -41,7 +41,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     {
                         Username = msg.Payload.Username,
                         Password = msg.Payload.Password,
-                        Email = msg.Payload.Email
+                        Email = msg.Payload.Email,
+                        KeycloakUserId = keycloakUserId
                     },
                     Cpf = msg.Cpf,
                     FullName = msg.FullName,

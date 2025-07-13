@@ -34,6 +34,7 @@ namespace OneID.Application.Builders
         private string _contractorCnpj;
         private string _contractorName;
         private string _createdBy;
+        private Guid _keycloakUserId;
 
 
         public IUserAccountBuilder WithCorrelationId(Guid correlationId)
@@ -178,6 +179,13 @@ namespace OneID.Application.Builders
             return this;
         }
 
+        public IUserAccountBuilder WithKeycloakUserId(Guid keycloakUserId)
+        {
+            _keycloakUserId = keycloakUserId;
+            return this;
+        }
+
+
         public UserAccount Build()
         {
             var user = new UserAccount(_id, _createdBy);
@@ -205,10 +213,10 @@ namespace OneID.Application.Builders
             user.SetDepartment(_department);
             user.SetFiscalNumberIdentity(_fiscalNumberIdentity);
             user.SetContractor(_contractorCnpj, _contractorName);
+            user.SetKeycloakUserId(_keycloakUserId);
 
             return user;
         }
-
 
     }
 

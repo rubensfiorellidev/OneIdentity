@@ -87,7 +87,14 @@ namespace OneID.Api.Controllers
             var loginHash = await _hashService.ComputeSha3HashAsync(request.Login);
 
             await using var db = _contextFactory.CreateDbContext();
-            var user = await db.UserAccounts.FirstOrDefaultAsync(u => u.LoginHash == loginHash);
+
+            if (!Guid.TryParse(keycloakUserId, out var parsedId))
+                throw new InvalidOperationException("KeycloakUserId inválido.");
+
+            var user = await db.UserAccounts
+                .Where(u => u.KeycloakUserId == parsedId)
+                .OrderByDescending(u => u.ProvisioningAt)
+                .FirstOrDefaultAsync();
 
             if (user is null)
                 return Unauthorized("Usuário autenticado, mas não registrado no sistema.");
@@ -95,7 +102,7 @@ namespace OneID.Api.Controllers
             var decryptedUser = await _decryptionService.DecryptSensitiveDataAsync(user);
 
             var authResult = await _jwtProvider.GenerateTokenAsync(
-                decryptedUser.Id,
+                decryptedUser.KeycloakUserId,
                 preferredUsername,
                 email,
                 name

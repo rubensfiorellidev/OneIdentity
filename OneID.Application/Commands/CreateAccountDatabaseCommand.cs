@@ -9,6 +9,7 @@ namespace OneID.Application.Commands
         public Guid CorrelationId { get; init; }
 
 
+        public Guid KeycloakUserId { get; init; }
         public string FullName { get; init; }
         public string SocialName { get; init; }
         public string Cpf { get; init; }

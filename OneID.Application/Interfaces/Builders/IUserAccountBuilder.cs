@@ -29,7 +29,7 @@ namespace OneID.Application.Interfaces.Builders
         IUserAccountBuilder WithFiscalNumberIdentity(string fiscalNumberIdentity);
         IUserAccountBuilder WithContractor(string contractorCnpj, string contractorName);
         IUserAccountBuilder WithCreatedBy(string createdBy);
-
+        IUserAccountBuilder WithKeycloakUserId(Guid keycloakUserId);
         UserAccount Build();
     }
 

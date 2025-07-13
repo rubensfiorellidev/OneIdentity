@@ -144,6 +144,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         context.Saga.KeycloakData.Username = context.Message.KeycloakPayload.Username;
                         context.Saga.KeycloakData.Password = context.Message.KeycloakPayload.Password;
                         context.Saga.KeycloakData.Email = context.Message.KeycloakPayload.Email;
+                        context.Saga.KeycloakData.KeycloakUserId = context.Message.KeycloakPayload.KeycloakUserId;
 
                     })
                     .Publish(context => new AdmissionAuditRequested
@@ -204,7 +205,8 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .Publish(context => new CreateAccountDatabaseCommand
                     {
                         CorrelationId = context.Saga.CorrelationId,
-                        Login = context.Saga.KeycloakData.Username
+                        Login = context.Saga.KeycloakData.Username,
+                        KeycloakUserId = context.Saga.KeycloakData.KeycloakUserId
                     })
                     .TransitionTo(WaitingDatabaseResult),
 

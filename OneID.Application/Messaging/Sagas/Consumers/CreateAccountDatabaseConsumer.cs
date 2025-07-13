@@ -90,6 +90,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                     .WithFiscalNumberIdentity(staging.FiscalNumberIdentity)
                     .WithContractor(staging.ContractorCnpj, staging.ContractorName)
                     .WithCreatedBy(staging.CreatedBy)
+                    .WithKeycloakUserId(context.Message.KeycloakUserId)
                     .Build();
 
                 if (!userAccount.IsValid())
