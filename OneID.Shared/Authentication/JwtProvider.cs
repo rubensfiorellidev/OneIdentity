@@ -319,6 +319,11 @@ namespace OneID.Shared.Authentication
 
             claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
 
+            if (roles.Any())
+            {
+                claims.Add(new Claim("roles", JsonConvert.SerializeObject(roles)));
+            }
+
             return claims;
         }
 

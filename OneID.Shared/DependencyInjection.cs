@@ -111,6 +111,7 @@ namespace OneID.Shared
                     ValidIssuer = issuer,
                     ValidAudience = audience,
                     IssuerSigningKey = rsaKey
+
                 };
 
                 options.Events = new JwtBearerEvents
