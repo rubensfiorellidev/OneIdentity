@@ -42,6 +42,7 @@ namespace OneID.Data
             services.AddScoped<IAdmissionAlertRepository, AdmissionAlertRepository>();
             services.AddScoped<IAccessPackageQueryRepository, AccessPackageQueryRepository>();
             services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
+            services.AddScoped<IUserRoleWriterRepository, UserRoleWriterRepository>();
 
 
             return services;

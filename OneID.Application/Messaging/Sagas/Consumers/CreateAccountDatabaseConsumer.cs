@@ -23,6 +23,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
         private readonly IQueryAccountAdmissionStagingRepository _stagingRepository;
         private readonly IAccessPackageClaimService _claimService;
         private readonly IUserClaimWriterRepository _claimWriter;
+        private readonly IAccessPackageRoleService _roleService;
+        private readonly IUserRoleWriterRepository _roleWriter;
+
 
 
         public CreateAccountDatabaseConsumer(
@@ -34,7 +37,9 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             IEventDispatcher dispatcher,
             IQueryAccountAdmissionStagingRepository stagingRepository,
             IAccessPackageClaimService claimService,
-            IUserClaimWriterRepository claimWriter)
+            IUserClaimWriterRepository claimWriter,
+            IAccessPackageRoleService roleService,
+            IUserRoleWriterRepository roleWriter)
         {
             _builder = builder;
             _repository = repository;
@@ -45,6 +50,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
             _stagingRepository = stagingRepository;
             _claimService = claimService;
             _claimWriter = claimWriter;
+            _roleService = roleService;
+            _roleWriter = roleWriter;
         }
 
         public async Task Consume(ConsumeContext<CreateAccountDatabaseCommand> context)
@@ -131,6 +138,14 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 {
                     await _claimWriter.AddRangeAsync(resolvedClaims, context.CancellationToken);
                 }
+
+                var resolvedRoles = await _roleService.ResolveRolesForUserAsync(userAccount, context.CancellationToken);
+
+                if (resolvedRoles.Any())
+                {
+                    await _roleWriter.AddRangeAsync(resolvedRoles, context.CancellationToken);
+                }
+
 
                 if (!result.IsSuccess)
                 {

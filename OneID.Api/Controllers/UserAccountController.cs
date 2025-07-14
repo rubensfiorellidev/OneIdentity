@@ -8,7 +8,6 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.ValueObjects;
-using OtpNet;
 using System.Security.Claims;
 
 #nullable disable
@@ -50,13 +49,6 @@ namespace OneID.Api.Controllers
             {
                 if (!ModelState.IsValid)
                     return UnprocessableEntity(ModelState);
-
-                var totp = new Totp(Base32Encoding.ToBytes(OperatorSecret));
-                if (!totp.VerifyTotp(request.TotpCode, out _, VerificationWindow.RfcSpecifiedNetworkDelay))
-                {
-                    _logger.LogWarning("TOTP inválido para o usuário {User}", User.Identity?.Name);
-                    return Unauthorized("Código TOTP inválido");
-                }
 
                 var correlationId = Guid.NewGuid();
                 var cpfHash = await _hashService.ComputeSha3HashAsync(request.Cpf);

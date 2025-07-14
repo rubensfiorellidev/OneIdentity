@@ -60,7 +60,7 @@ namespace OneID.Application
             services.AddScoped<IAlertNotifier, AlertNotifier>();
             services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
             services.AddScoped<ISender, Sender>();
-
+            services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
 
             services.AddTransient<ICryptoService>(provider =>
             {
