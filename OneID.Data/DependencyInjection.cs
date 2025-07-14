@@ -12,6 +12,7 @@ using OneID.Data.Interfaces;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.DeduplicationSagaContext;
 using OneID.Data.Repositories.RefreshTokens;
+using OneID.Data.Repositories.RolesContext;
 using OneID.Data.Repositories.StoredEvents;
 using OneID.Data.Repositories.UsersContext;
 using OneID.Domain.Interfaces;
@@ -43,6 +44,8 @@ namespace OneID.Data
             services.AddScoped<IAccessPackageQueryRepository, AccessPackageQueryRepository>();
             services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
             services.AddScoped<IUserRoleWriterRepository, UserRoleWriterRepository>();
+            services.AddScoped<IRoleWriterRepository, RoleWriterRepository>();
+
 
 
             return services;

@@ -120,6 +120,18 @@ namespace OneID.Data.DataContexts
 
                 entity.Property(r => r.IsActive)
                        .IsRequired();
+
+                entity.Property(x => x.ProvisioningAt)
+                      .IsRequired();
+
+                entity.Property(x => x.UpdatedAt);
+
+                entity.Property(x => x.CreatedBy)
+                      .HasMaxLength(100);
+
+                entity.Property(x => x.UpdatedBy)
+                      .HasMaxLength(100);
+
             });
 
             // Mapeamento de UserClaim
