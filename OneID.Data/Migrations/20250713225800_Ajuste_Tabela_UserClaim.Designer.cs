@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250713225800_Ajuste_Tabela_UserClaim")]
+    partial class Ajuste_Tabela_UserClaim
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -632,9 +635,6 @@ namespace OneID.Data.Migrations
                         .HasMaxLength(250)
                         .HasColumnType("character varying(250)");
 
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -1092,7 +1092,7 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.UserRole", b =>
                 {
                     b.HasOne("OneID.Domain.Entities.UserContext.Role", "Role")
-                        .WithMany()
+                        .WithMany("Users")
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -1115,6 +1115,11 @@ namespace OneID.Data.Migrations
             modelBuilder.Entity("OneID.Domain.Entities.Packages.AccessPackage", b =>
                 {
                     b.Navigation("Items");
+                });
+
+            modelBuilder.Entity("OneID.Domain.Entities.UserContext.Role", b =>
+                {
+                    b.Navigation("Users");
                 });
 
             modelBuilder.Entity("OneID.Domain.Entities.UserContext.ServiceUser", b =>

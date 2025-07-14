@@ -8,6 +8,7 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OneID.Domain.ValueObjects;
+using OtpNet;
 using System.Security.Claims;
 
 #nullable disable
@@ -21,6 +22,9 @@ namespace OneID.Api.Controllers
         private readonly IHashService _hashService;
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
+
+        private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
+
 
 
         public UserAccountController(
@@ -39,13 +43,20 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("start-provisioning")]
-        [Authorize]
-        public async Task<IActionResult> StartProvisioningAsync([FromBody] AccountRequest request, CancellationToken cancellationToken)
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> StartProvisioningAsync([FromBody] SecureProvisioningRequest request, CancellationToken cancellationToken)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return UnprocessableEntity(ModelState);
+
+                var totp = new Totp(Base32Encoding.ToBytes(OperatorSecret));
+                if (!totp.VerifyTotp(request.TotpCode, out _, VerificationWindow.RfcSpecifiedNetworkDelay))
+                {
+                    _logger.LogWarning("TOTP inválido para o usuário {User}", User.Identity?.Name);
+                    return Unauthorized("Código TOTP inválido");
+                }
 
                 var correlationId = Guid.NewGuid();
                 var cpfHash = await _hashService.ComputeSha3HashAsync(request.Cpf);

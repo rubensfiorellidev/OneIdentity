@@ -312,6 +312,13 @@ namespace OneID.Shared.Authentication
                 .Select(c => new Claim(c.Type, c.Value))
                 .ToListAsync();
 
+            var roles = await db.UserRoles
+                .Where(ur => ur.UserAccountId == userId)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
             return claims;
         }
 

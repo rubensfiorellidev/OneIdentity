@@ -94,7 +94,7 @@ namespace OneID.Data.DataContexts
                     .OnDelete(DeleteBehavior.Cascade);
 
                 entity.HasOne(x => x.Role)
-                      .WithMany(r => r.Users)
+                      .WithMany()
                       .HasForeignKey(x => x.RoleId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
@@ -117,6 +117,9 @@ namespace OneID.Data.DataContexts
 
                 entity.Property(x => x.Description)
                       .HasMaxLength(250);
+
+                entity.Property(r => r.IsActive)
+                       .IsRequired();
             });
 
             // Mapeamento de UserClaim
@@ -139,9 +142,10 @@ namespace OneID.Data.DataContexts
                       .HasMaxLength(250)
                       .IsRequired();
 
-                entity.HasOne<UserAccount>()
+                entity.HasOne(x => x.User)
                       .WithMany()
                       .HasForeignKey(x => x.UserAccountId)
+                      .HasConstraintName("FK_UserClaims_UserAccounts")
                       .OnDelete(DeleteBehavior.Cascade);
 
             });
