@@ -7,8 +7,8 @@ namespace OneID.Application.Messaging.Sagas.Contracts.Events
 {
     public record StartCreateAccountSaga : CorrelatedBy<Guid>
     {
-        public Guid CorrelationId { get; init; }
-        public KeycloakPayload Payload { get; init; }
+        public Guid CorrelationId { get; set; }
+        public KeycloakPayload KeycloakPayload { get; set; }
 
     }
 

@@ -17,13 +17,13 @@ namespace OneID.Data.Repositories.UsersContext
             _logger = logger;
         }
 
-        public async Task SaveAsync(AccountPjAdmissionStaging entity, CancellationToken cancellationToken)
+        public async Task SaveAsync(AccountAdmissionStaging entity, CancellationToken cancellationToken)
         {
             try
             {
                 await using var dbContext = _contextFactory.CreateDbContext();
 
-                dbContext.Set<AccountPjAdmissionStaging>().Add(entity);
+                dbContext.Set<AccountAdmissionStaging>().Add(entity);
 
                 await dbContext.SaveChangesAsync(cancellationToken);
                 _logger.LogInformation("Staging salvo com sucesso: {CorrelationId}", entity.CorrelationId);

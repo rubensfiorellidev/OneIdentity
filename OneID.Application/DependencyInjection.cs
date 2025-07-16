@@ -1,9 +1,8 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OneID.Application.Builders;
-using OneID.Application.CommandHandlers;
-using OneID.Application.Commands;
 using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
 using OneID.Application.Interfaces.CQRS;
@@ -29,6 +28,12 @@ namespace OneID.Application
         {
             services.Configure<KeycloakOptions>(configuration.GetSection("Keycloak"));
 
+            services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>((provider, client) =>
+            {
+                var options = provider.GetRequiredService<IOptions<KeycloakOptions>>().Value;
+                client.BaseAddress = new Uri($"{options.BaseUrl.TrimEnd('/')}/");
+            });
+
             services.AddHttpClient("KeycloakClient", client =>
             {
                 var keycloak = configuration.GetSection("Keycloak").Get<KeycloakOptions>();
@@ -41,6 +46,7 @@ namespace OneID.Application
                 client.BaseAddress = new Uri($"{keycloak.BaseUrl.TrimEnd('/')}/");
             });
 
+
             services.AddScoped<IUserLoginGenerator, UserLoginGenerator>();
             services.AddScoped<IKeycloakUserCreator, KeycloakUserCreator>();
             services.AddScoped<IKeycloakUserChecker, KeycloakUserChecker>();
@@ -50,9 +56,11 @@ namespace OneID.Application
             services.AddScoped<IFactoryEventStrategy, FactoryEventStrategy>();
             services.AddScoped<IEventDispatcher, EventDispatcher>();
             services.AddScoped<IUserAccountBuilder, UserAccountBuilder>();
-            services.AddScoped<ICommandHandler<CreateUserAccountCommand, IResult>, CreateUserAccountCommandHandler>();
-
-
+            services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
+            services.AddScoped<IAlertNotifier, AlertNotifier>();
+            services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
+            services.AddScoped<ISender, Sender>();
+            services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
 
             services.AddTransient<ICryptoService>(provider =>
             {
@@ -70,7 +78,7 @@ namespace OneID.Application
 
             services.AddTransient<IHashService, Sha3HashService>();
             services.AddTransient<ISensitiveDataEncryptionServiceUserAccount, SensitiveDataEncryptionServiceUserAccount>();
-
+            services.AddTransient<ISensitiveDataDecryptionServiceUserAccount, SensitiveDataDecryptionServiceUserAccount>();
 
 
             return services;

@@ -27,7 +27,7 @@ namespace OneID.Application.Services.KeyCloakServices
             _clientSecret = configuration["Keycloak:ClientSecret"];
         }
 
-        public async Task CreateUserAsync(
+        public async Task<Guid> CreateUserAsync(
             string username,
             string password,
             string email,
@@ -48,13 +48,13 @@ namespace OneID.Application.Services.KeyCloakServices
                 emailVerified = true,
                 credentials = new[]
                 {
-                new
-                {
-                    type = "password",
-                    value = password,
-                    temporary = true
+                    new
+                    {
+                        type = "password",
+                        value = password,
+                        temporary = true
+                    }
                 }
-            }
             };
 
             var json = JsonConvert.SerializeObject(payload);
@@ -73,6 +73,16 @@ namespace OneID.Application.Services.KeyCloakServices
                 var content = await response.Content.ReadAsStringAsync(ct);
                 throw new InvalidOperationException($"Erro ao criar usuário no Keycloak: {response.StatusCode} - {content}");
             }
+
+            var locationHeader = response.Headers.Location?.ToString();
+            if (string.IsNullOrWhiteSpace(locationHeader))
+                throw new InvalidOperationException("Não foi possível recuperar o ID do usuário do header 'Location'");
+
+            var idSegment = locationHeader.Split('/').LastOrDefault();
+            if (!Guid.TryParse(idSegment, out var parsedId))
+                throw new InvalidOperationException($"ID do usuário do Keycloak não é um Guid válido: {idSegment}");
+
+            return parsedId;
         }
     }
 

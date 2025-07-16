@@ -11,5 +11,9 @@
         string JwtToken { get; }
         object AdditionalData { get; }
 
+        TResult Match<TResult>(
+            Func<IResult, TResult> onSuccess,
+            Func<IResult, TResult> onError);
+
     }
 }

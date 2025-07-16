@@ -7,5 +7,6 @@ namespace OneID.Application.Messaging.Sagas.Contracts.Events
     {
         public Guid CorrelationId { get; init; }
         public string Login { get; init; }
+        public string CorporateEmail { get; init; }
     }
 }

@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Logging;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Results;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Results;
 
 #nullable disable
 namespace OneID.Data.Repositories.UsersContext
@@ -13,6 +13,7 @@ namespace OneID.Data.Repositories.UsersContext
     {
         private readonly IOneDbContextFactory _dbContextFactory;
         private readonly ILogger<AddUserAccountRepository> _logger;
+
         public AddUserAccountRepository(IOneDbContextFactory dbContextFactory,
                                         ILogger<AddUserAccountRepository> logger)
         {
@@ -24,33 +25,45 @@ namespace OneID.Data.Repositories.UsersContext
         {
             await using var dbContext = _dbContextFactory.CreateDbContext();
 
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+            var strategy = dbContext.Database.CreateExecutionStrategy();
 
             try
             {
-                await dbContext.UserAccounts.AddAsync(entity, cancellationToken);
+                return await strategy.ExecuteAsync(async () =>
+                {
+                    await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-                var rows = await dbContext.SaveChangesAsync(cancellationToken);
+                    try
+                    {
+                        await dbContext.UserAccounts.AddAsync(entity, cancellationToken);
 
-                await transaction.CommitAsync(cancellationToken);
+                        var rows = await dbContext.SaveChangesAsync(cancellationToken);
 
-                _logger.LogInformation("UserAccount {Id} persisted successfully with {Rows} rows affected.", entity.Id, rows);
+                        await transaction.CommitAsync(cancellationToken);
 
-                return Result.Success($"UserAccount {entity.Id} persisted successfully.", entity);
+                        _logger.LogInformation("UserAccount {Id} persisted successfully with {Rows} rows affected.", entity.Id, rows);
+
+                        return Result.Success($"UserAccount {entity.Id} persisted successfully.", entity);
+                    }
+                    catch (DbUpdateException dbEx)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        _logger.LogError(dbEx, "Database update exception while persisting UserAccount {Id}.", entity.Id);
+                        return Result.Failure("Database update error occurred while persisting the UserAccount.");
+                    }
+                    catch (Exception ex)
+                    {
+                        await transaction.RollbackAsync(cancellationToken);
+                        _logger.LogError(ex, "Unexpected error while persisting UserAccount {Id}.", entity.Id);
+                        return Result.Failure("Unexpected error occurred while persisting the UserAccount.");
+                    }
+                });
             }
-            catch (DbUpdateException dbEx)
+            catch (Exception outerEx)
             {
-                await transaction.RollbackAsync(cancellationToken);
-                _logger.LogError(dbEx, "Database update exception while persisting UserAccount {Id}.", entity.Id);
-                return Result.Failure("Database update error occurred while persisting the UserAccount.");
+                _logger.LogError(outerEx, "Execution strategy failed for UserAccount {Id}.", entity.Id);
+                return Result.Failure("Execution strategy failure while persisting the UserAccount.");
             }
-            catch (Exception ex)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-                _logger.LogError(ex, "Unexpected error while persisting UserAccount {Id}.", entity.Id);
-                return Result.Failure("Unexpected error occurred while persisting the UserAccount.");
-            }
-
         }
     }
 }

@@ -1,7 +1,10 @@
 ﻿#nullable disable
+using OneID;
+
+#nullable disable
 using OneID.Application.Interfaces.Services;
 
-namespace OneID.Domain.Results
+namespace OneID.Application.Results
 {
     public class Result : IResult
     {
@@ -96,6 +99,13 @@ namespace OneID.Domain.Results
         public static Result NotFound(int httpCode, string message = "Resource not found", object additionalData = null)
         {
             return Failure(httpCode, message, additionalData: additionalData);
+        }
+
+        public TResult Match<TResult>(
+            Func<IResult, TResult> onSuccess,
+            Func<IResult, TResult> onError)
+        {
+            return IsSuccess ? onSuccess(this) : onError(this);
         }
 
     }

@@ -24,12 +24,11 @@ namespace OneID.Domain.EventsFromDomain
             Metadata[EntityTypeKey] = "UserAccount";
             Metadata[ActionKey] = "Created";
             Metadata[AccountIdKey] = AccountId;
-            Metadata[CreatedByKey] = CreatedBy;
+            Metadata[CreatedByKey] = createdBy;
             Metadata[AggregateTypeKey] = AggregateType;
             Metadata[DescriptionKey] = Description;
         }
         public string AccountId { get; init; }
         public string AggregateType { get; init; }
-
     }
 }

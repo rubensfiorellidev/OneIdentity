@@ -1,16 +1,19 @@
 ﻿using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Services;
 #nullable disable
 namespace OneID.Application.Commands
 {
-    public sealed record CreateAccountStagingCommand : ICommand
+    public sealed record CreateAccountStagingCommand : ICommand<IResult>
     {
         public AccountRequest Request { get; }
-        public CreateAccountStagingCommand(AccountRequest request)
+        public string CreatedBy { get; }
+
+        public CreateAccountStagingCommand(AccountRequest request, string createdBy)
         {
             Request = request;
+            CreatedBy = createdBy;
         }
-
     }
 
 }

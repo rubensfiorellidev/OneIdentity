@@ -39,7 +39,8 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 await context.Publish(new LoginCreated
                 {
                     CorrelationId = message.CorrelationId,
-                    Login = login
+                    Login = login,
+                    CorporateEmail = $"{login}@onesecureid.com"
                 });
             }
             catch (Exception ex)

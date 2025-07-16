@@ -1,11 +1,13 @@
 ﻿using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using OneID.Application.Results;
+using OneID.Data.Interfaces;
 using OneID.Domain.Interfaces;
-using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -26,11 +28,13 @@ namespace OneID.Shared.Authentication
         private readonly string _publicKeyPath;
         private readonly string _metadataPath;
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
+        private readonly IOneDbContextFactory _contextFactory;
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
                            IHttpContextAccessor httpContextAccessor,
-                           ILogger<JwtProvider> logger)
+                           ILogger<JwtProvider> logger,
+                           IOneDbContextFactory contextFactory)
         {
             _jwtOptions = jwtOptions.Value;
             _refreshTokenService = refreshTokenService;
@@ -52,6 +56,7 @@ namespace OneID.Shared.Authentication
             }
 
             _logger = logger;
+            _contextFactory = contextFactory;
         }
         public async Task<string> EnsureKeysAsync()
         {
@@ -62,14 +67,15 @@ namespace OneID.Shared.Authentication
 
             return await File.ReadAllTextAsync(_publicKeyPath);
         }
-        public async Task<AuthResult> GenerateTokenAsync(string upn)
+        public async Task<AuthResult> GenerateTokenAsync(Guid keycloakUserId,
+                                                         string preferredUsername = null,
+                                                         string email = null,
+                                                         string name = null)
         {
             var handler = new JsonWebTokenHandler();
-
             RsaSecurityKey key = GetRSAKey();
 
             string keyId = GenerateKeyId(key);
-
             var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
             jwk.KeyId = keyId;
             jwk.Alg = SecurityAlgorithms.RsaSha256;
@@ -80,15 +86,32 @@ namespace OneID.Shared.Authentication
             var ipAddress = GetClientIpAddress(httpContext);
             var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
 
+            await using var db = _contextFactory.CreateDbContext();
+
+            var user = await db.UserAccounts
+                .FirstOrDefaultAsync(u => u.KeycloakUserId == keycloakUserId)
+                ?? throw new SecurityTokenException("Usuário não encontrado com base no KeycloakUserId");
+
+            var userId = user.Id;
+
             var claims = new List<Claim>
-        {
-            new(JwtClaims.Sub, upn),
-            new(JwtClaims.UniqueName, upn),
-            new(JwtClaims.Jti, Ulid.NewUlid().ToString()),
-            new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new("ip", ipAddress),
-            new("user_agent", userAgent)
-        };
+            {
+                new(JwtClaims.Sub, userId),
+                new(JwtClaims.UniqueName, preferredUsername ?? userId),
+                new(JwtClaims.Jti, Ulid.NewUlid().ToString()),
+                new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+                new("ip", ipAddress),
+                new("user_agent", userAgent)
+            };
+
+            if (!string.IsNullOrWhiteSpace(email))
+                claims.Add(new Claim("email", email));
+
+            if (!string.IsNullOrWhiteSpace(name))
+                claims.Add(new Claim("name", name));
+
+            var customClaims = await GetUserClaimsAsync(userId);
+            claims.AddRange(customClaims);
 
             var descriptor = new SecurityTokenDescriptor
             {
@@ -102,7 +125,7 @@ namespace OneID.Shared.Authentication
 
             var jws = handler.CreateToken(descriptor);
 
-            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(upn, jws);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(userId, jws);
 
             return new AuthResult
             {
@@ -203,7 +226,7 @@ namespace OneID.Shared.Authentication
 
             return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
-        public string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan validFor)
+        public string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor)
         {
             var handler = new JsonWebTokenHandler();
             var key = GetRSAKey();
@@ -218,7 +241,7 @@ namespace OneID.Shared.Authentication
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.Add(validFor),
+                Expires = DateTime.UtcNow.Add(validFor ?? _jwtOptions.AccessTokenTotpExpires),
                 Subject = claimsIdentity,
                 SigningCredentials = signingCredentials
             };
@@ -278,6 +301,30 @@ namespace OneID.Shared.Authentication
                 File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
                 _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
             }
+        }
+
+        private async Task<List<Claim>> GetUserClaimsAsync(string userId)
+        {
+            await using var db = _contextFactory.CreateDbContext();
+
+            var claims = await db.UserClaims
+                .Where(c => c.UserAccountId == userId)
+                .Select(c => new Claim(c.Type, c.Value))
+                .ToListAsync();
+
+            var roles = await db.UserRoles
+                .Where(ur => ur.UserAccountId == userId)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+
+            claims.AddRange(roles.Select(role => new Claim(ClaimTypes.Role, role)));
+
+            if (roles.Any())
+            {
+                claims.Add(new Claim("roles", JsonConvert.SerializeObject(roles)));
+            }
+
+            return claims;
         }
 
     }

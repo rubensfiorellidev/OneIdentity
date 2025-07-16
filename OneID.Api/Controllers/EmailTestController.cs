@@ -1,5 +1,5 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.SES;
 
 #nullable disable
@@ -10,7 +10,7 @@ namespace OneID.Api.Controllers
     public class EmailTestController : MainController
     {
         private readonly ISesEmailSender _emailSender;
-        public EmailTestController(ISender sender, ISesEmailSender emailSender) : base(sender)
+        public EmailTestController(ISender dispatcher, ISesEmailSender emailSender) : base(dispatcher)
         {
             _emailSender = emailSender;
         }

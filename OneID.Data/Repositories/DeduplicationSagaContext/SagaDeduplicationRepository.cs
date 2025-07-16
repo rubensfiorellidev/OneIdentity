@@ -5,7 +5,7 @@ using OneID.Domain.Entities.Sagas;
 
 namespace OneID.Data.Repositories.DeduplicationSagaContext
 {
-    public sealed class SagaDeduplicationRepository : ISagaDeduplicationRepository
+    public sealed class SagaDeduplicationRepository : IDeduplicationRepository
     {
         IOneDbContextFactory _dbContextFactory;
 

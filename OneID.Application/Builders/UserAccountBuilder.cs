@@ -1,13 +1,17 @@
 ﻿using OneID.Application.Interfaces.Builders;
 using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Enums;
+using OneID.Domain.ValueObjects;
 
 #nullable disable
 namespace OneID.Application.Builders
 {
     public class UserAccountBuilder : IUserAccountBuilder
     {
+        private Guid _correlationId;
+
         private string _id = $"{Ulid.NewUlid()}";
+        private string _firstName;
+        private string _lastName;
         private string _fullName;
         private string _socialName;
         private string _cpf;
@@ -19,14 +23,37 @@ namespace OneID.Application.Builders
         private string _login;
         private string _corporateEmail;
         private string _personalEmail;
-        private EnumStatusUserAccount _statusUserProfile;
-        private EnumTypeUserAccount _typeUserProfile;
+        private string _phoneNumber;
+        private UserAccountStatus _statusUserProfile;
+        private TypeUserAccount _typeUserProfile;
         private string _loginManager;
-        private string _positionHeldId;
+        private string _jobTitleId;
+        private string _jobTitle;
+        private string _departmentId;
+        private string _department;
         private string _fiscalNumberIdentity;
         private string _contractorCnpj;
         private string _contractorName;
         private string _createdBy;
+        private Guid _keycloakUserId;
+
+
+        public IUserAccountBuilder WithCorrelationId(Guid correlationId)
+        {
+            _correlationId = correlationId;
+            return this;
+        }
+        public IUserAccountBuilder WithFirstName(string firstName)
+        {
+            _firstName = firstName;
+            return this;
+        }
+
+        public IUserAccountBuilder WithLastName(string lastName)
+        {
+            _lastName = lastName;
+            return this;
+        }
 
         public IUserAccountBuilder WithFullName(string fullName)
         {
@@ -94,13 +121,19 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IUserAccountBuilder WithStatusUserProfile(EnumStatusUserAccount status)
+        public IUserAccountBuilder WithPhoneNumber(string phoneNumber)
+        {
+            _phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public IUserAccountBuilder WithStatusUserAccount(UserAccountStatus status)
         {
             _statusUserProfile = status;
             return this;
         }
 
-        public IUserAccountBuilder WithTypeUserProfile(EnumTypeUserAccount type)
+        public IUserAccountBuilder WithTypeUserAccount(TypeUserAccount type)
         {
             _typeUserProfile = type;
             return this;
@@ -112,9 +145,25 @@ namespace OneID.Application.Builders
             return this;
         }
 
-        public IUserAccountBuilder WithPositionHeldId(string positionHeldId)
+        public IUserAccountBuilder WithJobTitleId(string jobTitleId)
         {
-            _positionHeldId = positionHeldId;
+            _jobTitleId = jobTitleId;
+            return this;
+        }
+        public IUserAccountBuilder WithJobTitle(string jobTitle)
+        {
+            _jobTitle = jobTitle;
+            return this;
+        }
+        public IUserAccountBuilder WithDepartmentId(string departmentId)
+        {
+            _departmentId = departmentId;
+            return this;
+        }
+
+        public IUserAccountBuilder WithDepartment(string department)
+        {
+            _department = department;
             return this;
         }
 
@@ -137,10 +186,20 @@ namespace OneID.Application.Builders
             return this;
         }
 
+        public IUserAccountBuilder WithKeycloakUserId(Guid keycloakUserId)
+        {
+            _keycloakUserId = keycloakUserId;
+            return this;
+        }
+
+
         public UserAccount Build()
         {
             var user = new UserAccount(_id, _createdBy);
 
+            user.SetCorrelationId(_correlationId);
+            user.SetFirstName(_firstName);
+            user.SetLastname(_lastName);
             user.SetFullName(_fullName);
             user.SetSocialName(_socialName);
             user.SetCpf(_cpf);
@@ -152,12 +211,17 @@ namespace OneID.Application.Builders
             user.SetLogin(_login);
             user.SetCorporateEmail(_corporateEmail);
             user.SetPersonalEmail(_personalEmail);
-            user.SetStatusUserProfile(_statusUserProfile);
-            user.SetTypeUserProfile(_typeUserProfile);
+            user.SetPhoneNumber(_phoneNumber);
+            user.SetStatusUserAccount(_statusUserProfile);
+            user.SetTypeUserAccount(_typeUserProfile);
             user.SetLoginManager(_loginManager);
-            user.SetPositionHeldId(_positionHeldId);
+            user.SetJobTitleId(_jobTitleId);
+            user.SetJobTitle(_jobTitle);
+            user.SetDepartmentId(_departmentId);
+            user.SetDepartment(_department);
             user.SetFiscalNumberIdentity(_fiscalNumberIdentity);
             user.SetContractor(_contractorCnpj, _contractorName);
+            user.SetKeycloakUserId(_keycloakUserId);
 
             return user;
         }

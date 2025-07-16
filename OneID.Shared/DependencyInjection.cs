@@ -5,7 +5,6 @@ using Amazon.SimpleEmail;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.Extensions.Configuration;
@@ -15,13 +14,15 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using OneID.Application.Abstractions;
+using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.SES;
+using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
-using OneID.Data.DataContexts;
-using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
+using OneID.Shared.Services;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
@@ -47,13 +48,33 @@ namespace OneID.Shared
             services.AddAWSService<IAmazonSimpleEmailService>();
             services.Configure<SesSettings>(configuration.GetSection("SesSettings"));
             services.AddSingleton<ISesEmailSender, SesEmailSender>();
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 
-            services.AddMediatR(cfg =>
-            {
-                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
-                cfg.AddOpenBehavior(typeof(RequestLoggingPipelineBehavior<,>));
-            });
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+
+            services.Scan(scan => scan
+                .FromApplicationDependencies()
+                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
+                .AsImplementedInterfaces()
+                .WithScopedLifetime());
+
+            services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));
+
+
+            services.AddScoped<ISender, Sender>();
+            services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
 
             return services;
@@ -74,10 +95,6 @@ namespace OneID.Shared
             rsa.FromXmlString(xmlKey);
             var rsaKey = new RsaSecurityKey(rsa);
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-               .AddEntityFrameworkStores<OneDbContext>()
-               .AddDefaultTokenProviders();
-
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -94,6 +111,7 @@ namespace OneID.Shared
                     ValidIssuer = issuer,
                     ValidAudience = audience,
                     IssuerSigningKey = rsaKey
+
                 };
 
                 options.Events = new JwtBearerEvents
@@ -124,7 +142,6 @@ namespace OneID.Shared
 
             return services;
         }
-
         #endregion
 
         #region Pipeline

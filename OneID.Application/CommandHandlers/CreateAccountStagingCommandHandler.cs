@@ -7,8 +7,8 @@ using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
+using OneID.Application.Results;
 using OneID.Domain.Entities.UserContext;
-using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers
 {
@@ -19,16 +19,14 @@ namespace OneID.Application.CommandHandlers
         private readonly ILogger<CreateAccountStagingCommandHandler> _logger;
         private readonly IUserAccountStagingBuilder _builder;
         private readonly IDeduplicationKeyRepository _keyRepository;
-        private readonly ISagaDeduplicationRepository _deduplicationRepository;
-
-
+        private readonly IDeduplicationRepository _deduplicationRepository;
 
         public CreateAccountStagingCommandHandler(
             IAddUserAccountStagingRepository repository,
             ILogger<CreateAccountStagingCommandHandler> logger,
             IUserAccountStagingBuilder userAccountStagingBuilder,
             IDeduplicationKeyRepository keyRepository,
-            ISagaDeduplicationRepository deduplicationRepository,
+            IDeduplicationRepository deduplicationRepository,
             IBus publishEndpoint)
         {
             _repository = repository;
@@ -41,59 +39,72 @@ namespace OneID.Application.CommandHandlers
 
         public async Task<IResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)
         {
-            var payload = await _builder.BuildAsync(command.Request);
+            var request = await _builder.BuildAsync(command.Request);
 
-            if (await _keyRepository.ExistsAsync(payload.CpfHash, "create-account", cancellationToken))
+            if (await _keyRepository.ExistsAsync(request.CpfHash, "create-account", cancellationToken))
             {
                 return Result.Conflict("Já existe um processo de admissão em andamento para esse CPF.");
             }
 
-            if (await _deduplicationRepository.ExistsAsync(payload.CorrelationId, cancellationToken))
+            if (await _deduplicationRepository.ExistsAsync(request.CorrelationId, cancellationToken))
             {
                 return Result.Conflict("Esse CorrelationId já existe.");
             }
 
-            var staging = new AccountPjAdmissionStaging
+            var staging = new AccountAdmissionStaging
             {
-                CorrelationId = payload.CorrelationId,
-                FullName = payload.FullName,
-                SocialName = payload.SocialName,
-                Cpf = payload.Cpf,
-                CpfHash = payload.CpfHash,
-                FiscalNumberIdentity = payload.FiscalNumberIdentity,
-                FiscalNumberIdentityHash = payload.FiscalNumberIdentityHash,
-                StartDate = payload.StartDate,
-                ContractorCnpj = payload.ContractorCnpj,
-                ContractorName = payload.ContractorName,
-                PositionHeldId = payload.PositionHeldId,
-                Login = payload.Login,
-                LoginHash = payload.LoginHash,
-                PersonalEmail = payload.PersonalEmail,
-                PersonalEmailHash = payload.PersonalEmailHash,
-                CorporateEmail = payload.CorporateEmail,
-                CorporateEmailHash = payload.CorporateEmailHash,
-                CreatedBy = payload.CreatedBy,
+                CorrelationId = request.CorrelationId,
+                FirstName = request.FirstName,
+                LastName = request.LastName,
+                FullName = request.FullName,
+                SocialName = request.SocialName,
+                Cpf = request.Cpf,
+                CpfHash = request.CpfHash,
+                FiscalNumberIdentity = request.FiscalNumberIdentity,
+                FiscalNumberIdentityHash = request.FiscalNumberIdentityHash,
+                StartDate = request.StartDate,
+                ContractorCnpj = request.ContractorCnpj,
+                ContractorName = request.ContractorName,
+                JobTitleId = request.JobTitleId,
+                JobTitleName = request.JobTitleName,
+                DepartmentId = request.DepartmentId,
+                DepartmentName = request.DepartmentName,
+                Login = request.Login,
+                LoginHash = request.LoginHash,
+                PersonalEmail = request.PersonalEmail,
+                PersonalEmailHash = request.PersonalEmailHash,
+                CorporateEmail = request.CorporateEmail,
+                CorporateEmailHash = request.CorporateEmailHash,
+                PhoneNumber = request.PhoneNumber,
+                BirthDate = request.BirthDate,
+                Company = request.Company,
+                MotherName = request.MotherName,
+                Registry = request.Registry,
+                LoginManager = request.LoginManager,
+                TypeUserAccount = request.TypeUserAccount,
+
+                CreatedBy = command.CreatedBy,
                 CreatedAt = DateTimeOffset.UtcNow,
                 Status = "Pending"
             };
 
             await _repository.SaveAsync(staging, cancellationToken);
-            await _keyRepository.SaveAsync(payload.CpfHash, "create-account", cancellationToken);
-            await _deduplicationRepository.SaveAsync(payload.CorrelationId, "create-account", cancellationToken);
+            await _keyRepository.SaveAsync(request.CpfHash, "create-account", cancellationToken);
+            await _deduplicationRepository.SaveAsync(request.CorrelationId, "create-account", cancellationToken);
 
             await _publishEndpoint.Publish(new StartCreateAccountSaga
             {
-                CorrelationId = payload.CorrelationId,
-                Payload = new KeycloakPayload
+                CorrelationId = request.CorrelationId,
+                KeycloakPayload = new KeycloakPayload
                 {
-                    CorrelationId = payload.CorrelationId,
-                    Firstname = payload.FirstName,
-                    Lastname = payload.LastName
+                    CorrelationId = request.CorrelationId,
+                    FirstName = request.FirstName,
+                    LastName = request.LastName
                 }
             }, cancellationToken);
 
-            _logger.LogInformation("Dados salvos em staging e saga iniciada - CorrelationId: {CorrelationId}", payload.CorrelationId);
-            return Result.Success("Staging salvo com sucesso.", new { payload.CorrelationId });
+            _logger.LogInformation("Dados salvos em staging e saga iniciada - CorrelationId: {CorrelationId}", request.CorrelationId);
+            return Result.Success("Staging salvo com sucesso.", request);
         }
     }
 

@@ -8,6 +8,7 @@ namespace OneID.Application.Services.KeyCloakServices
 {
     public class KeycloakTokenService : IKeycloakTokenService
     {
+
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly KeycloakOptions _options;
 
@@ -24,8 +25,8 @@ namespace OneID.Application.Services.KeyCloakServices
             var content = new FormUrlEncodedContent(
             [
                 new KeyValuePair<string, string>("client_id", _options.ClientId),
-                new KeyValuePair<string, string>("client_secret", _options.ClientSecret),
-                new KeyValuePair<string, string>("grant_type", "client_credentials")
+            new KeyValuePair<string, string>("client_secret", _options.ClientSecret),
+            new KeyValuePair<string, string>("grant_type", "client_credentials")
             ]);
 
             var response = await client.PostAsync(
@@ -33,15 +34,15 @@ namespace OneID.Application.Services.KeyCloakServices
                 content,
                 cancellationToken);
 
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
 
             if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync(cancellationToken);
-                throw new InvalidOperationException($"Erro ao obter token do Keycloak: {error}");
-            }
+                throw new InvalidOperationException($"Erro ao obter token do Keycloak: {json}");
 
-            var json = await response.Content.ReadAsStringAsync(cancellationToken);
             var tokenResponse = JsonConvert.DeserializeObject<KeycloakTokenResponse>(json);
+
+            if (tokenResponse == null || string.IsNullOrEmpty(tokenResponse.AccessToken))
+                throw new InvalidOperationException("Token de acesso não pôde ser obtido.");
 
             return tokenResponse.AccessToken;
         }
