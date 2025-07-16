@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "identityapp1": {
-      "connectionInfo": "App registration: OneID.LoginUI, Tenant: Default Directory (oneidsecure.cloud - Microsoft Entra ID)",
-      "type": "identityapp.default"
-    }
-  }
-}
