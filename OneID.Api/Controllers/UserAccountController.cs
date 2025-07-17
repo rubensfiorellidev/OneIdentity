@@ -99,7 +99,7 @@ namespace OneID.Api.Controllers
         /// <summary>
         /// Etapa 2 - Confirma o provisionamento e publica o evento para a saga.
         /// </summary>
-        [HttpPost("confirm")]
+        [HttpGet("confirm")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> ConfirmAsync([FromBody] ProvisioningConfirmationRequest request, CancellationToken cancellationToken)
         {

@@ -10,12 +10,10 @@ using OneID.Application.Interfaces.Graph;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
-using OneID.Application.Interfaces.SMSService;
 using OneID.Application.Services;
 using OneID.Application.Services.AesCryptoServices;
 using OneID.Application.Services.Graph;
 using OneID.Application.Services.KeyCloakServices;
-using OneID.Application.Services.SmsServices;
 using OneID.Application.Services.StrategyEvents;
 using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Abstractions.Factories;
@@ -69,7 +67,6 @@ namespace OneID.Application
             services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
             services.AddScoped<IAzureGraphUserSyncService, AzureGraphUserSyncService>();
             services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();
-            services.AddScoped<ISmsService, SmsService>();
             services.AddHttpContextAccessor();
             services.AddScoped<ILoggedUserAccessor, LoggedUserAccessor>();
 

@@ -93,22 +93,6 @@ namespace OneID.Application.CommandHandlers
             await _keyRepository.SaveAsync(request.CpfHash, "create-account", cancellationToken);
             await _deduplicationRepository.SaveAsync(request.CorrelationId, "create-account", cancellationToken);
 
-            //await _sender.SendAsync(new SendTotpNotificationCommand(
-            //    request.CorrelationId,
-            //    _userAccessor.GetEmail(),
-            //    _userAccessor.GetName(),
-            //    _userAccessor.GetPhone()
-
-            //), cancellationToken);
-
-            await _sender.SendAsync(new SendTotpNotificationCommand(
-                request.CorrelationId,
-                "rubensfiorelli@outlook.com",
-                "Rubens Fiorelli",
-                "+5511999999999"
-            ), cancellationToken);
-
-
 
             _logger.LogInformation("Dados salvos em staging - CorrelationId: {CorrelationId}", request.CorrelationId);
             return Result.Success("Staging salvo com sucesso.", request);
