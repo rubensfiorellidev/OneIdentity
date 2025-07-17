@@ -70,6 +70,9 @@ namespace OneID.Application
             services.AddScoped<IAzureGraphUserSyncService, AzureGraphUserSyncService>();
             services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();
             services.AddScoped<ISmsService, SmsService>();
+            services.AddHttpContextAccessor();
+            services.AddScoped<ILoggedUserAccessor, LoggedUserAccessor>();
+
 
 
             services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();

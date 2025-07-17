@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 
 #nullable disable

@@ -1,4 +1,4 @@
-﻿namespace OneID.Domain.Results
+﻿namespace OneID.Domain.Interfaces
 {
     public interface IResult
     {

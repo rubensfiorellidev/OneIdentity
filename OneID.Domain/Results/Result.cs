@@ -1,4 +1,6 @@
 ﻿#nullable disable
+using OneID.Domain.Interfaces;
+
 namespace OneID.Domain.Results
 {
     public class Result : IResult

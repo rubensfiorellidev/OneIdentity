@@ -5,6 +5,7 @@ using OneID.Application.Interfaces.SES;
 using OneID.Application.Interfaces.SMSService;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Entities.ApiOptions;
+using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -36,8 +37,8 @@ namespace OneID.Application.CommandHandlers
                 var now = DateTimeOffset.UtcNow;
                 var jwtClaims = new Dictionary<string, object>
                 {
-                    { JwtRegisteredClaimNames.Sub, command.EmailOperador },
-                    { JwtRegisteredClaimNames.Email, command.EmailOperador },
+                    { JwtRegisteredClaimNames.Sub, command.OperatorEmail },
+                    { JwtRegisteredClaimNames.Email, command.OperatorEmail },
                     { JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString() },
                     { JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString() },
                     { JwtRegisteredClaimNames.Nbf, now.ToUnixTimeSeconds().ToString() },
@@ -49,33 +50,33 @@ namespace OneID.Application.CommandHandlers
                     { "scope", "confirm:provisioning" }
                 };
 
-                var token = _jwtProvider.GenerateAcceptanceToken(jwtClaims, TimeSpan.FromMinutes(15));
+                var token = _jwtProvider.GenerateAcceptanceToken(jwtClaims, TimeSpan.FromMinutes(5));
                 var callbackUrl = $"{_urlBase.BaseUrl.TrimEnd('/')}/v1/staging/confirm?token={token}";
 
                 var subject = "Confirmação de Provisionamento";
                 var textBody = $"""
-                Olá {command.NomeOperador},
+                Olá {command.OperatorName},
 
                     Para continuar o provisionamento da conta, acesse o link abaixo e informe o código TOTP:
 
                     {callbackUrl}
 
-                    Esse link expira em 15 minutos.
+                    Esse link expira em 5 minutos.
 
                     Se você não iniciou este processo, por favor ignore esta mensagem.
                 """;
 
                 await _sesEmailSender.SendEmailAsync(
-                    to: command.EmailOperador,
+                    to: command.OperatorEmail,
                     subject: subject,
                     textBody: textBody,
                     cancellationToken: cancellationToken);
 
-                var smsBody = $"Olá {command.NomeOperador}, acesse para confirmar o provisionamento: {callbackUrl}";
+                var smsBody = $"Olá {command.OperatorName}, acesse para confirmar o provisionamento: {callbackUrl}";
                 await _smsService.SendTotpConfirmationSmsAsync(
-                    phoneNumber: command.TelefoneOperador,
+                    phoneNumber: command.OperatorPhone,
                     callbackUrl: callbackUrl,
-                    recipientName: command.NomeOperador);
+                    recipientName: command.OperatorName);
 
                 return Result.Success("Notificação TOTP enviada com sucesso.");
             }

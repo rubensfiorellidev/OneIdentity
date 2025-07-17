@@ -2,6 +2,7 @@
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers

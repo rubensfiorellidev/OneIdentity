@@ -3,7 +3,9 @@ using OneID.Application.Commands;
 using OneID.Application.Interfaces.Builders;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
+using OneID.Application.Interfaces.Services;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers
@@ -16,6 +18,7 @@ namespace OneID.Application.CommandHandlers
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
         private readonly ISender _sender;
+        private readonly ILoggedUserAccessor _userAccessor;
 
         public CreateAccountStagingCommandHandler(
             IAddUserAccountStagingRepository repository,
@@ -23,7 +26,8 @@ namespace OneID.Application.CommandHandlers
             IUserAccountStagingBuilder userAccountStagingBuilder,
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
-            ISender sender)
+            ISender sender,
+            ILoggedUserAccessor userAccessor)
         {
             _repository = repository;
             _logger = logger;
@@ -31,6 +35,7 @@ namespace OneID.Application.CommandHandlers
             _keyRepository = keyRepository;
             _deduplicationRepository = deduplicationRepository;
             _sender = sender;
+            _userAccessor = userAccessor;
         }
 
         public async Task<IResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)
@@ -88,12 +93,21 @@ namespace OneID.Application.CommandHandlers
             await _keyRepository.SaveAsync(request.CpfHash, "create-account", cancellationToken);
             await _deduplicationRepository.SaveAsync(request.CorrelationId, "create-account", cancellationToken);
 
+            //await _sender.SendAsync(new SendTotpNotificationCommand(
+            //    request.CorrelationId,
+            //    _userAccessor.GetEmail(),
+            //    _userAccessor.GetName(),
+            //    _userAccessor.GetPhone()
+
+            //), cancellationToken);
+
             await _sender.SendAsync(new SendTotpNotificationCommand(
                 request.CorrelationId,
-                command.CreatedBy,
-                request.PersonalEmail,
-                request.PhoneNumber
+                "rubensfiorelli@outlook.com",
+                "Rubens Fiorelli",
+                "+5511999999999"
             ), cancellationToken);
+
 
 
             _logger.LogInformation("Dados salvos em staging - CorrelationId: {CorrelationId}", request.CorrelationId);

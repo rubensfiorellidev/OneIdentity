@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Results;
+﻿using OneID.Domain.Interfaces;
 
 namespace OneID.Application.Interfaces.CQRS
 {

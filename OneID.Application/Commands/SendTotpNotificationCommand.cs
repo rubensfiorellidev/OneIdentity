@@ -1,21 +1,21 @@
 ﻿using OneID.Application.Interfaces.CQRS;
-using OneID.Domain.Results;
+using OneID.Domain.Interfaces;
 
 namespace OneID.Application.Commands
 {
     public record SendTotpNotificationCommand : ICommand<IResult>
     {
         public Guid CorrelationId { get; init; }
-        public string EmailOperador { get; init; }
-        public string NomeOperador { get; init; }
-        public string TelefoneOperador { get; init; }
+        public string OperatorEmail { get; init; }
+        public string OperatorName { get; init; }
+        public string OperatorPhone { get; init; }
 
-        public SendTotpNotificationCommand(Guid correlationId, string email, string nome, string telefone)
+        public SendTotpNotificationCommand(Guid correlationId, string email, string name, string phone)
         {
             CorrelationId = correlationId;
-            EmailOperador = email;
-            NomeOperador = nome;
-            TelefoneOperador = telefone;
+            OperatorEmail = email;
+            OperatorName = name;
+            OperatorPhone = phone;
         }
     }
 

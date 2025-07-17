@@ -1,4 +1,4 @@
-﻿namespace OneID.Domain.Notifications
+﻿namespace OneID.Domain.Interfaces
 {
     public interface INotification
     {

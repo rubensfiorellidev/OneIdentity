@@ -1,4 +1,5 @@
 ﻿using OneID.Domain.Abstractions.EventsContext;
+using OneID.Domain.Interfaces;
 
 namespace OneID.Domain.Notifications
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
 using OneID.Application.Interfaces.CQRS;
-using OneID.Domain.Results;
+using OneID.Domain.Interfaces;
 
 namespace OneID.Application.Abstractions
 {

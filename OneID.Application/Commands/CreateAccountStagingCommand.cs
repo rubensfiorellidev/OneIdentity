@@ -1,6 +1,7 @@
 ﻿using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.CQRS;
-using OneID.Domain.Results;
+using OneID.Domain.Interfaces;
+
 #nullable disable
 namespace OneID.Application.Commands
 {
