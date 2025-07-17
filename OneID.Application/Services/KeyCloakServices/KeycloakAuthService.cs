@@ -2,7 +2,7 @@
 using Microsoft.Extensions.Options;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Domain.Entities.KeycloakOptions;
-using OneID.Domain.Entities.TokenResults;
+using OneID.Domain.Entities.Tokens;
 using System.Text.Json;
 #nullable disable
 namespace OneID.Application.Services.KeyCloakServices

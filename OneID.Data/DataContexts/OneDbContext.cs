@@ -10,6 +10,7 @@ using OneID.Domain.Entities.JobTitleContext;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
+using OneID.Domain.Entities.Tokens;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Notifications;
 using OneID.Domain.ValueObjects;
@@ -45,6 +46,8 @@ namespace OneID.Data.DataContexts
         public DbSet<AccessPackageCondition> AccessPackageConditions => Set<AccessPackageCondition>();
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<JobTitle> JobTitles => Set<JobTitle>();
+        public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
+
 
 
 

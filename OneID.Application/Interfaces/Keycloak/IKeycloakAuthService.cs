@@ -1,4 +1,4 @@
-﻿using OneID.Domain.Entities.TokenResults;
+﻿using OneID.Domain.Entities.Tokens;
 
 namespace OneID.Application.Interfaces.Keycloak
 {

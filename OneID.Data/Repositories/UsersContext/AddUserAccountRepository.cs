@@ -1,10 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Application.Interfaces.Services;
-using OneID.Application.Results;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Results;
 
 #nullable disable
 namespace OneID.Data.Repositories.UsersContext

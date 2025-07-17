@@ -6,6 +6,7 @@ using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Messaging.Sagas.Contracts.Events;
 using OtpNet;
 using System.Security.Claims;
 
@@ -117,15 +118,17 @@ namespace OneID.Api.Controllers
                           ?? User.FindFirst(ClaimTypes.Name)?.Value
                           ?? "unknown";
 
-            var command = new CreateAccountDatabaseCommand
+            await _bus.Publish(new StartCreateAccountSaga
             {
                 CorrelationId = request.CorrelationId,
-                CorporateEmail = staging.CorporateEmail,
-                Login = staging.Login,
-                KeycloakUserId = Guid.Parse(request.KeycloakUserId)
-            };
+                KeycloakPayload = new KeycloakPayload
+                {
+                    CorrelationId = request.CorrelationId,
+                    FirstName = staging.FirstName,
+                    LastName = staging.LastName
+                }
+            }, cancellationToken);
 
-            await _bus.Publish(command, cancellationToken);
 
             _logger.LogInformation("Provisionamento confirmado - CorrelationId: {CorrelationId}", request.CorrelationId);
 

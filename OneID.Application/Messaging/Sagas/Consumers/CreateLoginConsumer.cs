@@ -40,7 +40,7 @@ namespace OneID.Application.Messaging.Sagas.Consumers
                 {
                     CorrelationId = message.CorrelationId,
                     Login = login,
-                    CorporateEmail = $"{login}@onesecureid.com"
+                    CorporateEmail = $"{login}@oneidsecure.cloud"
                 });
             }
             catch (Exception ex)

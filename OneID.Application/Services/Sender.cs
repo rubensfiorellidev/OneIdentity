@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using OneID.Application.Interfaces.CQRS;
-using OneID.Application.Interfaces.Services;
+using OneID.Domain.Results;
 
 namespace OneID.Application.Services
 {

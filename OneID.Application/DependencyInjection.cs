@@ -6,16 +6,21 @@ using OneID.Application.Builders;
 using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
 using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Graph;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.SMSService;
 using OneID.Application.Services;
 using OneID.Application.Services.AesCryptoServices;
+using OneID.Application.Services.Graph;
 using OneID.Application.Services.KeyCloakServices;
+using OneID.Application.Services.SmsServices;
 using OneID.Application.Services.StrategyEvents;
 using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Abstractions.Factories;
 using OneID.Domain.Contracts;
+using OneID.Domain.Entities.AlertsContext;
 using OneID.Domain.Entities.KeycloakOptions;
 using OneID.Domain.Interfaces;
 
@@ -27,6 +32,7 @@ namespace OneID.Application
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<KeycloakOptions>(configuration.GetSection("Keycloak"));
+            services.Configure<TwilioSettings>(configuration.GetSection("Twilio"));
 
             services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>((provider, client) =>
             {
@@ -61,6 +67,12 @@ namespace OneID.Application
             services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
             services.AddScoped<ISender, Sender>();
             services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
+            services.AddScoped<IAzureGraphUserSyncService, AzureGraphUserSyncService>();
+            services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();
+            services.AddScoped<ISmsService, SmsService>();
+
+
+            services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();
 
             services.AddTransient<ICryptoService>(provider =>
             {
@@ -83,5 +95,6 @@ namespace OneID.Application
 
             return services;
         }
+
     }
 }

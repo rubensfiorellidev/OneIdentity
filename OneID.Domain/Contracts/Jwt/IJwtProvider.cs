@@ -1,9 +1,9 @@
 ﻿using Microsoft.IdentityModel.Tokens;
-using OneID.Application.Results;
+using OneID.Domain.Results;
 
 
 #nullable disable
-namespace OneID.Shared.Authentication
+namespace OneID.Domain.Contracts.Jwt
 {
     public interface IJwtProvider
     {

@@ -20,6 +20,7 @@ using OneID.Application.Interfaces.SES;
 using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
+using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
 using OneID.Shared.Services;
@@ -76,69 +77,6 @@ namespace OneID.Shared
             services.AddScoped<ISender, Sender>();
             services.AddScoped<IQueryDispatcher, QueryDispatcher>();
 
-
-            return services;
-        }
-        #endregion
-
-        #region JwtWebTokens
-        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
-        {
-            var jwtSettings = configuration.GetSection("Jwt");
-
-            var issuer = jwtSettings["Issuer"];
-            var audience = jwtSettings["Audience"];
-            var publicKeyPath = jwtSettings["PublicKeyPath"];
-
-            var xmlKey = File.ReadAllText(publicKeyPath);
-            var rsa = RSA.Create();
-            rsa.FromXmlString(xmlKey);
-            var rsaKey = new RsaSecurityKey(rsa);
-
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddJwtBearer(options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = issuer,
-                    ValidAudience = audience,
-                    IssuerSigningKey = rsaKey
-
-                };
-
-                options.Events = new JwtBearerEvents
-                {
-                    OnAuthenticationFailed = context =>
-                    {
-                        context.NoResult();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
-                    },
-                    OnChallenge = context =>
-                    {
-                        if (!context.Response.HasStarted)
-                        {
-                            context.Response.StatusCode = 401;
-                            context.Response.ContentType = "application/json";
-                            return context.Response.WriteAsync("{\"error\":\"Token ausente ou inválido\"}");
-                        }
-                        return Task.CompletedTask;
-                    }
-                };
-            });
-
-            services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
-            services.TryAddScoped<JwtProvider>();
-            services.ConfigureOptions<JwtOptionsSetup>();
 
             return services;
         }
@@ -230,5 +168,71 @@ namespace OneID.Shared
             return services;
         }
         #endregion
+
+        #region JwtWebTokens
+        public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
+        {
+            var jwtSettings = configuration.GetSection("Jwt");
+
+            var issuer = jwtSettings["Issuer"];
+            var audience = jwtSettings["Audience"];
+            var publicKeyPath = jwtSettings["PublicKeyPath"];
+
+            var xmlKey = File.ReadAllText(publicKeyPath);
+            var rsa = RSA.Create();
+            rsa.FromXmlString(xmlKey);
+            var rsaKey = new RsaSecurityKey(rsa);
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = issuer,
+                    ValidAudience = audience,
+                    IssuerSigningKey = rsaKey
+
+                };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        context.NoResult();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+                    },
+                    OnChallenge = context =>
+                    {
+                        if (!context.Response.HasStarted)
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            return context.Response.WriteAsync("{\"error\":\"Token ausente ou inválido\"}");
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
+            });
+
+            services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.TryAddScoped<JwtProvider>();
+            services.ConfigureOptions<JwtOptionsSetup>();
+            services.AddScoped<IJwtProvider, JwtProvider>();
+
+
+            return services;
+        }
+        #endregion
+
     }
 }

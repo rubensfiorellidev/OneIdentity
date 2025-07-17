@@ -9,7 +9,7 @@ using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
 using OneID.Data.Interfaces;
-using OneID.Shared.Authentication;
+using OneID.Domain.Contracts.Jwt;
 using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
@@ -21,7 +21,7 @@ namespace OneID.Api.Controllers
     [Route("v1/auth")]
     public class AuthController : MainController
     {
-        private readonly JwtProvider _jwtProvider;
+        private readonly IJwtProvider _jwtProvider;
         private readonly ILogger<AuthController> _logger;
         private readonly IOneDbContextFactory _contextFactory;
         private readonly IKeycloakAuthService _authService;
@@ -32,7 +32,7 @@ namespace OneID.Api.Controllers
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
         public AuthController(ISender send,
-                              JwtProvider jwtProvider,
+                              IJwtProvider jwtProvider,
                               ILogger<AuthController> logger,
                               IOneDbContextFactory contextFactory,
                               IKeycloakAuthService authService,

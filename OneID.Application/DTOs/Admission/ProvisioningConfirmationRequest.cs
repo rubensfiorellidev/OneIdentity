@@ -5,7 +5,6 @@ namespace OneID.Application.DTOs.Admission
     {
         public Guid CorrelationId { get; init; }
         public string TotpCode { get; init; }
-        public string KeycloakUserId { get; init; }
     }
 
 }

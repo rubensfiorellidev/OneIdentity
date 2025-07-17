@@ -1,5 +1,5 @@
-﻿using OneID.Application.Interfaces.Services;
-using OneID.Domain.Entities.UserContext;
+﻿using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Results;
 
 namespace OneID.Application.Interfaces.Repositories
 {

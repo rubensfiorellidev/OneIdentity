@@ -5,9 +5,10 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
-using OneID.Application.Results;
 using OneID.Data.Interfaces;
+using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
+using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -51,7 +52,7 @@ namespace OneID.Shared.Authentication
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Erro ao garantir chaves RSA: {ex.Message}");
+                _logger.LogError($"Erro ao garantir chaves RSA: {ex.Message}");
                 throw;
             }
 
@@ -76,9 +77,11 @@ namespace OneID.Shared.Authentication
             RsaSecurityKey key = GetRSAKey();
 
             string keyId = GenerateKeyId(key);
+            var jti = Ulid.NewUlid().ToString();
             var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
             jwk.KeyId = keyId;
             jwk.Alg = SecurityAlgorithms.RsaSha256;
+
 
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
@@ -96,9 +99,9 @@ namespace OneID.Shared.Authentication
 
             var claims = new List<Claim>
             {
+                new(JwtClaims.Jti, jti),
                 new(JwtClaims.Sub, userId),
                 new(JwtClaims.UniqueName, preferredUsername ?? userId),
-                new(JwtClaims.Jti, Ulid.NewUlid().ToString()),
                 new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
                 new("ip", ipAddress),
                 new("user_agent", userAgent)
@@ -235,6 +238,9 @@ namespace OneID.Shared.Authentication
 
             var claimsIdentity = new ClaimsIdentity(claims.Select(c =>
                 new Claim(c.Key, c.Value?.ToString() ?? string.Empty)));
+
+            if (!claims.ContainsKey("jti"))
+                claims["jti"] = Ulid.NewUlid().ToString();
 
             var descriptor = new SecurityTokenDescriptor
             {

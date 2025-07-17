@@ -1,25 +1,21 @@
-﻿using MassTransit;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using OneID.Application.Commands;
-using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.Builders;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Application.Interfaces.Services;
-using OneID.Application.Messaging.Sagas.Contracts.Events;
-using OneID.Application.Results;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers
 {
     public class CreateAccountStagingCommandHandler : ICommandHandler<CreateAccountStagingCommand, IResult>
     {
         private readonly IAddUserAccountStagingRepository _repository;
-        private readonly IBus _publishEndpoint;
         private readonly ILogger<CreateAccountStagingCommandHandler> _logger;
         private readonly IUserAccountStagingBuilder _builder;
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
+        private readonly ISender _sender;
 
         public CreateAccountStagingCommandHandler(
             IAddUserAccountStagingRepository repository,
@@ -27,14 +23,14 @@ namespace OneID.Application.CommandHandlers
             IUserAccountStagingBuilder userAccountStagingBuilder,
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
-            IBus publishEndpoint)
+            ISender sender)
         {
             _repository = repository;
             _logger = logger;
             _builder = userAccountStagingBuilder;
             _keyRepository = keyRepository;
             _deduplicationRepository = deduplicationRepository;
-            _publishEndpoint = publishEndpoint;
+            _sender = sender;
         }
 
         public async Task<IResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)
@@ -92,18 +88,15 @@ namespace OneID.Application.CommandHandlers
             await _keyRepository.SaveAsync(request.CpfHash, "create-account", cancellationToken);
             await _deduplicationRepository.SaveAsync(request.CorrelationId, "create-account", cancellationToken);
 
-            await _publishEndpoint.Publish(new StartCreateAccountSaga
-            {
-                CorrelationId = request.CorrelationId,
-                KeycloakPayload = new KeycloakPayload
-                {
-                    CorrelationId = request.CorrelationId,
-                    FirstName = request.FirstName,
-                    LastName = request.LastName
-                }
-            }, cancellationToken);
+            await _sender.SendAsync(new SendTotpNotificationCommand(
+                request.CorrelationId,
+                command.CreatedBy,
+                request.PersonalEmail,
+                request.PhoneNumber
+            ), cancellationToken);
 
-            _logger.LogInformation("Dados salvos em staging e saga iniciada - CorrelationId: {CorrelationId}", request.CorrelationId);
+
+            _logger.LogInformation("Dados salvos em staging - CorrelationId: {CorrelationId}", request.CorrelationId);
             return Result.Success("Staging salvo com sucesso.", request);
         }
     }

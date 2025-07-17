@@ -1,10 +1,9 @@
-﻿using OneID.Shared.Authentication;
-
-#nullable disable
+﻿#nullable disable
 namespace OneID.Api.Controllers
 {
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Configuration;
+    using OneID.Shared.Authentication;
     using System.Text.Json;
 
     [ApiController]

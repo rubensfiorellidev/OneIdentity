@@ -2,7 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 
 #nullable disable
-namespace OneID.Domain.Entities.TokenResults
+namespace OneID.Domain.Entities.Tokens
 {
     public class KeycloakTokenResult
     {

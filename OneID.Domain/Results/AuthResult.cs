@@ -1,4 +1,4 @@
-﻿namespace OneID.Application.Results
+﻿namespace OneID.Domain.Results
 {
     public sealed class AuthResult
     {

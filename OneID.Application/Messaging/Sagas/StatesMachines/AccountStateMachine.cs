@@ -18,6 +18,7 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
         public State WaitingCpfValidation { get; private set; }
         public State WaitingKeycloakCreation { get; private set; }
         public State WaitingDatabaseResult { get; private set; }
+        public State WaitingAzureResult { get; private set; }
         public State Completed { get; private set; }
         public State Faulted { get; private set; }
 
@@ -33,6 +34,10 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
         public Event<AccountSagaFailed> SagaFailed { get; private set; }
         public Event<UserProfilePersisted> UserProfilePersisted { get; private set; }
         public Event<UserProfilePersistenceFailed> UserProfilePersistenceFailed { get; private set; }
+        public Event<AzureUserCreated> AzureUserCreated { get; private set; }
+        public Event<AzureUserCreationFailed> AzureUserCreationFailed { get; private set; }
+        public Event<AzureUserCreationRequested> AzureUserCreationRequested { get; private set; }
+
 
 
         public AccountStateMachine(ILogger<AccountStateMachine> logger)
@@ -53,6 +58,9 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
             Event(() => CpfValidationFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => DatabaseCreated, x => x.CorrelateById(m => m.Message.CorrelationId));
             Event(() => DatabaseFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => AzureUserCreationRequested, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => AzureUserCreated, x => x.CorrelateById(m => m.Message.CorrelationId));
+            Event(() => AzureUserCreationFailed, x => x.CorrelateById(m => m.Message.CorrelationId));
 
 
             Initially(
@@ -245,14 +253,26 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         CorrelationId = context.Saga.CorrelationId,
                         FirstName = context.Saga.KeycloakData.FirstName,
                         LastName = context.Saga.KeycloakData.LastName,
-                        CurrentState = nameof(Completed),
+                        CurrentState = nameof(WaitingAzureResult),
                         EventName = "UserAccount provisionado",
-                        Description = $"User account provisionado na base de dados com o ID {context.Message.DatabaseId}",
+                        Description = $"User account provisionado - ID {context.Message.DatabaseId}, Iniciando o provisionamento no Entra ID",
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.KeycloakData.Username,
                         DatabaseId = context.Message.DatabaseId
                     })
-                    .TransitionTo(Completed),
+                    .Publish(context => new AzureUserCreationRequested
+                    {
+
+                        CorrelationId = context.Saga.CorrelationId,
+                        FirstName = context.Saga.KeycloakData.FirstName,
+                        LastName = context.Saga.KeycloakData.LastName,
+                        Login = context.Saga.KeycloakData.Username,
+                        Email = context.Saga.AccountData.CorporateEmail,
+                        Password = context.Saga.AccountData.Password,
+                        ManagerLogin = context.Saga.AccountData.LoginManager
+
+                    })
+                    .TransitionTo(WaitingAzureResult),
 
                 When(DatabaseFailed)
                     .Then(context => context.Saga.FaultReason = context.Message.FaultReason)
@@ -267,6 +287,47 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         ProvisioningDate = DateTimeOffset.UtcNow,
                         Login = context.Saga.KeycloakData.Username,
                         DatabaseId = "NotAvailable"
+                    })
+                    .TransitionTo(Faulted)
+            );
+
+            During(WaitingAzureResult,
+                When(AzureUserCreated)
+                    .Then(context =>
+                    {
+                        _logger.LogInformation("Usuário {Username} criado com sucesso no Entra ID", context.Saga.KeycloakData.Username);
+                    })
+                    .Publish(context => new AdmissionAuditRequested
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        FirstName = context.Saga.KeycloakData.FirstName,
+                        LastName = context.Saga.KeycloakData.LastName,
+                        CurrentState = nameof(Completed),
+                        EventName = "Usuário criado no Entra ID",
+                        Description = "Usuário sincronizado com sucesso no Entra ID.",
+                        ProvisioningDate = DateTimeOffset.UtcNow,
+                        Login = context.Saga.KeycloakData.Username,
+                        DatabaseId = context.Saga.DatabaseId
+                    })
+                    .TransitionTo(Completed),
+
+                When(AzureUserCreationFailed)
+                    .Then(context =>
+                    {
+                        context.Saga.FaultReason = context.Message.FaultReason;
+                        _logger.LogError("Falha ao criar usuário no Entra ID: {Reason}", context.Message.FaultReason);
+                    })
+                    .Publish(context => new AdmissionAuditRequested
+                    {
+                        CorrelationId = context.Saga.CorrelationId,
+                        FirstName = context.Saga.KeycloakData.FirstName,
+                        LastName = context.Saga.KeycloakData.LastName,
+                        CurrentState = nameof(Faulted),
+                        EventName = "Erro no Entra ID",
+                        Description = $"Falha ao provisionar usuário no Entra ID: {context.Message.FaultReason}",
+                        ProvisioningDate = DateTimeOffset.UtcNow,
+                        Login = context.Saga.KeycloakData.Username,
+                        DatabaseId = context.Saga.DatabaseId
                     })
                     .TransitionTo(Faulted)
             );
