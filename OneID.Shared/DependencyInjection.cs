@@ -224,6 +224,44 @@ namespace OneID.Shared
                 };
             });
 
+            services.AddAuthentication()
+                .AddJwtBearer("RequestToken", options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        ValidIssuer = issuer,
+                        ValidAudience = audience,
+                        IssuerSigningKey = rsaKey,
+                        ClockSkew = TimeSpan.FromSeconds(2)
+                    };
+
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnAuthenticationFailed = context =>
+                        {
+                            context.NoResult();
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            return context.Response.WriteAsync("{\"error\":\"Token de requisição inválido ou malformado\"}");
+                        },
+                        OnChallenge = context =>
+                        {
+                            if (!context.Response.HasStarted)
+                            {
+                                context.Response.StatusCode = 401;
+                                context.Response.ContentType = "application/json";
+                                return context.Response.WriteAsync("{\"error\":\"Token de requisição ausente ou inválido\"}");
+                            }
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+
             services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
             services.TryAddScoped<JwtProvider>();
             services.ConfigureOptions<JwtOptionsSetup>();

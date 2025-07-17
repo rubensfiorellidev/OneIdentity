@@ -10,16 +10,18 @@ using OneID.Application.Interfaces.Graph;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Services;
 using OneID.Application.Services.AesCryptoServices;
 using OneID.Application.Services.Graph;
 using OneID.Application.Services.KeyCloakServices;
 using OneID.Application.Services.StrategyEvents;
+using OneID.Application.Services.TotpServices;
 using OneID.Domain.Abstractions.EventsContext;
 using OneID.Domain.Abstractions.Factories;
 using OneID.Domain.Contracts;
-using OneID.Domain.Entities.AlertsContext;
 using OneID.Domain.Entities.KeycloakOptions;
+using OneID.Domain.Entities.TotpOptions;
 using OneID.Domain.Interfaces;
 
 #nullable disable
@@ -30,7 +32,7 @@ namespace OneID.Application
         public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<KeycloakOptions>(configuration.GetSection("Keycloak"));
-            services.Configure<TwilioSettings>(configuration.GetSection("Twilio"));
+            services.Configure<TotpOptions>(configuration.GetSection("Totp"));
 
             services.AddHttpClient<IKeycloakAuthService, KeycloakAuthService>((provider, client) =>
             {
@@ -71,7 +73,7 @@ namespace OneID.Application
             services.AddScoped<ILoggedUserAccessor, LoggedUserAccessor>();
 
 
-
+            services.AddSingleton<ITotpService, TotpService>();
             services.AddSingleton<IGraphServiceClientFactory, GraphServiceClientFactory>();
 
             services.AddTransient<ICryptoService>(provider =>

@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Commands;
 using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.CQRS;
+using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
-using OtpNet;
 using System.Security.Claims;
 
 #nullable disable
@@ -23,8 +24,9 @@ namespace OneID.Api.Controllers
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
         private readonly IQueryAccountAdmissionStagingRepository _stagingRepository;
+        private readonly ITotpService _otpService;
+        private readonly ICurrentUserService _currentUser;
 
-        private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
 
         public UserAccountController(
             ISender send,
@@ -33,7 +35,9 @@ namespace OneID.Api.Controllers
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
             IQueryAccountAdmissionStagingRepository stagingRepository,
-            IBus bus) : base(send)
+            IBus bus,
+            ITotpService otpService,
+            ICurrentUserService currentUser) : base(send)
         {
             _logger = logger;
             _hashService = hashService;
@@ -41,6 +45,8 @@ namespace OneID.Api.Controllers
             _deduplicationRepository = deduplicationRepository;
             _stagingRepository = stagingRepository;
             _bus = bus;
+            _otpService = otpService;
+            _currentUser = currentUser;
         }
 
         /// <summary>
@@ -77,9 +83,7 @@ namespace OneID.Api.Controllers
             await _keyRepository.SaveAsync(cpfHash, "create-account-clt", cancellationToken);
             await _deduplicationRepository.SaveAsync(correlationId, "create-account-clt", cancellationToken);
 
-            var loggedUser = User.FindFirst("preferred_username")?.Value
-                          ?? User.FindFirst(ClaimTypes.Name)?.Value
-                          ?? "unknown";
+            var loggedUser = _currentUser.GetUsername();
 
             var stagingCommand = new CreateAccountStagingCommand(request with { CorrelationId = correlationId }, loggedUser);
             var stagingResult = await Send.SendAsync(stagingCommand, cancellationToken);
@@ -99,16 +103,16 @@ namespace OneID.Api.Controllers
         /// <summary>
         /// Etapa 2 - Confirma o provisionamento e publica o evento para a saga.
         /// </summary>
-        [HttpGet("confirm")]
+        [HttpPost("confirm")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> ConfirmAsync([FromBody] ProvisioningConfirmationRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.TotpCode))
                 return Unauthorized("Por favor, informe o código de verificação.");
 
-            var totp = new Totp(Base32Encoding.ToBytes(OperatorSecret));
-            if (!totp.VerifyTotp(request.TotpCode, out _, VerificationWindow.RfcSpecifiedNetworkDelay))
+            if (!_otpService.ValidateCode(request.TotpCode))
                 return Unauthorized("Código de verificação inválido. Verifique no seu aplicativo autenticador.");
+
 
             var staging = await _stagingRepository.GetByCorrelationIdAsync(request.CorrelationId, cancellationToken);
             if (staging is null)

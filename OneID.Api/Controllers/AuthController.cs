@@ -8,10 +8,11 @@ using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.TotpServices;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
-using OtpNet;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -28,9 +29,9 @@ namespace OneID.Api.Controllers
         private readonly IHashService _hashService;
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
         private readonly ICurrentUserService _currentUser;
+        private readonly ITotpService _totpService;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
-        private const string OperatorSecret = "JBSWY3DPEHPK3PXP";
         public AuthController(ISender send,
                               IJwtProvider jwtProvider,
                               ILogger<AuthController> logger,
@@ -38,7 +39,8 @@ namespace OneID.Api.Controllers
                               IKeycloakAuthService authService,
                               IHashService hashService,
                               ISensitiveDataDecryptionServiceUserAccount decryptionService,
-                              ICurrentUserService currentUser) : base(send)
+                              ICurrentUserService currentUser,
+                              ITotpService totpService) : base(send)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
@@ -47,13 +49,13 @@ namespace OneID.Api.Controllers
             _hashService = hashService;
             _decryptionService = decryptionService;
             _currentUser = currentUser;
+            _totpService = totpService;
         }
 
         [HttpPost("request-token")]
         public async Task<IActionResult> RequestTokenAsync([FromBody] AuthRequest request)
         {
-            var totp = new Totp(Base32Encoding.ToBytes(OperatorSecret));
-            if (!totp.VerifyTotp(request.TotpCode, out _, VerificationWindow.RfcSpecifiedNetworkDelay))
+            if (!_totpService.ValidateCode(request.TotpCode))
             {
                 _logger.LogWarning("TOTP inválido");
                 return Unauthorized("Código TOTP inválido");
@@ -66,9 +68,14 @@ namespace OneID.Api.Controllers
 
 
         [HttpPost("login")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [Authorize(AuthenticationSchemes = "RequestToken")]
         public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
         {
+            var token = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+
+            if (!_jwtProvider.ValidateRequestToken(token))
+                return Unauthorized("Token de requisição inválido ou expirado.");
+
             var accessScope = _currentUser.GetClaim("access_scope");
             if (accessScope != "token_request_only")
                 return Forbid("Token não autorizado para login.");
@@ -112,12 +119,65 @@ namespace OneID.Api.Controllers
                 name
             );
 
+            Response.Cookies.Append("access_token", authResult.Jwtoken, new CookieOptions
+            {
+                HttpOnly = true,                     // protege contra JS malicioso
+                Secure = true,                       // só HTTPS
+                SameSite = SameSiteMode.Strict,      // bloqueia CSRF cruzado
+                Expires = DateTimeOffset.UtcNow.AddHours(1)  // tempo do token
+            });
+
+            Response.Cookies.Append("refresh_token", authResult.RefreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+
+
             return Ok(new
             {
                 token = authResult.Jwtoken,
                 refreshToken = authResult.RefreshToken
             });
         }
+
+        [HttpPost("refresh-token")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        public async Task<IActionResult> RefreshTokenAsync()
+        {
+            var refreshToken = Request.Cookies["refresh_token"];
+
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return Unauthorized("Refresh token ausente");
+
+            var userUpn = User.FindFirstValue(JwtClaims.Sub);
+
+            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpn, refreshToken);
+
+            if (!success)
+                return Unauthorized("Refresh token inválido ou expirado");
+
+            Response.Cookies.Append("access_token", newJwt, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(5)
+            });
+
+            Response.Cookies.Append("refresh_token", newRefresh, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddDays(7)
+            });
+
+            return Ok(new { success = true });
+        }
+
         private async Task<Dictionary<string, object>> GetServiceUserClaimsAsync(string serviceUserId)
         {
             await using var db = _contextFactory.CreateDbContext();

@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using OneID.Application.Interfaces.SensitiveData;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
@@ -30,12 +31,14 @@ namespace OneID.Shared.Authentication
         private readonly string _metadataPath;
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IOneDbContextFactory _contextFactory;
+        private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
                            IHttpContextAccessor httpContextAccessor,
                            ILogger<JwtProvider> logger,
-                           IOneDbContextFactory contextFactory)
+                           IOneDbContextFactory contextFactory,
+                           ISensitiveDataDecryptionServiceUserAccount decryptionService)
         {
             _jwtOptions = jwtOptions.Value;
             _refreshTokenService = refreshTokenService;
@@ -58,6 +61,7 @@ namespace OneID.Shared.Authentication
 
             _logger = logger;
             _contextFactory = contextFactory;
+            _decryptionService = decryptionService;
         }
         public async Task<string> EnsureKeysAsync()
         {
@@ -236,11 +240,13 @@ namespace OneID.Shared.Authentication
 
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
-            var claimsIdentity = new ClaimsIdentity(claims.Select(c =>
-                new Claim(c.Key, c.Value?.ToString() ?? string.Empty)));
-
             if (!claims.ContainsKey("jti"))
                 claims["jti"] = Ulid.NewUlid().ToString();
+
+            claims["access_scope"] = "token_request_only";
+
+            var claimsIdentity = new ClaimsIdentity(claims.Select(c =>
+                new Claim(c.Key, c.Value?.ToString() ?? string.Empty)));
 
             var descriptor = new SecurityTokenDescriptor
             {
@@ -333,6 +339,64 @@ namespace OneID.Shared.Authentication
             return claims;
         }
 
+        public bool ValidateRequestToken(string token)
+        {
+            var principal = ValidateToken(token);
+
+            if (principal == null)
+                return false;
+
+            var scopeClaim = principal.FindFirst("access_scope")?.Value;
+            return scopeClaim == "token_request_only";
+        }
+
+        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken)
+        {
+            if (!Guid.TryParse(userUpn, out var userGuid))
+                return ("", "", false);
+
+            await using var db = _contextFactory.CreateDbContext();
+
+            var user = await db.UserAccounts
+                .Where(u => u.KeycloakUserId == userGuid)
+                .OrderByDescending(u => u.ProvisioningAt)
+                .FirstOrDefaultAsync();
+
+            if (user == null)
+                return ("", "", false);
+
+            var existing = await db.RefreshWebTokens
+                .Where(x =>
+                    x.UserUpn == userUpn &&
+                    x.Token == refreshToken &&
+                    !x.IsRevoked &&
+                    !x.IsUsed &&
+                    x.ExpiresAt > DateTimeOffset.UtcNow)
+                .OrderByDescending(x => x.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (existing == null)
+                return ("", "", false);
+
+            existing.IsUsed = true;
+
+            var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);
+
+            var authResult = await GenerateTokenAsync(
+                decrypted.KeycloakUserId,
+                decrypted.Login,
+                decrypted.CorporateEmail,
+                decrypted.FullName
+            );
+
+            var newJwt = authResult.Jwtoken;
+            var newRefreshToken = authResult.RefreshToken;
+
+
+            await db.SaveChangesAsync();
+
+            return (newJwt, newRefreshToken, true);
+        }
     }
 
 }

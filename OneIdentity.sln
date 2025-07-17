@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.Messaging", "OneID.Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.Shared", "OneID.Shared\OneID.Shared.csproj", "{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.TotpFrontend", "Front\OneID.TotpFrontend\OneID.TotpFrontend.csproj", "{3A74C7B2-3150-2735-D336-B9840A3D3192}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0 - Front", "0 - Front", "{C1839ECF-F85C-4999-9A95-ECCE02EA3FC4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +57,10 @@ Global
 		{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A74C7B2-3150-2735-D336-B9840A3D3192}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A74C7B2-3150-2735-D336-B9840A3D3192}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A74C7B2-3150-2735-D336-B9840A3D3192}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A74C7B2-3150-2735-D336-B9840A3D3192}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,6 +72,7 @@ Global
 		{47F82395-5257-00A8-C281-E87E65993D7A} = {3BC8F90A-00A6-4E1B-BCD1-4F93D88EB157}
 		{FE738271-95F9-F8ED-2C02-FC46B0DFD482} = {3BC8F90A-00A6-4E1B-BCD1-4F93D88EB157}
 		{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E} = {081ED45E-904F-4456-85B0-CE88629FFD47}
+		{3A74C7B2-3150-2735-D336-B9840A3D3192} = {C1839ECF-F85C-4999-9A95-ECCE02EA3FC4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {12094E69-E945-4B78-B196-E2D2FFB0673E}

@@ -12,6 +12,7 @@ namespace OneID.Domain.Contracts.Jwt
         string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor);
         public RsaSecurityKey GetPublicKey();
         IDictionary<string, object> DecodeToken(string token);
-
+        bool ValidateRequestToken(string token);
+        Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
     }
 }
