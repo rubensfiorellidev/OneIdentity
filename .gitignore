@@ -366,3 +366,4 @@ FodyWeavers.xsd
 /OneID.Api/appsettings.Development.json
 /OneID.Api/Dockerfile
 /OneID.LoginUI/appsettings.Development.json
+/Front/OneID.TotpFrontend/appsettings.Development.json
