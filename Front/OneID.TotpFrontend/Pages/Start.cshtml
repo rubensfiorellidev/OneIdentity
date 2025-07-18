@@ -1,0 +1,121 @@
+﻿@page "/manual-admission"
+@model StartModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <title>Iniciar Admissão</title>
+    <style>
+        body {
+            background-color: #343541;
+            font-family: 'Segoe UI', sans-serif;
+            color: white;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            color: #ffffff;
+        }
+
+        form {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #40414f;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 0 10px #00000055;
+        }
+
+        .form-row {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+            color: #ddd;
+        }
+
+        input, select, textarea {
+            padding: 0.6rem 0.8rem;
+            border: none;
+            border-radius: 8px;
+            background-color: #2c2d3b;
+            color: white;
+            font-size: 0.95rem;
+        }
+
+            input:focus,
+            select:focus,
+            textarea:focus {
+                outline: none;
+                box-shadow: 0 0 0 2px #6b6d7c;
+            }
+
+        ::placeholder {
+            color: #888;
+            font-style: italic;
+        }
+
+        button {
+            background-color: #565869;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+            margin-top: 1.5rem;
+        }
+
+            button:hover {
+                background-color: #6b6d7c;
+            }
+    </style>
+</head>
+<body>
+    <h1>Formulário de Admissão</h1>
+
+    <form method="post" asp-page-handler="Submit">
+        <div class="form-row"><label>First Name</label><input asp-for="FirstName" /></div>
+        <div class="form-row"><label>Last Name</label><input asp-for="LastName" /></div>
+        <div class="form-row"><label>Full Name</label><input asp-for="FullName" /></div>
+        <div class="form-row"><label>Social Name</label><input asp-for="SocialName" /></div>
+        <div class="form-row"><label>CPF</label><input asp-for="Cpf" /></div>
+        <div class="form-row"><label>Birth Date</label><input asp-for="BirthDate" type="date" /></div>
+        <div class="form-row"><label>Registry</label><input asp-for="Registry" /></div>
+        <div class="form-row"><label>Mother Name</label><input asp-for="MotherName" /></div>
+        <div class="form-row"><label>Company</label><input asp-for="Company" /></div>
+        <div class="form-row"><label>Type User Account</label><input asp-for="TypeUserAccount" /></div>
+        <div class="form-row"><label>Login Manager</label><input asp-for="LoginManager" /></div>
+        <div class="form-row"><label>Fiscal Number Identity</label><input asp-for="FiscalNumberIdentity" /></div>
+        <div class="form-row"><label>Start Date</label><input asp-for="StartDate" type="date" /></div>
+        <div class="form-row"><label>End Date</label><input asp-for="EndDate" type="date" /></div>
+        <div class="form-row"><label>Contractor CNPJ</label><input asp-for="ContractorCnpj" /></div>
+        <div class="form-row"><label>Contractor Name</label><input asp-for="ContractorName" /></div>
+        <div class="form-row"><label>Job Title ID</label><input asp-for="JobTitleId" /></div>
+        <div class="form-row"><label>Job Title Name</label><input asp-for="JobTitleName" /></div>
+        <div class="form-row"><label>Department ID</label><input asp-for="DepartmentId" /></div>
+        <div class="form-row"><label>Department Name</label><input asp-for="DepartmentName" /></div>
+        <div class="form-row"><label>Login</label><input asp-for="Login" /></div>
+        <div class="form-row"><label>Personal Email</label><input asp-for="PersonalEmail" type="email" /></div>
+        <div class="form-row"><label>Corporate Email</label><input asp-for="CorporateEmail" type="email" /></div>
+        <div class="form-row"><label>Phone Number</label><input asp-for="PhoneNumber" /></div>
+        <div class="form-row"><label>Comments</label><textarea asp-for="Comments" rows="3"></textarea></div>
+
+        <button type="submit">Enviar Dados</button>
+    </form>
+</body>
+</html>

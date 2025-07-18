@@ -132,6 +132,16 @@ namespace OneID.Data.Mappings
                 .HasColumnName("TypeUserAccount")
                 .IsRequired();
 
+            builder.Property(x => x.Status)
+                .HasConversion(
+                    v => v.Value.ToUpperInvariant(),
+                    v => AdmissionStatus.From(v)
+                )
+                .HasMaxLength(20)
+                .HasColumnName("Status")
+                .IsRequired();
+
+
             builder.HasIndex(x => x.CpfHash).HasDatabaseName("idx_admission_staging_cpfhash");
             builder.HasIndex(x => x.LoginHash).HasDatabaseName("idx_admission_staging_loginhash");
             builder.HasIndex(x => x.CorrelationId).IsUnique().HasDatabaseName("idx_admission_staging_correlation");

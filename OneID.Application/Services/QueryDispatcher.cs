@@ -3,7 +3,7 @@ using OneID.Application.Interfaces.CQRS;
 
 namespace OneID.Application.Services
 {
-    public class QueryDispatcher : IQueryDispatcher
+    public class QueryDispatcher : IQueryExecutor
     {
         private readonly IServiceProvider _serviceProvider;
 
@@ -12,11 +12,11 @@ namespace OneID.Application.Services
             _serviceProvider = serviceProvider;
         }
 
-        public Task<TResponse> DispatchAsync<TQuery, TResponse>(TQuery query, CancellationToken cancellationToken)
+        public async Task<TResponse> SendQueryAsync<TQuery, TResponse>(TQuery query, CancellationToken cancellationToken)
             where TQuery : IQuery<TResponse>
         {
             var handler = _serviceProvider.GetRequiredService<IQueryHandler<TQuery, TResponse>>();
-            return handler.Handle(query, cancellationToken);
+            return await handler.Handle(query, cancellationToken);
         }
     }
 

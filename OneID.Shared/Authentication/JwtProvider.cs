@@ -397,6 +397,23 @@ namespace OneID.Shared.Authentication
 
             return (newJwt, newRefreshToken, true);
         }
+
+        public string GenerateRequestToken(string username, Guid correlationId)
+        {
+            var claims = new Dictionary<string, object>
+            {
+                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+                { JwtClaims.UniqueName, username },
+                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+                { "access_scope", "token_request_only" },
+                { "correlation_id", correlationId.ToString() }
+            };
+
+            return GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
+        }
+
     }
+
+
 
 }

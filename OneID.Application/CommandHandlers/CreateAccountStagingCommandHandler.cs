@@ -7,6 +7,7 @@ using OneID.Application.Interfaces.Services;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Application.CommandHandlers
 {
@@ -86,7 +87,7 @@ namespace OneID.Application.CommandHandlers
 
                 CreatedBy = command.CreatedBy,
                 CreatedAt = DateTimeOffset.UtcNow,
-                Status = "Pending"
+                Status = AdmissionStatus.Pending
             };
 
             await _repository.SaveAsync(staging, cancellationToken);

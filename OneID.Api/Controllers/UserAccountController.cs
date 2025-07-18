@@ -9,6 +9,7 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
+using OneID.Domain.Contracts.Jwt;
 using System.Security.Claims;
 
 #nullable disable
@@ -26,6 +27,7 @@ namespace OneID.Api.Controllers
         private readonly IQueryAccountAdmissionStagingRepository _stagingRepository;
         private readonly ITotpService _otpService;
         private readonly ICurrentUserService _currentUser;
+        private readonly IJwtProvider _jwtProvider;
 
 
         public UserAccountController(
@@ -37,7 +39,8 @@ namespace OneID.Api.Controllers
             IQueryAccountAdmissionStagingRepository stagingRepository,
             IBus bus,
             ITotpService otpService,
-            ICurrentUserService currentUser) : base(send)
+            ICurrentUserService currentUser,
+            IJwtProvider jwtProvider) : base(send)
         {
             _logger = logger;
             _hashService = hashService;
@@ -47,6 +50,7 @@ namespace OneID.Api.Controllers
             _bus = bus;
             _otpService = otpService;
             _currentUser = currentUser;
+            _jwtProvider = jwtProvider;
         }
 
         /// <summary>
@@ -93,18 +97,26 @@ namespace OneID.Api.Controllers
 
             _logger.LogInformation("Provisionamento iniciado - CorrelationId: {CorrelationId}", correlationId);
 
+            var requestToken = _jwtProvider.GenerateRequestToken(loggedUser, correlationId);
+
+            Response.Cookies.Append("request_token", requestToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.Strict,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(5)
+            });
+
             return Accepted(new
             {
                 Message = "Provisionamento iniciado. Confirme com o código TOTP.",
-                CorrelationId = correlationId
+                CorrelationId = correlationId,
             });
+
         }
 
-        /// <summary>
-        /// Etapa 2 - Confirma o provisionamento e publica o evento para a saga.
-        /// </summary>
         [HttpPost("confirm")]
-        [Authorize(Roles = "admin")]
+        [Authorize(AuthenticationSchemes = "RequestToken")]
         public async Task<IActionResult> ConfirmAsync([FromBody] ProvisioningConfirmationRequest request, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(request.TotpCode))
@@ -143,6 +155,35 @@ namespace OneID.Api.Controllers
             });
 
         }
+
+        [HttpPost("resume")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> ResumeAsync([FromBody] ResumeRequest request)
+        {
+            var staging = await _stagingRepository.GetByCorrelationIdAsync(request.CorrelationId);
+            if (staging is null)
+                return NotFound("Processo não encontrado.");
+
+            if (staging.Status != "Pending")
+                return BadRequest("Esse processo não pode mais ser retomado.");
+
+            var claims = new Dictionary<string, object>
+            {
+                { "sub", User.Identity?.Name ?? "unknown" },
+                { "preferred_username", User.Identity?.Name ?? "unknown" },
+                { "correlation_id", request.CorrelationId },
+            };
+
+            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
+
+            return Ok(new
+            {
+                Message = "Token gerado com sucesso.",
+                Token = token,
+                request.CorrelationId
+            });
+        }
+
     }
 
 }

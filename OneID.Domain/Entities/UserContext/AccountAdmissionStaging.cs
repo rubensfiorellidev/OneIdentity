@@ -7,8 +7,8 @@ namespace OneID.Domain.Entities.UserContext
     {
         public AccountAdmissionStaging()
         {
-            Status = "Pending";
             CreatedAt = DateTimeOffset.UtcNow;
+            Status = AdmissionStatus.Pending;
         }
 
         public Guid CorrelationId { get; set; }
@@ -44,7 +44,7 @@ namespace OneID.Domain.Entities.UserContext
         public string Comments { get; set; }
         public string CreatedBy { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        public string Status { get; set; }
+        public AdmissionStatus Status { get; set; }
 
         public UserAccountStatus StatusUserAccount { get; set; } = UserAccountStatus.Inactive;
         public TypeUserAccount TypeUserAccount { get; set; }

@@ -1,6 +1,11 @@
+using OneID.TotpFrontend.RefreshTokens;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
+
+builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
+
 
 var app = builder.Build();
 

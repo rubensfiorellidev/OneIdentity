@@ -2,6 +2,7 @@
 using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
+using OneID.Domain.ValueObjects;
 
 namespace OneID.Data.Repositories.AdmissionContext
 {
@@ -22,6 +23,18 @@ namespace OneID.Data.Repositories.AdmissionContext
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.CorrelationId == correlationId, cancellationToken);
 
+        }
+
+        public async Task<List<AccountAdmissionStaging>> GetPendingAsync(CancellationToken cancellationToken)
+        {
+            await using var db = _dbContextFactory.CreateDbContext();
+
+            var result = await db.AccountAdmissionStagings
+                .Where(x => x.Status == AdmissionStatus.Pending)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            return result;
         }
     }
 }

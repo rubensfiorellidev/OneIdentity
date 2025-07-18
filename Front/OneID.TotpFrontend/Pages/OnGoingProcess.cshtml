@@ -1,0 +1,108 @@
+﻿@page "/ongoing-processes"
+@model OngoingProcessesModel
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <title>Processos em Andamento</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #343541;
+            color: white;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        h1 {
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            max-width: 1200px;
+            border-collapse: collapse;
+            background-color: #40414f;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 10px #00000033;
+        }
+
+        thead {
+            background-color: #202123;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+        }
+
+        th {
+            color: #90ee90;
+            font-weight: 600;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #2c2d3b;
+        }
+
+        tbody tr:hover {
+            background-color: #565869;
+            cursor: pointer;
+        }
+
+        .empty {
+            margin-top: 2rem;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Processos de Admissão em Andamento</h1>
+
+    @if (Model.Processes?.Any() == true)
+    {
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>CorrelationId</th>
+                    <th>Nome</th>
+                    <th>Login</th>
+                    <th>Status</th>
+                    <th>Evento</th>
+                    <th>Data</th>
+                    <th>Descrição</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var process in Model.Processes)
+                {
+                    <tr>
+                        <td>@process.Id</td>
+                        <td>@process.CorrelationId</td>
+                        <td>@($"{process.FirstName} {process.LastName}")</td>
+                        <td>@process.Login</td>
+                        <td>@process.CurrentState</td>
+                        <td>@process.EventName</td>
+                        <td>@process.ProvisioningDate.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@process.Description</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="empty">Nenhum processo em andamento no momento.</div>
+    }
+</body>
+</html>

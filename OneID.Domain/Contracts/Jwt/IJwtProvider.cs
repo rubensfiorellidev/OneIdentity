@@ -14,5 +14,6 @@ namespace OneID.Domain.Contracts.Jwt
         IDictionary<string, object> DecodeToken(string token);
         bool ValidateRequestToken(string token);
         Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
+        string GenerateRequestToken(string username, Guid correlationId);
     }
 }

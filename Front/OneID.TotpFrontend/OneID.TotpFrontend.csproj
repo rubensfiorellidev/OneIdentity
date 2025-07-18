@@ -12,4 +12,9 @@
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.1" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <ProjectReference Include="..\..\OneID.Domain\OneID.Domain.csproj" />
+	  <ProjectReference Include="..\..\OneID.Shared\OneID.Shared.csproj" />
+	</ItemGroup>
+
 </Project>

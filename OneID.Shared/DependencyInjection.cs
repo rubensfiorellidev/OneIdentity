@@ -51,32 +51,24 @@ namespace OneID.Shared
             services.AddSingleton<ISesEmailSender, SesEmailSender>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-
+            // Command handlers
             services.Scan(scan => scan
                 .FromApplicationDependencies()
                 .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
+            // Query handlers
             services.Scan(scan => scan
                 .FromApplicationDependencies()
                 .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
                 .AsImplementedInterfaces()
                 .WithScopedLifetime());
 
-
-            services.Scan(scan => scan
-                .FromApplicationDependencies()
-                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
+            // Decorators e dispatchers
             services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));
-
-
             services.AddScoped<ISender, Sender>();
-            services.AddScoped<IQueryDispatcher, QueryDispatcher>();
-
+            services.AddScoped<IQueryExecutor, QueryDispatcher>();
 
             return services;
         }
