@@ -22,7 +22,6 @@
             --background-color: #1b1c1d;
             --highlight-color: #38bdf8;
             --link-hover-color: #66f0f1;
-
             --btn-bg: #2c2f3a;
             --btn-hover: #37475a;
             --btn-border: #3a4553;
@@ -86,74 +85,64 @@
             margin: 0.3rem 0;
         }
 
-        .action-btn {
-            display: inline-block;
-            margin-top: 2rem;
-            padding: 0.75rem 1.5rem;
-            background-color: var(--btn-bg);
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: background-color 0.3s ease;
-            border: 1px solid var(--btn-border);
-        }
-
-            .action-btn:hover {
-                background-color: var(--btn-hover);
-            }
-
         .container-table {
             margin: 3rem auto;
             width: 90%;
             max-width: 1600px;
         }
 
-        .pending-section {
+        .pending-widget {
             background-color: var(--card-bg);
-            padding: 2rem;
+            padding: 1.5rem;
             border-radius: 12px;
             border: 1px solid var(--card-border);
+            text-align: left;
         }
 
-            .pending-section h2 {
-                margin-bottom: 1rem;
+            .pending-widget h2 {
+                margin-bottom: 0.5rem;
+                font-size: 1.3rem;
                 color: var(--highlight-color);
-                font-size: 1.4rem;
-                font-weight: 600;
             }
 
-            .pending-section table {
-                width: 100%;
-                border-collapse: collapse;
-                font-size: 14px;
+            .pending-widget ul {
+                list-style: none;
+                padding-left: 0;
             }
 
-            .pending-section th,
-            .pending-section td {
-                padding: 8px 12px;
-                text-align: left;
+            .pending-widget li {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 6px 0;
                 border-bottom: 1px solid var(--grid-border);
             }
 
-            .pending-section tr:hover {
-                background-color: var(--row-hover);
-            }
+                .pending-widget li:last-child {
+                    border-bottom: none;
+                }
 
-            .pending-section button {
-                background-color: transparent;
+            .pending-widget .resume-button {
+                font-size: 13px;
                 color: var(--highlight-color);
+                background: none;
                 border: none;
-                padding: 0;
-                font-size: 14px;
-                font-weight: 600;
                 cursor: pointer;
-                transition: color 0.3s ease;
+                font-weight: 600;
+                transition: color 0.2s ease;
             }
 
-                .pending-section button:hover {
+                .pending-widget .resume-button:hover {
                     color: var(--link-hover-color);
                 }
+
+
+            .pending-widget .footer-link {
+                display: block;
+                margin-top: 1rem;
+                text-align: right;
+                font-size: 14px;
+            }
 
         .external-link {
             color: var(--highlight-color);
@@ -169,12 +158,11 @@
         }
 
             .external-link:hover {
-                color: var(--link-hover-color, #67e8f9);
+                color: var(--link-hover-color);
             }
 
     </style>
 </head>
-
 <body>
     <div class="container">
         <h1>Bem-vindo, @Model.OperatorName!</h1>
@@ -204,40 +192,37 @@
                 <path fill-rule="evenodd" d="M3 9a1 1 0 011-1h6a1 1 0 110 2H5v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
             </svg>
         </a>
-
     </div>
 
     @if (Model.PendingProcesses?.Any() == true)
     {
         <div class="container-table">
-            <div class="pending-section">
+            <div class="pending-widget">
                 <h2>Processos pendentes de confirmação</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nome Completo</th>
-                            <th>Data de Criação</th>
-                            <th style="text-align: center;">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.PendingProcesses)
-                        {
-                            <tr>
-                                <td>@item.FullName</td>
-                                <td>@item.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                                <td style="text-align: center;">
-                                    <form method="post" asp-page-handler="Resume">
-                                        <input type="hidden" name="correlationId" value="@item.CorrelationId" />
-                                        <button type="submit">🔄 Retomar</button>
-                                    </form>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                <ul>
+                    @{
+                        var expandGrid = (bool?)ViewData["ExpandGrid"] ?? false;
+                        var processes = expandGrid ? Model.PendingProcesses : Model.PendingProcesses.Take(5);
+                    }
+
+                    @foreach (var item in processes)
+                    {
+                        <li>
+                            <span>@item.FullName</span>
+                            <form method="post" asp-page-handler="Resume" style="margin: 0;">
+                                <input type="hidden" name="correlationId" value="@item.CorrelationId" />
+                                <button type="submit" class="resume-button">Retomar</button>
+                            </form>
+                        </li>
+                    }
+                </ul>
+                @if (!expandGrid)
+                {
+                    <a href="/dashboard?expand=true" target="_blank" class="footer-link">Ver todos ⤴</a>
+                }
             </div>
         </div>
     }
+
 </body>
 </html>

@@ -16,6 +16,8 @@ public class DashboardModel : PageModel
 
     public async Task<IActionResult> OnGetAsync()
     {
+        var expand = Request.Query.ContainsKey("expand");
+
         var token = Request.Cookies["access_token"];
 
         if (string.IsNullOrWhiteSpace(token))
@@ -51,6 +53,8 @@ public class DashboardModel : PageModel
             var list = await response.Content.ReadFromJsonAsync<List<PendingProcessDto>>();
             PendingProcesses = list ?? [];
         }
+
+        ViewData["ExpandGrid"] = expand;
 
         return Page();
     }
