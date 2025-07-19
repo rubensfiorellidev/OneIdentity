@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using OneID.TotpFrontend.RefreshTokens;
+using OneID.TotpFrontend.Tokens;
 using System.Net.Http.Headers;
 using System.Text.Json;
 

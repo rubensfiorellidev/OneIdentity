@@ -1,4 +1,4 @@
-﻿namespace OneID.TotpFrontend.Tokens
+﻿namespace OneID.ServerWebApp.Shared.Tokens
 {
     public interface ITotpTokenGenerator
     {

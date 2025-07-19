@@ -1,0 +1,169 @@
+﻿@page "/manual-admission"
+@rendermode InteractiveServer
+
+@inject HttpClient Http
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ITotpTokenGenerator TotpTokenGenerator
+
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text.Json
+@using System.Net.Http.Headers
+@using OneID.ServerWebApp.Shared.Tokens
+
+<EditForm Model="formModel" OnValidSubmit="HandleSubmit">
+    <div class="container">
+        <h1>Formulário de Admissão</h1>
+
+        <div class="form-row"><label>First Name</label><InputText @bind-Value="formModel.FirstName" /></div>
+        <div class="form-row"><label>Last Name</label><InputText @bind-Value="formModel.LastName" /></div>
+        <div class="form-row"><label>Full Name</label><InputText @bind-Value="formModel.FullName" /></div>
+        <div class="form-row"><label>Social Name</label><InputText @bind-Value="formModel.SocialName" /></div>
+        <div class="form-row"><label>CPF</label><InputText @bind-Value="formModel.Cpf" /></div>
+        <div class="form-row"><label>Birth Date</label><InputDate @bind-Value="formModel.BirthDate" /></div>
+        <div class="form-row"><label>Registry</label><InputText @bind-Value="formModel.Registry" /></div>
+        <div class="form-row"><label>Mother Name</label><InputText @bind-Value="formModel.MotherName" /></div>
+        <div class="form-row"><label>Company</label><InputText @bind-Value="formModel.Company" /></div>
+        <div class="form-row"><label>Type User Account</label><InputText @bind-Value="formModel.TypeUserAccount" /></div>
+        <div class="form-row"><label>Login Manager</label><InputText @bind-Value="formModel.LoginManager" /></div>
+        <div class="form-row"><label>Fiscal Number Identity</label><InputText @bind-Value="formModel.FiscalNumberIdentity" /></div>
+        <div class="form-row"><label>Start Date</label><InputDate @bind-Value="formModel.StartDate" /></div>
+        <div class="form-row"><label>End Date</label><InputDate @bind-Value="formModel.EndDate" /></div>
+        <div class="form-row"><label>Contractor CNPJ</label><InputText @bind-Value="formModel.ContractorCnpj" /></div>
+        <div class="form-row"><label>Contractor Name</label><InputText @bind-Value="formModel.ContractorName" /></div>
+        <div class="form-row"><label>Job Title ID</label><InputText @bind-Value="formModel.JobTitleId" /></div>
+        <div class="form-row"><label>Job Title Name</label><InputText @bind-Value="formModel.JobTitleName" /></div>
+        <div class="form-row"><label>Department ID</label><InputText @bind-Value="formModel.DepartmentId" /></div>
+        <div class="form-row"><label>Department Name</label><InputText @bind-Value="formModel.DepartmentName" /></div>
+        <div class="form-row"><label>Login</label><InputText @bind-Value="formModel.Login" /></div>
+        <div class="form-row"><label>Personal Email</label><InputText @bind-Value="formModel.PersonalEmail" /></div>
+        <div class="form-row"><label>Corporate Email</label><InputText @bind-Value="formModel.CorporateEmail" /></div>
+        <div class="form-row"><label>Phone Number</label><InputText @bind-Value="formModel.PhoneNumber" /></div>
+        <div class="form-row"><label>Comments</label><InputTextArea @bind-Value="formModel.Comments" Rows="3" /></div>
+
+        <button type="submit">Enviar Dados</button>
+    </div>
+</EditForm>
+
+@code {
+    private ManualAdmissionFormModel formModel = new();
+
+    private async Task HandleSubmit()
+    {
+        var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+        if (string.IsNullOrEmpty(token)) return;
+
+        var payload = new
+        {
+            firstName = formModel.FirstName,
+            lastName = formModel.LastName,
+            fullName = formModel.FullName,
+            socialName = formModel.SocialName,
+            cpf = formModel.Cpf,
+            cpfHash = (string?)null,
+            birthDate = formModel.BirthDate.ToString("yyyy-MM-dd"),
+            registry = formModel.Registry,
+            motherName = formModel.MotherName,
+            company = formModel.Company,
+            typeUserAccount = formModel.TypeUserAccount,
+            loginManager = formModel.LoginManager,
+            fiscalNumberIdentity = formModel.FiscalNumberIdentity,
+            fiscalNumberIdentityHash = (string?)null,
+            startDate = formModel.StartDate.ToString("yyyy-MM-dd"),
+            endDate = formModel.EndDate?.ToString("yyyy-MM-dd"),
+            contractorCnpj = formModel.ContractorCnpj,
+            contractorCnpjHash = (string?)null,
+            contractorName = formModel.ContractorName,
+            jobTitleId = formModel.JobTitleId,
+            jobTitleName = formModel.JobTitleName,
+            departmentId = formModel.DepartmentId,
+            departmentName = formModel.DepartmentName,
+            login = formModel.Login,
+            loginHash = (string?)null,
+            personalEmail = formModel.PersonalEmail,
+            personalEmailHash = (string?)null,
+            corporateEmail = formModel.CorporateEmail,
+            corporateEmailHash = (string?)null,
+            phoneNumber = formModel.PhoneNumber,
+            comments = formModel.Comments
+        };
+
+        Http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        var response = await Http.PostAsJsonAsync("https://localhost:7200/v1/staging/start", payload);
+
+        if (!response.IsSuccessStatusCode) return;
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var correlationId = json.GetProperty("correlationId").GetString();
+
+        if (string.IsNullOrWhiteSpace(correlationId))
+            return;
+
+        HttpContextAccessor.HttpContext?.Response.Cookies.Append("correlation_id", correlationId!, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(5)
+        });
+
+        var claims = new Dictionary<string, object>
+        {
+            { "sub", correlationId },
+            { "preferred_username", correlationId },
+            { "correlation_id", correlationId! }
+        };
+
+        var tokenGenerator = HttpContextAccessor.HttpContext?.RequestServices.GetService(typeof(ITotpTokenGenerator)) as ITotpTokenGenerator;
+
+        if (tokenGenerator is null)
+            throw new InvalidOperationException("O serviço ITotpTokenGenerator não foi resolvido.");
+
+        var requestToken = tokenGenerator!.GenerateToken(claims, TimeSpan.FromMinutes(5));
+
+        var context = HttpContextAccessor.HttpContext;
+
+        if (context is null)
+            throw new InvalidOperationException("HttpContext não está disponível.");
+
+        context.Response.Cookies.Append("request_token", requestToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = DateTimeOffset.UtcNow.AddMinutes(5)
+        });
+
+        Navigation.NavigateTo("/confirm-code");
+    }
+
+    private sealed class ManualAdmissionFormModel
+    {
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string SocialName { get; set; } = string.Empty;
+        public string Cpf { get; set; } = string.Empty;
+        public DateTime BirthDate { get; set; } = DateTime.Today;
+        public string Registry { get; set; } = string.Empty;
+        public string MotherName { get; set; } = string.Empty;
+        public string Company { get; set; } = string.Empty;
+        public string TypeUserAccount { get; set; } = string.Empty;
+        public string LoginManager { get; set; } = string.Empty;
+        public string FiscalNumberIdentity { get; set; } = string.Empty;
+        public DateTime StartDate { get; set; } = DateTime.Today;
+        public DateTime? EndDate { get; set; }
+        public string ContractorCnpj { get; set; } = string.Empty;
+        public string ContractorName { get; set; } = string.Empty;
+        public string JobTitleId { get; set; } = string.Empty;
+        public string JobTitleName { get; set; } = string.Empty;
+        public string DepartmentId { get; set; } = string.Empty;
+        public string DepartmentName { get; set; } = string.Empty;
+        public string Login { get; set; } = string.Empty;
+        public string PersonalEmail { get; set; } = string.Empty;
+        public string CorporateEmail { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public string Comments { get; set; } = string.Empty;
+    }
+}

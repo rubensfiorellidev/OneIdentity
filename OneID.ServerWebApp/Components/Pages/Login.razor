@@ -1,0 +1,166 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager Navigation
+@inject HttpClient Http
+
+<div class="container">
+    <div class="header">
+        <h1>Bem-vindo de volta!</h1>
+        <p>Digite suas credenciais para acessar o sistema</p>
+    </div>
+
+    <EditForm Model="@formModel" OnValidSubmit="HandleLogin">
+        <div class="form-group">
+            <InputText @bind-Value="formModel.Username" placeholder="Digite seu login" class="login-input" />
+        </div>
+
+        <div class="form-group">
+            <InputText @bind-Value="formModel.Password"
+                       type="password"
+                       placeholder="Digite sua senha"
+                       class="login-input" />
+            <button type="submit" class="submit-button">↑</button>
+        </div>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="result">@ErrorMessage</div>
+    }
+</div>
+
+<style>
+    :root {
+        --font-main: 'Inter', 'Segoe UI', 'Noto Sans', sans-serif;
+        --background-color: #1b1c1d;
+        --input-bg: #2c2f3a;
+        --input-border: #3a4553;
+        --input-hover: #40414f;
+        --text-color: #f3f4f6;
+        --text-muted: #aaa;
+        --btn-bg: #2c2f3a;
+        --btn-hover: #37475a;
+    }
+
+    html, body {
+        margin: 0;
+        padding: 0;
+        height: 100vh;
+        font-family: var(--font-main);
+        background-color: var(--background-color);
+        color: var(--text-color);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .container {
+        width: 100%;
+        max-width: 680px;
+        padding: 1rem;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+    .form-group {
+        display: flex;
+        align-items: center;
+        background-color: var(--input-bg);
+        border: 1px solid var(--input-border);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-bottom: 1rem;
+        transition: background-color 0.2s ease;
+    }
+
+        .form-group:hover {
+            background-color: var(--input-hover);
+        }
+
+    .login-input {
+        flex: 1;
+        border: none;
+        background-color: transparent;
+        color: var(--text-color);
+        font-size: 1rem;
+        padding: 0.4rem;
+        outline: none;
+    }
+
+        .login-input::placeholder {
+            color: #999;
+        }
+
+    .submit-button {
+        background-color: var(--btn-bg);
+        border: 1px solid var(--input-border);
+        color: var(--text-color);
+        font-size: 1.1rem;
+        padding: 0.5rem 0.8rem;
+        border-radius: 12px;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+        margin-left: 0.5rem;
+    }
+
+        .submit-button:hover {
+            background-color: var(--btn-hover);
+        }
+
+    .result {
+        margin-top: 1rem;
+        text-align: center;
+        color: #ffaaaa;
+    }
+</style>
+
+@code {
+    private LoginForm formModel = new();
+    private string ErrorMessage = string.Empty;
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            // Aqui você envia os dados para o seu backend
+            var response = await Http.PostAsJsonAsync("https://localhost:7200/v1/auth/login", formModel);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                ErrorMessage = "Credenciais inválidas.";
+                return;
+            }
+
+            // Se deu bom, redireciona
+            Navigation.NavigateTo("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Erro no login: {ex.Message}";
+        }
+    }
+
+    public class LoginForm
+    {
+        [Required]
+        public string Username { get; set; } = string.Empty;
+
+        [Required]
+        public string Password { get; set; } = string.Empty;
+    }
+}

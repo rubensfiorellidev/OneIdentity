@@ -23,9 +23,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.Messaging", "OneID.Me
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.Shared", "OneID.Shared\OneID.Shared.csproj", "{BD8255A2-A892-0EB9-8A55-8FFBDECAF72E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.TotpFrontend", "Front\OneID.TotpFrontend\OneID.TotpFrontend.csproj", "{3A74C7B2-3150-2735-D336-B9840A3D3192}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "FrontRazor", "FrontRazor", "{C1839ECF-F85C-4999-9A95-ECCE02EA3FC4}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "0 - Front", "0 - Front", "{C1839ECF-F85C-4999-9A95-ECCE02EA3FC4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OneID.TotpFrontend", "Front\OneID.TotpFrontend\OneID.TotpFrontend.csproj", "{3A74C7B2-3150-2735-D336-B9840A3D3192}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

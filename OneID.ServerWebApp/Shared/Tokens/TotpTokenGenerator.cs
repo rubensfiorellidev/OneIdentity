@@ -4,7 +4,7 @@ using System.Security.Claims;
 using System.Text;
 
 #nullable disable
-namespace OneID.TotpFrontend.Tokens
+namespace OneID.ServerWebApp.Shared.Tokens
 {
     public sealed class TotpTokenGenerator : ITotpTokenGenerator
     {

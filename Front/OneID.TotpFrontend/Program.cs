@@ -1,4 +1,4 @@
-using OneID.TotpFrontend.RefreshTokens;
+using OneID.TotpFrontend.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
