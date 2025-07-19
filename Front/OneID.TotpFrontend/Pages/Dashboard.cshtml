@@ -8,159 +8,134 @@
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
-    <title>Dashboard</title>
-
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <title>OneID - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 
     <style>
-        :root {
-            --font-main: 'Inter', 'Segoe UI', 'Noto Sans', sans-serif;
-            --font-size: 15px;
-            --font-weight: 400;
-            --text-color: #f3f4f6;
-            --text-muted: #aaa;
-            --background-color: #1b1c1d;
-            --highlight-color: #38bdf8;
-            --link-hover-color: #66f0f1;
-            --btn-bg: #2c2f3a;
-            --btn-hover: #37475a;
-            --btn-border: #3a4553;
-            --card-bg: #212121;
-            --card-border: #3a4553;
-            --row-hover: #2e3b4e;
-            --grid-border: #3a4553;
-            --resume-btn-bg: #1e293b;
-            --resume-btn-hover: #334155;
-        }
-
-        a {
-            color: var(--highlight-color);
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.3s ease;
-        }
-
-            a:hover {
-                color: var(--link-hover-color);
-            }
-
         body {
-            font-family: var(--font-main);
-            font-weight: var(--font-weight);
-            font-size: var(--font-size);
-            color: var(--text-color);
-            background-color: var(--background-color);
-            line-height: 1.5;
             margin: 0;
             padding: 0;
+            background-color: #343541;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            padding-top: 3rem;
         }
 
         .container {
             text-align: center;
-            margin-top: 3rem;
+            width: 100%;
+            max-width: 800px;
+            padding: 0 1rem;
         }
 
         h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
             font-weight: 600;
+            margin-bottom: 0.5rem;
         }
 
         .info {
-            margin-bottom: 1rem;
-            color: var(--text-muted);
+            color: #aaa;
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .roles {
-            margin-top: 1.5rem;
-            color: var(--highlight-color);
+            margin-bottom: 2rem;
         }
 
-        ul {
-            list-style: none;
-            padding: 0;
+            .roles strong {
+                color: #38bdf8;
+                font-weight: 600;
+            }
+
+            .roles ul {
+                list-style: none;
+                padding: 0;
+                margin-top: 0.5rem;
+            }
+
+            .roles li {
+                color: #ccc;
+                font-size: 0.95rem;
+            }
+
+        .admission-link {
+            display: inline-flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            color: #38bdf8;
+            text-decoration: none;
+            font-weight: 600;
         }
 
-        li {
-            margin: 0.3rem 0;
-        }
-
-        .container-table {
-            margin: 3rem auto;
-            width: 90%;
-            max-width: 1600px;
-        }
+            .admission-link:hover {
+                color: #66f0f1;
+            }
 
         .pending-widget {
-            background-color: var(--card-bg);
+            background-color: #40414f;
             padding: 1.5rem;
             border-radius: 12px;
-            border: 1px solid var(--card-border);
-            text-align: left;
+            width: 100%;
+            box-shadow: 0 0 3px #00000055;
         }
 
             .pending-widget h2 {
-                margin-bottom: 0.5rem;
-                font-size: 1.3rem;
-                color: var(--highlight-color);
+                font-size: 1.2rem;
+                font-weight: 600;
+                color: #38bdf8;
+                margin-bottom: 1rem;
             }
 
             .pending-widget ul {
                 list-style: none;
-                padding-left: 0;
+                padding: 0;
+                margin: 0;
             }
 
             .pending-widget li {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: 6px 0;
-                border-bottom: 1px solid var(--grid-border);
+                padding: 8px 0;
+                border-bottom: 1px solid #555;
             }
 
                 .pending-widget li:last-child {
                     border-bottom: none;
                 }
 
-            .pending-widget .resume-button {
-                font-size: 13px;
-                color: var(--highlight-color);
-                background: none;
-                border: none;
-                cursor: pointer;
-                font-weight: 600;
-                transition: color 0.2s ease;
-            }
-
-                .pending-widget .resume-button:hover {
-                    color: var(--link-hover-color);
-                }
-
-
-            .pending-widget .footer-link {
-                display: block;
-                margin-top: 1rem;
-                text-align: right;
-                font-size: 14px;
-            }
-
-        .external-link {
-            color: var(--highlight-color);
-            text-decoration: none;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            transition: color 0.2s ease;
+        .resume-button {
+            background-color: transparent;
             border: none;
-            background: none;
-            font-size: 15px;
-            padding: 0;
+            color: #38bdf8;
+            font-weight: 600;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            font-size: 0.95rem;
         }
 
-            .external-link:hover {
-                color: var(--link-hover-color);
+            .resume-button:hover {
+                color: #66f0f1;
             }
 
+        .footer-link {
+            display: block;
+            text-align: right;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+            .footer-link:hover {
+                color: #66f0f1;
+            }
     </style>
 </head>
 <body>
@@ -180,23 +155,13 @@
                 </ul>
             </div>
         }
-        else
-        {
-            <div class="roles">Nenhuma role atribuída.</div>
-        }
 
-        <a href="/manual-admission" class="external-link" target="_blank" rel="noopener noreferrer">
-            Iniciar Nova Admissão
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="14" height="14" style="margin-left: 6px;">
-                <path fill-rule="evenodd" d="M12.293 2.293a1 1 0 011.414 0l4 4a1 1 0 01-1.414 1.414L14 5.414V13a1 1 0 11-2 0V5.414l-2.293 2.293A1 1 0 018.293 6.293l4-4z" clip-rule="evenodd" />
-                <path fill-rule="evenodd" d="M3 9a1 1 0 011-1h6a1 1 0 110 2H5v6a1 1 0 11-2 0V9z" clip-rule="evenodd" />
-            </svg>
+        <a href="/manual-admission" class="admission-link" target="_blank">
+            Iniciar Nova Admissão ⤴
         </a>
-    </div>
 
-    @if (Model.PendingProcesses?.Any() == true)
-    {
-        <div class="container-table">
+        @if (Model.PendingProcesses?.Any() == true)
+        {
             <div class="pending-widget">
                 <h2>Processos pendentes de confirmação</h2>
                 <ul>
@@ -216,13 +181,13 @@
                         </li>
                     }
                 </ul>
+
                 @if (!expandGrid)
                 {
-                    <a href="/dashboard?expand=true" target="_blank" class="footer-link">Ver todos ⤴</a>
+                    <a href="/dashboard?expand=true" class="footer-link" target="_blank">Ver todos ⤴</a>
                 }
             </div>
-        </div>
-    }
-
+        }
+    </div>
 </body>
 </html>
