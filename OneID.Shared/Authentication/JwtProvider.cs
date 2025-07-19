@@ -108,7 +108,9 @@ namespace OneID.Shared.Authentication
                 new(JwtClaims.UniqueName, preferredUsername ?? userId),
                 new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
                 new("ip", ipAddress),
-                new("user_agent", userAgent)
+                new("user_agent", userAgent),
+                new("account_id", $"ONE-{userId.ToUpper()}")
+
             };
 
             if (!string.IsNullOrWhiteSpace(email))

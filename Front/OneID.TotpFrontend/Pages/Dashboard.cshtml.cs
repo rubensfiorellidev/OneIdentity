@@ -11,8 +11,8 @@ public class DashboardModel : PageModel
     public string OperatorName { get; set; } = "usuário";
     public string Email { get; set; } = "desconhecido";
     public List<string> Roles { get; set; }
-
     public List<PendingProcessDto> PendingProcesses { get; set; } = [];
+    public string AccountId { get; set; }
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -32,6 +32,7 @@ public class DashboardModel : PageModel
             var jwt = handler.ReadJwtToken(token);
             OperatorName = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "usuário";
             Email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? "não informado";
+            AccountId = jwt.Claims.FirstOrDefault(c => c.Type == "account_id")?.Value ?? "desconhecido";
 
             var rolesClaim = jwt.Claims.FirstOrDefault(c => c.Type == "roles")?.Value;
             if (!string.IsNullOrEmpty(rolesClaim))
