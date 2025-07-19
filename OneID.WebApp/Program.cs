@@ -1,9 +1,19 @@
+using MudBlazor.Services;
 using OneID.WebApp.Components;
+using OneID.WebApp.Components.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddMudServices();
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddHttpClient();
+builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
+
 
 var app = builder.Build();
 

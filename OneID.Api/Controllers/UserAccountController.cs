@@ -9,6 +9,7 @@ using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Messaging.Sagas.Contracts.Events;
+using OneID.Application.Queries.AdmissionQueries;
 using OneID.Domain.Contracts.Jwt;
 using System.Security.Claims;
 
@@ -28,6 +29,7 @@ namespace OneID.Api.Controllers
         private readonly ITotpService _otpService;
         private readonly ICurrentUserService _currentUser;
         private readonly IJwtProvider _jwtProvider;
+        private readonly IQueryExecutor _queryExecutor;
 
 
         public UserAccountController(
@@ -40,7 +42,8 @@ namespace OneID.Api.Controllers
             IBus bus,
             ITotpService otpService,
             ICurrentUserService currentUser,
-            IJwtProvider jwtProvider) : base(send)
+            IJwtProvider jwtProvider,
+            IQueryExecutor queryExecutor) : base(send)
         {
             _logger = logger;
             _hashService = hashService;
@@ -51,6 +54,7 @@ namespace OneID.Api.Controllers
             _otpService = otpService;
             _currentUser = currentUser;
             _jwtProvider = jwtProvider;
+            _queryExecutor = queryExecutor;
         }
 
         /// <summary>
@@ -164,7 +168,7 @@ namespace OneID.Api.Controllers
             if (staging is null)
                 return NotFound("Processo não encontrado.");
 
-            if (staging.Status != "Pending")
+            if (staging.Status != "PENDING")
                 return BadRequest("Esse processo não pode mais ser retomado.");
 
             var claims = new Dictionary<string, object>
@@ -182,6 +186,24 @@ namespace OneID.Api.Controllers
                 Token = token,
                 request.CorrelationId
             });
+        }
+
+        [HttpGet("admissions-recents")]
+        public async Task<IActionResult> GetRecentAdmissionsAsync([FromQuery] int limit = 10, CancellationToken cancellationToken = default)
+        {
+            var query = new GetRecentAdmissionsQuery(limit);
+            var result = await _queryExecutor
+                .SendQueryAsync<GetRecentAdmissionsQuery, List<RecentAdmissionDto>>(query, cancellationToken);
+
+            _logger.LogInformation("Query retornou {Count} admissões recentes", result?.Count ?? 0);
+
+            foreach (var item in result ?? [])
+            {
+                _logger.LogDebug(" - {AccountId} | {FullName} | {Department} | {JobTitle} | {ProvisioningAt}",
+                    item.AccountId, item.FullName, item.DepartmentName, item.JobTitleName, item.ProvisioningAt);
+            }
+
+            return Ok(result);
         }
 
     }

@@ -1,0 +1,208 @@
+﻿
+:root {
+    --font-main: 'Inter', sans-serif;
+    --text-color: #f3f4f6;
+    --text-muted: #a1a1aa;
+    --background-color: #1b1c1d;
+    --highlight-color: #19c37d;
+    --link-hover-color: #66f0f1;
+    --card-bg: rgba(36, 39, 46, 0.8);
+    --card-border: #3a3a3c;
+    --divider: #3a3a3c80;
+}
+
+body {
+    margin: 0;
+    padding: 2rem;
+    background-color: #343541;
+    color: var(--text-color);
+    font-family: var(--font-main);
+}
+
+.top-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.grid-layout {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 2rem;
+}
+
+.widget,
+.pending-widget {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow:
+        0 0 0 1px #2dd4bf, /* cor da borda "viva" */
+        0 0 8px 2px #2dd4bf55, /* brilho espalhado */
+        0 0 12px 4px #2dd4bf22; /* glow sutil de fundo */
+    transition: box-shadow 0.3s ease;
+    backdrop-filter: blur(6px);
+}
+
+.account-id-widget label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.copyable-id {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+}
+
+    .copyable-id svg {
+        width: 16px;
+        height: 16px;
+        fill: var(--highlight-color);
+        cursor: pointer;
+    }
+
+.divider {
+    height: 1px;
+    background-color: var(--divider);
+    margin-top: 1rem;
+}
+
+.pending-widget h2,
+.widget h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--highlight-color);
+    letter-spacing: 0.3px;
+}
+
+.pending-widget ul,
+.widget ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.pending-widget li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--divider);
+}
+
+.resume-button {
+    background: none;
+    border: none;
+    color: var(--highlight-color);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+    .resume-button:hover {
+        color: var(--link-hover-color);
+    }
+
+.footer-link {
+    display: block;
+    margin-top: 1rem;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .footer-link:hover {
+        color: var(--highlight-color);
+    }
+
+.pending-widget ul {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--highlight-color) transparent;
+}
+
+    .pending-widget ul::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .pending-widget ul::-webkit-scrollbar-thumb {
+        background-color: var(--highlight-color);
+        border-radius: 4px;
+    }
+
+.admissions-widget {
+    margin-top: 2rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(6px);
+    overflow-y: auto;
+    max-height: 360px;
+    width: none;
+    flex: 1;
+}
+
+    .admissions-widget h2 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        color: var(--highlight-color);
+    }
+
+    .admissions-widget ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .admissions-widget li {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--divider);
+    }
+
+.admissions-wrapper {
+    width: 100%;
+}
+
+.date-box {
+    width: 48px;
+    text-align: center;
+    color: var(--highlight-color);
+}
+
+    .date-box .month {
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .date-box .day {
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+.admission-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+    .admission-info .muted {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }

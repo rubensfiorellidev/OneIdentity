@@ -54,6 +54,7 @@ public class LoginModel : PageModel
             Expires = DateTimeOffset.UtcNow.AddMinutes(15)
         });
 
-        return Redirect("/dashboard");
+        //return Redirect("/dashboard");
+        return Redirect("https://localhost:5002/dashboard");
     }
 }

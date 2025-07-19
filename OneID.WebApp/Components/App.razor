@@ -1,18 +1,31 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
-
+<html lang="pt-br">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="app.css" />
+
+    <!-- Fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+    <!-- Seu CSS dark moderno -->
+    <link rel="stylesheet" href="css/dashboard.css" />
+
+    <!-- CSS gerado pelo build -->
     <link rel="stylesheet" href="OneID.WebApp.styles.css" />
+
+    <!-- HEADOUTLET usado pelo Blazor para injetar dinamicamente meta, title, etc -->
     <HeadOutlet />
 </head>
 
 <body>
+    <!-- Aqui o conteúdo Blazor é renderizado -->
     <Routes />
+
+    <!-- Seu JS custom para copiar texto -->
+    <script src="js/utils.js"></script>
+
+    <!-- Blazor framework script -->
     <script src="_framework/blazor.web.js"></script>
 </body>
-
 </html>
