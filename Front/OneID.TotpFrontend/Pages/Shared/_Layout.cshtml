@@ -1,4 +1,9 @@
-﻿<!DOCTYPE html>
+﻿@*
+  Local: /Pages/Shared/_Layout.cshtml
+  Esse layout é global e será aplicado a todas as páginas Razor Pages que não definirem Layout = null
+*@
+
+<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
@@ -8,17 +13,29 @@
     <!-- Fonte Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
 
-    <!-- Seu tema personalizado -->
+    <!-- Tema customizado OneID -->
     <link rel="stylesheet" href="~/css/oneid-theme.css" asp-append-version="true" />
 
-    <!-- Se ainda for usar Bootstrap (opcional) -->
-    <!-- <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" /> -->
+    <!-- Scripts customizados podem ser adicionados via @section Scripts -->
 </head>
 <body>
     <header>
-        <nav style="padding: 1rem 2rem; background-color: #1b1c1d; border-bottom: 1px solid var(--card-border); color: var(--text-color); display: flex; align-items: center; justify-content: space-between;">
+        <nav style="
+            padding: 1rem 2rem;
+            background-color: var(--background-color);
+            border-bottom: 1px solid var(--card-border);
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        ">
             <div>
-                <a href="/" style="color: var(--highlight-color); font-weight: 600; font-size: 1.2rem;">OneID</a>
+                <a href="/" style="
+                    color: var(--highlight-color);
+                    font-weight: 600;
+                    font-size: 1.2rem;
+                    text-decoration: none;
+                ">OneID</a>
             </div>
             <div>
                 <a href="/" style="margin-right: 1.5rem; color: var(--text-muted); font-weight: 500;">Início</a>
@@ -27,11 +44,18 @@
         </nav>
     </header>
 
-    <main class="content">
+    <main class="content" style="padding: 2rem;">
         @RenderBody()
     </main>
 
-    <footer style="padding: 1rem 2rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--card-border); margin-top: 3rem;">
+    <footer style="
+        padding: 1rem 2rem;
+        text-align: center;
+        color: var(--text-muted);
+        font-size: 0.9rem;
+        border-top: 1px solid var(--card-border);
+        margin-top: 3rem;
+    ">
         &copy; 2025 - OneID
     </footer>
 

@@ -3,19 +3,19 @@
 @{
     Layout = null;
 }
-
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
-    <title>Login</title>
+    <title>OneID - Login</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #343541;
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -23,21 +23,24 @@
             height: 100vh;
         }
 
-        .header {
-            margin-bottom: 2rem;
+        .container {
             text-align: center;
+            width: 100%;
+            max-width: 680px;
+            padding: 0 1rem;
         }
 
-            .header h1 {
-                font-size: 1.6rem;
-                font-weight: bold;
-            }
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
 
-            .header p {
-                color: #aaa;
-                font-size: 1rem;
-                margin-top: 0.5rem;
-            }
+        .header p {
+            color: #aaa;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            margin-bottom: 2rem;
+        }
 
         .input-container {
             display: flex;
@@ -46,8 +49,8 @@
             padding: 0.75rem 1rem;
             border-radius: 20px;
             width: 100%;
-            max-width: 680px;
             box-shadow: 0 0 3px #00000055;
+            margin-bottom: 1rem;
         }
 
         input[type='text'],
@@ -70,30 +73,25 @@
             border: 1px solid #666;
             color: #ddd;
             font-size: 1.2rem;
-            padding: 0.5rem 0.75rem;
+            padding: 0.5rem;
             border-radius: 50%;
             cursor: pointer;
             transition: background-color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 0.5rem;
+            width: 36px;
+            height: 36px;
         }
 
             button:hover {
                 background-color: #555;
             }
 
-        .form-group {
-            margin-bottom: 1rem;
-            width: 100%;
-            max-width: 680px;
-        }
-
         .result {
             margin-top: 1rem;
             text-align: center;
-            color: #ffaaaa;
+            color: #f08080;
         }
     </style>
 </head>
@@ -104,10 +102,10 @@
             <p>Digite suas credenciais para acessar o sistema</p>
         </div>
         <form method="post">
-            <div class="form-group input-container">
+            <div class="input-container">
                 <input type="text" name="Username" placeholder="Digite seu login" required />
             </div>
-            <div class="form-group input-container">
+            <div class="input-container">
                 <input type="password" name="Password" placeholder="Digite sua senha" required />
                 <button type="submit">↑</button>
             </div>
