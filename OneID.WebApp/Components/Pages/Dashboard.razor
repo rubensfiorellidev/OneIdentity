@@ -15,7 +15,7 @@
 </div>
 
 <div class="grid-layout">
-    <div class="pending-widget">
+    <div id="widget-pendentes" class="pending-widget resizable-widget">
         <h2>Processos pendentes de confirmação</h2>
         <ul>
             @foreach (var item in PendingProcesses.Take(ExpandGrid ? PendingProcesses.Count : 5))
@@ -44,7 +44,7 @@
 
     </div>
 
-    <div class="pending-widget">
+    <div id="widget-status" class="pending-widget resizable-widget">
         <h2>Status do OneID</h2>
         <ul>
             <li><span>Autenticação</span><span style="color: #10b981;">Online</span></li>
@@ -58,7 +58,7 @@
 </div>
 
 <div class="grid-layout">
-    <div class="admissions-widget">
+    <div id="widget-admissoes" class="admissions-widget resizable-widget">
         <h2>Admissões recentes</h2>
         <ul>
             @foreach (var item in RecentAdmissions.Take(10))
@@ -81,6 +81,10 @@
         </ul>
     </div>
 </div>
+
+<RenderFragment>
+    <script src="js/resize.js"></script>
+</RenderFragment>
 
 
 @code {
@@ -129,6 +133,10 @@
 
         LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
 
+        await JS.InvokeVoidAsync("enableResize", "widget-pendentes");
+        await JS.InvokeVoidAsync("enableResize", "widget-status");
+        await JS.InvokeVoidAsync("enableResize", "widget-admissoes");
+
         StateHasChanged();
     }
 
@@ -149,7 +157,6 @@
         var requestToken = json.GetProperty("token").GetString();
         var resumedCorrelationId = json.GetProperty("correlationId").GetString();
 
-        // JS para definir cookies client-side
         await JS.InvokeVoidAsync("OneID.setCookie", "correlation_id", resumedCorrelationId, 5);
         await JS.InvokeVoidAsync("OneID.setCookie", "request_token", requestToken, 5);
 
@@ -200,5 +207,4 @@
         public string LoginManager { get; set; } = string.Empty;
         public string AccountId { get; set; } = string.Empty;
     }
-
 }
