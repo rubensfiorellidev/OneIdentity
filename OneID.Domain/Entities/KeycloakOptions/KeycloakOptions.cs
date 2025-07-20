@@ -1,6 +1,4 @@
 ﻿#nullable disable
-using OneID;
-
 namespace OneID.Domain.Entities.KeycloakOptions
 {
     public sealed class KeycloakOptions
