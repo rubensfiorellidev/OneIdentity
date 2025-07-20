@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href="css/dashboard.css" />
+    <link rel="stylesheet" href="css/landing.css" />
+    <link rel="stylesheet" href="app.css" />
+    <link rel="stylesheet" href="OneID.WebApp.styles.css" />
+
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: #ffffff;
+        }
+
+        *, *::before, *::after {
+            box-sizing: inherit;
+        }
+    </style>
+
+    <HeadOutlet />
+</head>
+<body>
+    <Routes />
+    <script src="js/utils.js"></script>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>

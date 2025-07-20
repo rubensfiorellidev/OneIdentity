@@ -1,0 +1,220 @@
+﻿@page "/dashboard"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JS
+
+@using System.IdentityModel.Tokens.Jwt
+@using System.Net.Http.Headers
+@using System.Text.Json
+
+<div class="main-container">
+    <div class="custom-header">
+        <div class="header-left">
+            <div class="search-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" placeholder="Search" class="search-input" />
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="email"><strong>@Email</strong></div>
+            <div class="account-id">Conta: <span class="account-id-value">@AccountId</span></div>
+        </div>
+    </div>
+
+    <div class="grid-layout">
+        <div id="widget-pendentes" class="pending-widget">
+            <h2>Processos pendentes de confirmação</h2>
+            <ul class="@(ExpandGrid ? "scrollable" : "")">
+                @foreach (var item in ExpandGrid ? PendingProcesses : PendingProcesses.Take(4))
+                {
+                    <li>
+                        <div style="display: flex; flex-direction: column;">
+                            <span>@item.FullName</span>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                                <span>@item.CorrelationId</span>
+                                <svg @onclick="@(() => CopiarId(item.CorrelationId))"
+                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                     style="width: 14px; height: 14px; fill: var(--highlight-color); cursor: pointer;">
+                                    <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <button class="resume-button" title="Retomar processo" @onclick="() => Retomar(item.CorrelationId)">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--highlight-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M6.67742 20.5673C2.53141 18.0212 0.758026 12.7584 2.71678 8.1439C4.87472 3.0601 10.7453 0.68822 15.8291 2.84617C20.9129 5.00412 23.2848 10.8747 21.1269 15.9585C20.2837 17.945 18.8736 19.5174 17.1651 20.5673" />
+                                <path d="M17 16V20.4C17 20.7314 17.2686 21 17.6 21H22" />
+                                <path d="M12 22.01L12.01 21.9989" />
+                            </svg>
+                        </button>
+                    </li>
+                }
+            </ul>
+            <a @onclick="ToggleExpand" class="footer-link expand-toggle">
+                <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--highlight-color)" viewBox="0 0 24 24">
+                    <path d="@(!ExpandGrid ? "M12 5l-7 7h14z" : "M12 19l7-7H5z")" />
+                </svg>
+                @(ExpandGrid ? "Ver menos" : "Ver todos")
+            </a>
+        </div>
+
+        <div id="widget-status" class="pending-widget">
+            <h2>Status do OneID</h2>
+            <ul>
+                <li><span>Autenticação</span><span style="color: #10b981;">Online</span></li>
+                <li><span>Provisionamento</span><span style="color: #10b981;">Online</span></li>
+                <li><span>Comunicação externa</span><span style="color: #10b981;">Online</span></li>
+            </ul>
+            <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); text-align: right;">
+                Última verificação: @LastChecked
+            </div>
+        </div>
+    </div>
+
+    <div class="admissions-wrapper">
+        <div id="widget-admissoes" class="admissions-widget">
+            <h2>Admissões recentes</h2>
+            <ul>
+                @foreach (var item in RecentAdmissions.Take(10))
+                {
+                    <li>
+                        <div class="date-box">
+                            <div class="month">@item.ProvisioningAt.ToString("MMM").ToUpper()</div>
+                            <div class="day">@item.ProvisioningAt.Day</div>
+                        </div>
+                        <div class="admission-info">
+                            <strong>@item.FullName</strong>
+                            <div class="muted">@item.JobTitleName</div>
+                            <div class="muted">@item.DepartmentName</div>
+                            <div class="muted">@item.Company</div>
+                            <div class="muted">Manager: @item.LoginManager</div>
+                            <div class="muted" title="@item.AccountId">ID: @item.AccountId[..8]...</div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string OperatorName = "usuário";
+    private string AccountId = "desconhecido";
+    private string Email = "não informado";
+    private List<PendingProcessDto> PendingProcesses = [];
+    private bool ExpandGrid = false;
+    private string LastChecked = string.Empty;
+    private List<RecentAdmissionDto> RecentAdmissions = [];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        ExpandGrid = await JS.InvokeAsync<bool>("dashboardState.getExpandState");
+
+        var request = HttpContextAccessor.HttpContext?.Request;
+        var token = request?.Cookies["access_token"];
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        var handler = new JwtSecurityTokenHandler();
+        try
+        {
+            var jwt = handler.ReadJwtToken(token);
+            OperatorName = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "usuário";
+            Email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? "não informado";
+            AccountId = jwt.Claims.FirstOrDefault(c => c.Type == "account_id")?.Value ?? "desconhecido";
+        }
+        catch
+        {
+            OperatorName = "erro ao ler token";
+        }
+
+        var client = HttpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.GetAsync("https://localhost:7200/v1/pendings");
+        if (response.IsSuccessStatusCode)
+        {
+            var list = await response.Content.ReadFromJsonAsync<List<PendingProcessDto>>();
+            PendingProcesses = list ?? [];
+        }
+
+        await LoadRecentAdmissions();
+
+        LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
+
+        StateHasChanged();
+    }
+
+    private async Task Retomar(string correlationId)
+    {
+        var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        var client = HttpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var payload = new { CorrelationId = correlationId };
+        var response = await client.PostAsJsonAsync("https://localhost:7200/v1/staging/resume", payload);
+
+        if (!response.IsSuccessStatusCode) return;
+
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        var requestToken = json.GetProperty("token").GetString();
+        var resumedCorrelationId = json.GetProperty("correlationId").GetString();
+
+        await JS.InvokeVoidAsync("OneID.setCookie", "correlation_id", resumedCorrelationId, 5);
+        await JS.InvokeVoidAsync("OneID.setCookie", "request_token", requestToken, 5);
+
+        Navigation.NavigateTo("https://localhost:5001/confirm-code", forceLoad: true);
+    }
+
+    private void CopiarId(string id)
+    {
+        JS.InvokeVoidAsync("OneID.copyToClipboard", id);
+    }
+
+    private async Task ToggleExpand()
+    {
+        ExpandGrid = !ExpandGrid;
+        await JS.InvokeVoidAsync("dashboardState.saveExpandState", ExpandGrid);
+    }
+
+    private async Task LoadRecentAdmissions()
+    {
+        var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+        if (string.IsNullOrWhiteSpace(token)) return;
+
+        var client = HttpClientFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        var response = await client.GetAsync("https://localhost:7200/v1/staging/admissions-recents?limit=10");
+        if (response.IsSuccessStatusCode)
+        {
+            var list = await response.Content.ReadFromJsonAsync<List<RecentAdmissionDto>>();
+            RecentAdmissions = list ?? [];
+        }
+    }
+
+    public class PendingProcessDto
+    {
+        public string CorrelationId { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+    }
+
+    public class RecentAdmissionDto
+    {
+        public DateTimeOffset ProvisioningAt { get; set; }
+        public string FullName { get; set; } = string.Empty;
+        public string JobTitleName { get; set; } = string.Empty;
+        public string DepartmentName { get; set; } = string.Empty;
+        public string Company { get; set; } = string.Empty;
+        public string LoginManager { get; set; } = string.Empty;
+        public string AccountId { get; set; } = string.Empty;
+    }
+}
