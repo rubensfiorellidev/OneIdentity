@@ -17,7 +17,9 @@ body {
     background-color: #343541;
     color: var(--text-color);
     font-family: var(--font-main);
+    font-weight: 700;
 }
+
 
 .top-bar {
     display: flex;
@@ -29,7 +31,7 @@ body {
 
 .grid-layout {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 3fr 7fr;
     gap: 2rem;
 }
 
@@ -120,13 +122,21 @@ body {
         color: var(--highlight-color);
     }
 
-.pending-widget ul {
+.scrollable {
     max-height: 250px;
     overflow-y: auto;
-    padding-right: 0.5rem;
     scrollbar-width: thin;
     scrollbar-color: var(--highlight-color) transparent;
 }
+
+    .scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb {
+        background-color: var(--highlight-color);
+        border-radius: 4px;
+    }
 
     .pending-widget ul::-webkit-scrollbar {
         width: 6px;
@@ -175,6 +185,9 @@ body {
 
 .admissions-wrapper {
     width: 100%;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: stretch;
 }
 
 .date-box {
@@ -205,3 +218,164 @@ body {
         font-size: 0.85rem;
         margin-top: 2px;
     }
+
+.top-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    background-color: transparent;
+    color: var(--text-primary);
+}
+
+.account-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-muted);
+}
+
+.copy-icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--highlight-color);
+    cursor: pointer;
+    transition: fill 0.2s ease;
+}
+
+    .copy-icon:hover {
+        fill: #10b981; /* Verde sucesso estilo AWS */
+    }
+.aws-style-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1b1c1d;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #333;
+    font-family: 'Inter', sans-serif;
+}
+
+.header-left {
+    flex: 1;
+}
+
+
+.header-right {
+    text-align: right;
+    font-size: 0.85rem;
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+.account-email {
+    margin-bottom: 0.2rem;
+}
+
+.account-id span {
+    font-weight: bold;
+    color: #10b981;
+}
+
+.custom-header {
+    background-color: var(--card-bg);
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border: 2px solid var(--card-border);
+    border-radius: 12px; 
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+}
+
+.header-left {
+    flex: 1;
+}
+
+.header-right {
+    text-align: right;
+}
+
+    .header-right .email {
+        margin-bottom: 0.2rem;
+    }
+
+.account-id-value {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.search-input {
+    background-color: #1f1f1f;
+    border: 2px solid #555;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    width: 600px; 
+    max-width: 100%;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+    .search-input::placeholder {
+        color: #888;
+    }
+
+h2 svg {
+    stroke: var(--highlight-color);
+}
+
+.resume-button svg {
+    transition: stroke 0.2s ease;
+}
+
+.resume-button:hover svg {
+    stroke: var(--link-hover-color);
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+}
+
+.rotate-down {
+    transform: rotate(180deg);
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 600px;
+    max-width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    pointer-events: none;
+}
+
+.search-input {
+    padding-left: 2rem;
+}
+
+.expand-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+}
+
+*, *::before, *::after {
+    font-family: var(--font-main);
+    font-weight: 700;
+}
