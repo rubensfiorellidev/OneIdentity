@@ -87,7 +87,7 @@ body {
     list-style: none;
     padding-left: 0;
     margin: 0;
-    max-height: 12rem;
+    max-height: 15rem;
     overflow-y: auto;
 }
 
@@ -123,7 +123,7 @@ body {
     backdrop-filter: blur(6px);
     overflow-y: auto;
     min-height: 360px;
-    max-height: 360px;
+    max-height: 1000px;
     flex: 1;
 }
 
@@ -204,7 +204,7 @@ body {
     }
 
 .admissions-wrapper {
-    width: 30%;
+    width: 28%;
     margin-top: 2rem;
     display: flex;
     justify-content: flex-start;
