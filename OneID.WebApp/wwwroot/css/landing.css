@@ -1,18 +1,14 @@
-﻿body {
-    margin: 0;
-    background-color: #343541;
-    color: white;
-    font-family: 'Inter', sans-serif;
+﻿.landing-body {
     height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
-.content {
-    text-align: center;
-    animation: fadeIn 1.2s ease-out both;
-}
+    .landing-body .content {
+        text-align: center;
+        animation: fadeIn 1.2s ease-out both;
+    }
 
 .logo-icon {
     width: 72px;
@@ -23,18 +19,18 @@
     filter: drop-shadow(0 0 6px #19c37d80);
 }
 
-h1 {
+.landing-body h1 {
     font-size: 2rem;
     margin-bottom: 0.5rem;
 }
 
-.subtitle {
+.landing-body .subtitle {
     color: #aaa;
     font-size: 1.1rem;
     margin-bottom: 2rem;
 }
 
-.start-button {
+.landing-body .start-button {
     background-color: #40414f;
     color: #ddd;
     border: 1px solid #666;
@@ -45,7 +41,7 @@ h1 {
     transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
-    .start-button:hover {
+    .landing-body .start-button:hover {
         background-color: #19c37d;
         color: #000;
         transform: scale(1.05);
