@@ -437,6 +437,56 @@ h2 svg {
     letter-spacing: 0.3px;
 }
 
+.custom-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1f1f1f;
+    color: #a1a1aa;
+    font-size: 0.75rem;
+    padding: 0.4rem 1.2rem;
+    border-top: 1px solid var(--divider);
+    margin-top: 2rem;
+    flex-wrap: wrap;
+    height: 40px;
+    line-height: 1.2;
+    box-sizing: border-box;
+}
+
+.footer-left, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    font-weight: 500;
+}
+
+.footer-right {
+    font-style: italic;
+    color: #cbd5e1;
+    font-weight: 500;
+}
+
+.footer-link {
+    color: var(--highlight-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+    .footer-link:hover {
+        color: var(--link-hover-color);
+        text-decoration: underline;
+    }
+
+.footer-item {
+    color: var(--text-muted);
+}
+
+.footer-muted {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 *, *::before, *::after {
     font-family: var(--font-main);
     font-weight: 700;
