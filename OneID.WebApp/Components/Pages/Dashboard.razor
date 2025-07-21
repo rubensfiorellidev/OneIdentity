@@ -9,98 +9,140 @@
 @using System.Net.Http.Headers
 @using System.Text.Json
 
-<div class="main-container">
-    <div class="custom-header">
-        <div class="header-left">
-            <div class="search-wrapper">
-                <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="11" cy="11" r="8" />
-                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                </svg>
-                <input type="text" placeholder="Search" class="search-input" />
-            </div>
-        </div>
-        <div class="header-right">
-            <div class="email"><strong>@Email</strong></div>
-            <div class="account-id">Conta: <span class="account-id-value">@AccountId</span></div>
+<div class="custom-header">
+    <div class="header-left">
+        <div class="search-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input type="text" placeholder="Search" class="search-input" />
         </div>
     </div>
-
-@*     <div class="grid-layout">
-        <div id="widget-pendentes" class="pending-widget">
-            <h2>Processos pendentes de confirmação</h2>
-            <ul class="@(ExpandGrid ? "scrollable" : "")">
-                @foreach (var item in ExpandGrid ? PendingProcesses : PendingProcesses.Take(4))
-                {
-                    <li>
-                        <div style="display: flex; flex-direction: column;">
-                            <span>@item.FullName</span>
-                            <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
-                                <span>@item.CorrelationId</span>
-                                <svg @onclick="@(() => CopiarId(item.CorrelationId))"
-                                     xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
-                                     style="width: 14px; height: 14px; fill: var(--highlight-color); cursor: pointer;">
-                                    <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
-                                </svg>
-                            </div>
-                        </div>
-                        <button class="resume-button" title="Retomar processo" @onclick="() => Retomar(item.CorrelationId)">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--highlight-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M6.67742 20.5673C2.53141 18.0212 0.758026 12.7584 2.71678 8.1439C4.87472 3.0601 10.7453 0.68822 15.8291 2.84617C20.9129 5.00412 23.2848 10.8747 21.1269 15.9585C20.2837 17.945 18.8736 19.5174 17.1651 20.5673" />
-                                <path d="M17 16V20.4C17 20.7314 17.2686 21 17.6 21H22" />
-                                <path d="M12 22.01L12.01 21.9989" />
-                            </svg>
-                        </button>
-                    </li>
-                }
-            </ul>
-            <a @onclick="ToggleExpand" class="footer-link expand-toggle">
-                <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--highlight-color)" viewBox="0 0 24 24">
-                    <path d="@(!ExpandGrid ? "M12 5l-7 7h14z" : "M12 19l7-7H5z")" />
-                </svg>
-                @(ExpandGrid ? "Ver menos" : "Ver todos")
-            </a>
-        </div>
-
-        <div id="widget-status" class="pending-widget">
-            <h2>Status do OneID</h2>
-            <ul>
-                <li><span>Autenticação</span><span style="color: #10b981;">Online</span></li>
-                <li><span>Provisionamento</span><span style="color: #10b981;">Online</span></li>
-                <li><span>Comunicação externa</span><span style="color: #10b981;">Online</span></li>
-            </ul>
-            <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); text-align: right;">
-                Última verificação: @LastChecked
-            </div>
-        </div>
+    <div class="header-right">
+        <div class="email"><strong>@Email</strong></div>
+        <div class="account-id">Conta: <span class="account-id-value">@AccountId</span></div>
     </div>
-
-    <div class="admissions-wrapper">
-        <div id="widget-admissoes" class="admissions-widget">
-            <h2>Admissões recentes</h2>
-            <ul>
-                @foreach (var item in RecentAdmissions.Take(10))
-                {
-                    <li>
-                        <div class="date-box">
-                            <div class="month">@item.ProvisioningAt.ToString("MMM").ToUpper()</div>
-                            <div class="day">@item.ProvisioningAt.Day</div>
-                        </div>
-                        <div class="admission-info">
-                            <strong>@item.FullName</strong>
-                            <div class="muted">@item.JobTitleName</div>
-                            <div class="muted">@item.DepartmentName</div>
-                            <div class="muted">@item.Company</div>
-                            <div class="muted">Manager: @item.LoginManager</div>
-                            <div class="muted" title="@item.AccountId">ID: @item.AccountId[..8]...</div>
-                        </div>
-                    </li>
-                }
-            </ul>
-        </div>
-    </div>
- *@
 </div>
+
+<!-- Primeira linha 70/30 -->
+<div class="grid-layout">
+    <div id="widget-pendentes" class="pending-widget resizable-widget">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="24" height="24"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 style="margin-right: 0.4rem; vertical-align: middle;">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" x2="19" y1="8" y2="14" />
+                <line x1="22" x2="16" y1="11" y2="11" />
+            </svg>
+            Processos pendentes de confirmação
+        </h2>
+        <ul class="@(ExpandGrid ? "scrollable" : "")">
+            @foreach (var item in ExpandGrid ? PendingProcesses : PendingProcesses.Take(4))
+            {
+                <li>
+                    <div style="display: flex; flex-direction: column;">
+                        <span>@item.FullName</span>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.4rem;">
+                            <span>@item.CorrelationId</span>
+                            <svg @onclick="@(() => CopiarId(item.CorrelationId))"
+                                 xmlns="http://www.w3.org/2000/svg"
+                                 viewBox="0 0 24 24"
+                                 style="width: 14px; height: 14px; fill: var(--highlight-color); cursor: pointer;">
+                                <path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <button class="resume-button" title="Retomar processo" @onclick="() => Retomar(item.CorrelationId)">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--highlight-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M6.67742 20.5673C2.53141 18.0212 0.758026 12.7584 2.71678 8.1439C4.87472 3.0601 10.7453 0.68822 15.8291 2.84617C20.9129 5.00412 23.2848 10.8747 21.1269 15.9585C20.2837 17.945 18.8736 19.5174 17.1651 20.5673" />
+                            <path d="M17 16V20.4C17 20.7314 17.2686 21 17.6 21H22" />
+                            <path d="M12 22.01L12.01 21.9989" />
+                        </svg>
+                    </button>
+                </li>
+            }
+        </ul>
+
+        <a @onclick="ToggleExpand" class="footer-link expand-toggle">
+            <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="var(--highlight-color)" viewBox="0 0 24 24">
+                <path d="@(!ExpandGrid ? "M12 5l-7 7h14z" : "M12 19l7-7H5z")" />
+            </svg>
+            @(ExpandGrid ? "Ver menos" : "Ver todos")
+        </a>
+    </div>
+
+    <div id="widget-status" class="pending-widget resizable-widget">
+        <h2>
+            <svg width="24px" height="24px" stroke-width="1.5" viewBox="0 0 24 24" fill="none"
+                 xmlns="http://www.w3.org/2000/svg" style="margin-right: 0.4rem; vertical-align: middle;" stroke="currentColor">
+                <path d="M18 20L21.8243 16.1757C21.9368 16.0632 22 15.9106 22 15.7515V10.5C22 9.67157 21.3284 9 20.5 9V9C19.6716 9 19 9.67157 19 10.5V15"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M18 16L18.8581 15.1419C18.949 15.051 19 14.9278 19 14.7994V14.7994C19 14.6159 18.8963 14.4482 18.7322 14.3661L18.2893 14.1447C17.5194 13.7597 16.5894 13.9106 15.9807 14.5193L15.0858 15.4142C14.7107 15.7893 14.5 16.298 14.5 16.8284V20"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M6 20L2.17574 16.1757C2.06321 16.0632 2 15.9106 2 15.7515V10.5C2 9.67157 2.67157 9 3.5 9V9C4.32843 9 5 9.67157 5 10.5V15"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M6 16L5.14187 15.1419C5.05103 15.051 5 14.9278 5 14.7994V14.7994C5 14.6159 5.10366 14.4482 5.26776 14.3661L5.71067 14.1447C6.48064 13.7597 7.41059 13.9106 8.01931 14.5193L8.91421 15.4142C9.28929 15.7893 9.5 16.298 9.5 16.8284V20"
+                      stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M13.6667 12H10.3333V9.66667H8V6.33333H10.3333V4H13.6667V6.33333H16V9.66667H13.6667V12Z"
+                      stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            Status do OneID
+        </h2>
+        <ul>
+            <li><span>Autenticação</span><span style="color: #10b981;">Online</span></li>
+            <li><span>Provisionamento</span><span style="color: #10b981;">Online</span></li>
+            <li><span>Comunicação externa</span><span style="color: #10b981;">Online</span></li>
+        </ul>
+        <div style="margin-top: 1rem; font-size: 0.85rem; color: var(--text-muted); text-align: right;">
+            Última verificação: @LastChecked
+        </div>
+    </div>
+</div>
+
+<!-- Segunda linha, fora do grid-layout -->
+<div class="admissions-wrapper">
+    <div id="widget-admissoes" class="admissions-widget resizable-widget">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" style="margin-right: 0.4rem; vertical-align: middle;" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="8.5" cy="7" r="4" />
+                <path d="M20 8v6h-2l2 3 2-3h-2" />
+            </svg>
+            Admissões recentes
+        </h2>
+        <ul>
+            @foreach (var item in RecentAdmissions.Take(10))
+            {
+                <li>
+                    <div class="date-box">
+                        <div class="month">@item.ProvisioningAt.ToString("MMM").ToUpper()</div>
+                        <div class="day">@item.ProvisioningAt.Day</div>
+                    </div>
+                    <div class="admission-info">
+                        <strong>@item.FullName</strong>
+                        <div class="muted">@item.JobTitleName</div>
+                        <div class="muted">@item.DepartmentName</div>
+                        <div class="muted">@item.Company</div>
+                        <div class="muted">Manager: @item.LoginManager</div>
+                        <div class="muted" title="@item.AccountId">ID: @item.AccountId[..8]...</div>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+</div>
+
+<script src="js/resize.js"></script>
+
 
 @code {
     private string OperatorName = "usuário";
@@ -147,6 +189,10 @@
         await LoadRecentAdmissions();
 
         LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
+
+        await JS.InvokeVoidAsync("enableResize", "widget-pendentes");
+        await JS.InvokeVoidAsync("enableResize", "widget-status");
+        await JS.InvokeVoidAsync("enableResize", "widget-admissoes");
 
         StateHasChanged();
     }

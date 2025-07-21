@@ -1,99 +1,381 @@
-﻿/* Fundo geral da aplicação */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Inter', sans-serif;
-    background-color: #1b1c1d; /* fundo geral */
-    color: #ffffff; /* cor padrão do texto */
+﻿:root {
+    --font-main: 'Inter', sans-serif;
+    --text-color: #f3f4f6;
+    --text-muted: #a1a1aa;
+    --background-color: #1b1c1d;
+    --highlight-color: #19c37d;
+    --link-hover-color: #66f0f1;
+    --card-bg: rgba(36, 39, 46, 0.8);
+    --card-border: #3a3a3c;
+    --divider: #3a3a3c80;
 }
 
-/* Container principal da dashboard */
-.main-container {
-    width: 100vw;
+body {
+    margin: 0;
     padding: 2rem;
-    box-sizing: border-box;
+    background-color: #343541;
+    color: var(--text-color);
+    font-family: var(--font-main);
+    font-weight: 700;
+}
+
+
+.top-bar {
     display: flex;
-    flex-direction: column;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+}
+
+.grid-layout {
+    display: grid;
+    grid-template-columns: 3fr 7fr;
     gap: 2rem;
 }
 
-.custom-header {
-    position: fixed; /* Fixa no topo da página */
-    top: 0;
-    left: 0;
+.widget,
+.pending-widget {
+    background-color: var(--card-bg);
+    border: 2px solid #a1a1aa; /* borda quase invisível */
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* sombra leve, sem brilho neon */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    backdrop-filter: blur(6px);
+}
+
+.account-id-widget label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+.copyable-id {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+}
+
+    .copyable-id svg {
+        width: 16px;
+        height: 16px;
+        fill: var(--highlight-color);
+        cursor: pointer;
+    }
+
+.divider {
+    height: 1px;
+    background-color: var(--divider);
+    margin-top: 1rem;
+}
+
+.pending-widget h2,
+.widget h2 {
+    font-size: 1.15rem;
+    margin-bottom: 0.75rem;
+    color: var(--highlight-color);
+    letter-spacing: 0.3px;
+}
+
+.pending-widget ul,
+.widget ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.pending-widget li {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid var(--divider);
+}
+
+.resume-button {
+    background: none;
+    border: none;
+    color: var(--highlight-color);
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: color 0.2s ease;
+}
+
+    .resume-button:hover {
+        color: var(--link-hover-color);
+    }
+
+.footer-link {
+    display: block;
+    margin-top: 1rem;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+    .footer-link:hover {
+        color: var(--highlight-color);
+    }
+
+.scrollable {
+    max-height: 250px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--highlight-color) transparent;
+}
+
+    .scrollable::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scrollable::-webkit-scrollbar-thumb {
+        background-color: var(--highlight-color);
+        border-radius: 4px;
+    }
+
+.pending-widget ul::-webkit-scrollbar {
+    width: 6px;
+}
+
+.pending-widget ul::-webkit-scrollbar-thumb {
+    background-color: var(--highlight-color);
+    border-radius: 4px;
+}
+
+.admissions-widget {
+    margin-top: 2rem;
+    background-color: var(--card-bg);
+    border: 2px solid #a1a1aa; /* borda quase invisível */
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* sombra sutil, nada de neon */
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+    backdrop-filter: blur(6px);
+    overflow-y: auto;
+    max-height: 360px;
+    width: none;
+    flex: 1;
+}
+
+
+    .admissions-widget h2 {
+        font-size: 1.1rem;
+        margin-bottom: 0.75rem;
+        color: var(--highlight-color);
+    }
+
+    .admissions-widget ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .admissions-widget li {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1.2rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--divider);
+    }
+
+.admissions-wrapper {
     width: 100%;
-    height: 60px;
-    background-color: #1b1c1d;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: stretch;
+}
+
+.date-box {
+    width: 48px;
+    text-align: center;
+    color: var(--highlight-color);
+}
+
+    .date-box .month {
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .date-box .day {
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+
+.admission-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+    .admission-info .muted {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        margin-top: 2px;
+    }
+
+.top-bar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 1.5rem;
-    color: white;
-    z-index: 1000;
-    border-bottom: 1px solid #2a2b2d;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+    padding: 1rem 1.5rem;
+    font-size: 0.95rem;
+    background-color: transparent;
+    color: var(--text-primary);
 }
 
-.main-content {
-    padding-top: 60px; /* Compensa a altura do header fixo */
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
-}
-
-
-.search-wrapper {
+.account-info {
     display: flex;
     align-items: center;
-    background-color: #2a2a2a;
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    border: 1px solid #3a3a3a;
-    width: 600px;
-    max-width: 90%;
+    gap: 0.5rem;
+    color: var(--text-muted);
 }
 
-.search-icon {
-    stroke: #aaa;
+.copy-icon {
+    width: 16px;
+    height: 16px;
+    fill: var(--highlight-color);
+    cursor: pointer;
+    transition: fill 0.2s ease;
 }
 
-.search-input {
-    background: transparent;
-    border: none;
-    outline: none;
-    margin-left: 0.6rem;
-    color: #fff;
-    font-size: 0.95rem;
-    width: 100%;
+    .copy-icon:hover {
+        fill: #10b981; /* Verde sucesso estilo AWS */
+    }
+
+.aws-style-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #1b1c1d;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #333;
+    font-family: 'Inter', sans-serif;
 }
 
 .header-left {
-    /* se quiser logo ou algo aqui no futuro */
+    flex: 1;
+}
+
+
+.header-right {
+    text-align: right;
+    font-size: 0.85rem;
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+.account-email {
+    margin-bottom: 0.2rem;
+}
+
+.account-id span {
+    font-weight: bold;
+    color: #10b981;
+}
+
+.custom-header {
+    background-color: var(--card-bg);
+    padding: 0.6rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    border: 2px solid var(--card-border);
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+}
+
+.header-left {
+    flex: 1;
 }
 
 .header-right {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-    max-width: 100%;
-    overflow-wrap: break-word;
-    word-break: break-word;
     text-align: right;
-    white-space: normal;
 }
 
     .header-right .email {
-        font-weight: 700;
-        color: white;
-        font-size: 16px;
+        margin-bottom: 0.2rem;
     }
 
-    .header-right .account-id {
-        font-size: 13px;
-        color: #aaa;
+.account-id-value {
+    color: #10b981;
+    font-weight: 600;
+}
+
+.search-input {
+    background-color: #1f1f1f;
+    border: 2px solid #555;
+    color: white;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    width: 600px;
+    max-width: 100%;
+    outline: none;
+    font-size: 0.9rem;
+}
+
+    .search-input::placeholder {
+        color: #888;
     }
 
-        .header-right .account-id span {
-            color: #00df9a;
-            word-break: break-word;
-        }
+h2 svg {
+    stroke: var(--highlight-color);
+}
+
+.resume-button svg {
+    transition: stroke 0.2s ease;
+}
+
+.resume-button:hover svg {
+    stroke: var(--link-hover-color);
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+    vertical-align: middle;
+}
+
+.rotate-down {
+    transform: rotate(180deg);
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 600px;
+    max-width: 100%;
+}
+
+.search-icon {
+    position: absolute;
+    left: 12px;
+    pointer-events: none;
+}
+
+.search-input {
+    padding-left: 2rem;
+}
+
+.expand-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.expand-icon {
+    transition: transform 0.3s ease;
+}
+
+*, *::before, *::after {
+    font-family: var(--font-main);
+    font-weight: 700;
+}
