@@ -1,21 +1,26 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="main-layout">
+
+    <!-- HEADER FIXO -->
     <header class="custom-header">
         <div class="header-left">
-            <!-- Coloque logo, ou título se quiser -->
+            <!-- Aqui você pode pôr logo, ícone, etc -->
         </div>
+
         <div class="header-right">
             <div class="email">rubens.fiore@oneidsecure.com</div>
             <div class="account-id">Conta: <span>ONE-01K02V...</span></div>
         </div>
     </header>
 
+    <!-- CONTEÚDO PRINCIPAL -->
     <main class="main-content">
         @Body
     </main>
 </div>
 
+<!-- Blazor error default -->
 <div id="blazor-error-ui">
     An unhandled error has occurred.
     <a href="" class="reload">Reload</a>
