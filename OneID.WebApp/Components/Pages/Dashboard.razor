@@ -185,6 +185,48 @@
             }
         </ul>
     </div>
+
+    <div class="grid-bottom-widgets">
+        <div id="widget-atividades" class="resizable-widget dashboard-widget">
+            <h2>🛠️ Atividades recentes no IAM</h2>
+            <ul>
+                @foreach (var item in RecentIamLogs)
+                {
+                    <li class="log-entry">
+                        <div><strong>@item.Actor</strong> @item.Action <strong>@item.Target</strong></div>
+                        <div class="timestamp">@item.Timestamp.ToString("HH:mm")</div>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div id="widget-alertas" class="resizable-widget dashboard-widget">
+            <h2>🚨 Alertas de segurança</h2>
+            <ul>
+                @foreach (var alert in SecurityAlerts)
+                {
+                    <li class="alert-entry" data-level="@alert.Level">
+                        <div><strong>@alert.Title</strong></div>
+                        <div class="timestamp">@alert.Timestamp.ToString("HH:mm")</div>
+                    </li>
+                }
+            </ul>
+        </div>
+
+        <div id="widget-auditoria" class="resizable-widget dashboard-widget">
+            <h2>📝 Auditoria de admissão</h2>
+            <ul>
+                @foreach (var log in AdmissionAudits)
+                {
+                    <li class="audit-entry">
+                        <div><strong>@log.FirstName @log.LastName</strong> – @log.EventName</div>
+                        <div>@log.Description</div>
+                        <div class="timestamp">@log.ProvisioningDate.ToString("dd/MM/yyyy HH:mm")</div>
+                    </li>
+                }
+            </ul>
+        </div>
+</div>
 </div>
 
 <footer class="custom-footer">
@@ -229,6 +271,28 @@
         public string Email { get; set; }
     }
 
+    private List<IamLog> RecentIamLogs = new()
+    {
+        new IamLog("Rubens", "adicionou role admin para", "Fernanda Lima", DateTime.Now.AddMinutes(-2)),
+        new IamLog("Carlos Souza", "removeu acesso de", "João Pedro", DateTime.Now.AddMinutes(-10)),
+        new IamLog("Ana Ribeiro", "criou usuário", "Lucas Matos", DateTime.Now.AddHours(-1)),
+    };
+
+    private List<SecurityAlert> SecurityAlerts = new()
+    {
+        new SecurityAlert("Tentativa de login inválido", "Critical", DateTime.Now.AddMinutes(-5)),
+        new SecurityAlert("Erro no provisionamento de conta", "Warning", DateTime.Now.AddMinutes(-15)),
+    };
+
+    private List<AdmissionAudit> AdmissionAudits = new()
+    {
+        new AdmissionAudit("Jhon", "Doe", "Admissão iniciada", "Processo iniciado. Aguardando criação do login.", DateTime.Parse("2025-07-05 04:58:34")),
+        new AdmissionAudit("Jhon", "Doe", "Login provisionado", "Login foi provisionado no sistema", DateTime.Parse("2025-07-05 04:59:08")),
+    };
+
+    public record IamLog(string Actor, string Action, string Target, DateTime Timestamp);
+    public record SecurityAlert(string Title, string Level, DateTime Timestamp);
+    public record AdmissionAudit(string FirstName, string LastName, string EventName, string Description, DateTime ProvisioningDate);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
