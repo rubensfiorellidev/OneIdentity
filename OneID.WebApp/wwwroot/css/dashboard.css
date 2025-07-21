@@ -34,8 +34,15 @@ body {
     display: grid;
     grid-template-columns: 2fr 1fr 4fr;
     gap: 2rem;
-    max-width: 3400px;
-    overflow: visible;
+    width: 100%;
+    padding: 0 1rem;
+    box-sizing: border-box;
+    align-items: start;
+}
+
+.pending-widget:hover {
+    box-shadow: 0 0 0 2px var(--highlight-color);
+    border-color: var(--highlight-color);
 }
 
 .widget,
@@ -43,7 +50,7 @@ body {
     background-color: var(--card-bg);
     border: 2px solid #a1a1aa;
     border-radius: 12px;
-    padding: 1.5rem;
+    padding: 1rem;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
     backdrop-filter: blur(6px);
@@ -171,19 +178,19 @@ body {
 .admissions-widget {
     margin-top: 0.2rem;
     background-color: var(--card-bg);
-    border: 2px solid #a1a1aa; /* borda quase invisível */
+    border: 2px solid #a1a1aa;
     border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* sombra sutil, nada de neon */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     transition: box-shadow 0.3s ease, border-color 0.3s ease;
     backdrop-filter: blur(6px);
+    height: 670px;
     overflow-y: auto;
-    height: 680px;
-    overflow-y: auto;
-    width: 94%;
-    flex: none;
+    resize: both;
+    min-width: 240px;
+    max-width: none;
+    width: auto;
 }
-
 
     .admissions-widget h2 {
         font-size: 1.1rem;
@@ -206,11 +213,21 @@ body {
     }
 
 .admissions-wrapper {
-    width: 28%;
-    margin-top: 2rem;
-    display: flex;
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 2fr 2fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    padding: 0 1rem;
+    width: 100%;
+    align-items: start;
+    box-sizing: border-box;
 }
+
+.admissions-widget:hover {
+    box-shadow: 0 0 0 2px var(--highlight-color);
+    border-color: var(--highlight-color);
+}
+
 
 .date-box {
     width: 48px;
@@ -396,13 +413,25 @@ h2 svg {
 }
 
 .expand-toggle {
+    cursor: pointer;
+    color: var(--highlight-color);
+    text-decoration: none;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
+    transition: color 0.2s ease;
 }
+
+    .expand-toggle:hover {
+        color: var(--link-hover-color);
+    }
 
 .expand-icon {
     transition: transform 0.3s ease;
+}
+
+.expand-toggle.expanded .expand-icon {
+    transform: rotate(180deg);
 }
 
 .resizable-widget {
@@ -411,7 +440,7 @@ h2 svg {
     overflow: auto;
     min-height: 360px;
     max-height: 1000px;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1rem;
 }
 
 .resizable-widget::after {
@@ -448,7 +477,7 @@ h2 svg {
     border-top: 1px solid var(--divider);
     margin-top: 2rem;
     flex-wrap: wrap;
-    height: 40px;
+    height: 44px;
     line-height: 1.2;
     box-sizing: border-box;
 }
@@ -485,32 +514,6 @@ h2 svg {
 .footer-muted {
     color: var(--text-muted);
     font-style: italic;
-}
-
-.grid-bottom-widgets {
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 1.25rem;
-    margin-top: 1.5rem;
-    padding-left: 1rem;
-}
-
-.dashboard-widget {
-    margin-top: 0.2rem;
-    background-color: var(--card-bg);
-    border: 2px solid #a1a1aa;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-    transition: box-shadow 0.3s ease, border-color 0.3s ease;
-    backdrop-filter: blur(6px);
-    color: var(--text-color);
-    overflow-y: auto;
-    height: 680px;
-    width: 360px;
-    flex: none;
 }
 
 *, *::before, *::after {
