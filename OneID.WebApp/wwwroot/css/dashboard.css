@@ -35,6 +35,7 @@ body {
     grid-template-columns: 2fr 1fr 4fr;
     gap: 2rem;
     max-width: 3400px;
+    overflow: visible;
 }
 
 .widget,
@@ -125,6 +126,7 @@ body {
     min-height: 360px;
     max-height: 1000px;
     flex: 1;
+    display:block;
 }
 
 .footer-link {
@@ -402,6 +404,14 @@ h2 svg {
 .expand-icon {
     transition: transform 0.3s ease;
 }
+
+.resizable-widget {
+    resize: vertical;
+    overflow: auto;
+    min-height: 360px;
+    max-height: 1000px;
+}
+
 
 *, *::before, *::after {
     font-family: var(--font-main);
