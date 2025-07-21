@@ -105,6 +105,48 @@
             Última verificação: @LastChecked
         </div>
     </div>
+
+    <div id="widget-usuarios" class="pending-widget resizable-widget">
+        <h2>
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="20" height="20"
+                 viewBox="0 0 24 24"
+                 fill="none"
+                 stroke="currentColor"
+                 stroke-width="2"
+                 stroke-linecap="round"
+                 stroke-linejoin="round"
+                 style="margin-right: 0.4rem; vertical-align: middle;">
+                <path d="m16 11 2 2 4-4" />
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+            </svg>
+
+            Usuários ativos
+        </h2>
+
+        <ul>
+            @foreach (var user in ActiveUsers.Take(5))
+            {
+                <li style="margin-bottom: 0.8rem;">
+                    <div style="display: flex; flex-direction: column;">
+                        <strong>@user.FullName</strong>
+                        <span class="muted">@user.JobTitleName - @user.DepartmentName</span>
+                        <span class="muted" title="@user.Email">@user.Email</span>
+                    </div>
+                </li>
+            }
+        </ul>
+
+        <a @onclick="VerTodosUsuarios" class="footer-link expand-toggle">
+            <svg class="expand-icon" xmlns="http://www.w3.org/2000/svg"
+                 width="16" height="16" fill="var(--highlight-color)" viewBox="0 0 24 24">
+                <path d="M12 5l-7 7h14z" />
+            </svg>
+            Ver todos os usuários
+        </a>
+    </div>
+
 </div>
 
 <div class="admissions-wrapper">
@@ -151,6 +193,24 @@
     private string LastChecked = string.Empty;
     private List<RecentAdmissionDto> RecentAdmissions = [];
 
+    private List<UserDto> ActiveUsers = new()
+    {
+        new UserDto { FullName = "Ana Ribeiro", JobTitleName = "Analista de Dados", DepartmentName = "Tecnologia", Email = "ana.ribeiro@oneidsecure.com" },
+        new UserDto { FullName = "Carlos Souza", JobTitleName = "Engenheiro DevOps", DepartmentName = "Infraestrutura", Email = "carlos.souza@oneidsecure.com" },
+        new UserDto { FullName = "Fernanda Lima", JobTitleName = "Gestora de RH", DepartmentName = "Recursos Humanos", Email = "fernanda.lima@oneidsecure.com" },
+        new UserDto { FullName = "João Mendes", JobTitleName = "Desenvolvedor Backend", DepartmentName = "TI", Email = "joao.mendes@oneidsecure.com" },
+        new UserDto { FullName = "Luciana Silva", JobTitleName = "Coordenadora", DepartmentName = "Jurídico", Email = "luciana.silva@oneidsecure.com" },
+    };
+
+    private sealed class UserDto
+    {
+        public string FullName { get; set; }
+        public string JobTitleName { get; set; }
+        public string DepartmentName { get; set; }
+        public string Email { get; set; }
+    }
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -195,6 +255,11 @@
         StateHasChanged();
 
 
+    }
+
+    private void VerTodosUsuarios()
+    {
+        Navigation.NavigateTo("/usuarios");
     }
 
     private async Task Retomar(string correlationId)
