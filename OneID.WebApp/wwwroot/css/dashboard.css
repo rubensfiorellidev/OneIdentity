@@ -1,11 +1,11 @@
 ﻿:root {
     --font-main: 'Inter', sans-serif;
-    --text-color: #f3f4f6;
-    --text-muted: #a1a1aa;
+    --text-color: #e6f6ff; /* Azul claro para textos */
+    --text-muted: #a1a1aa; /* Pode manter ou suavizar para #94a3b8 */
     --background-color: #1b1c1d;
-    --highlight-color: #19c37d;
-    --link-hover-color: #66f0f1;
-    --card-bg: rgba(36, 39, 46, 0.8);
+    --highlight-color: #00b3ff; /* Azul principal */
+    --link-hover-color: #33ccff; /* Azul hover */
+    --card-bg: rgba(36, 39, 46, 0.85);
     --card-border: #3a3a3c;
     --divider: #3a3a3c80;
 }
@@ -267,7 +267,7 @@ body {
 }
 
     .copy-icon:hover {
-        fill: #10b981;
+        fill: var(--link-hover-color);
     }
 
 .aws-style-header {
@@ -298,7 +298,7 @@ body {
 
 .account-id span {
     font-weight: bold;
-    color: #10b981;
+    color: var(--highlight-color);
 }
 
 .custom-header {
@@ -310,7 +310,7 @@ body {
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
-    color: var(--text-muted);
+    color: var(--highlight-color);
     border-bottom: 1px solid var(--card-border);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
     position: sticky;
@@ -428,6 +428,13 @@ h2 svg {
     pointer-events: none;
     z-index: 10;
     transform: rotate(0deg);
+}
+
+.status-online {
+    color: var(--highlight-color);
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.3px;
 }
 
 *, *::before, *::after {
