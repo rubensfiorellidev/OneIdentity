@@ -246,7 +246,7 @@ body {
 }
 
     .copy-icon:hover {
-        fill: #10b981; /* Verde sucesso estilo AWS */
+        fill: #10b981;
     }
 
 .aws-style-header {
@@ -281,7 +281,7 @@ body {
 }
 
 .custom-header {
-    width: 100vw;
+    width: 100%;
     max-width: 100vw;
     padding: 0.6rem 1.5rem;
     background-color: var(--card-bg);
@@ -299,6 +299,7 @@ body {
     border-radius: 0;
     backdrop-filter: blur(6px);
     box-sizing: border-box;
+    margin-bottom: 1.2rem;
 }
 
 .header-left {
