@@ -10,16 +10,38 @@
 @using System.Text.Json
 
 <div class="custom-header">
-    <div class="header-left-fixed">
-        <span class="logo-text">OneID</span>
-        <span class="pipe-divider">|</span>
+    <div class="header-left-fixed" style="display: flex; align-items: center; gap: 0.8rem;">
 
-        <div class="menu-launcher-wrapper">
-            <OneIdServiceLauncher />
-        </div>
+        <a href="/dashboard" class="logo-wrapper" style="display: flex; align-items: center; gap: 0.4rem;">
+            <img src="img/logo_one_id_prata_icone.png" alt="OneID Logo" width="26" height="26" />
+            <span style="color: var(--text-muted); font-weight: 700;">OneID</span>
+        </a>
+
+        <span class="pipe-divider" style="color: #555;">|</span>
+
+        <button class="menu-launcher-wrapper" @onclick="ToggleLauncher" style="background: none; border: none; padding: 0; cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg"
+                 width="22" height="22" viewBox="0 0 24 24"
+                 fill="var(--text-muted)">
+                <circle cx="5" cy="5" r="2" />
+                <circle cx="12" cy="5" r="2" />
+                <circle cx="19" cy="5" r="2" />
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+                <circle cx="5" cy="19" r="2" />
+                <circle cx="12" cy="19" r="2" />
+                <circle cx="19" cy="19" r="2" />
+            </svg>
+        </button>
 
         <div class="search-wrapper">
-            <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" ... />
+            <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" width="16" height="16"
+                 fill="none" stroke="var(--highlight-color)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                 viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
             <input type="text" placeholder="Search" class="search-input" />
         </div>
     </div>
@@ -29,6 +51,18 @@
         <div class="account-id">Conta: <span class="account-id-value">@AccountId</span></div>
     </div>
 </div>
+
+@if (showLauncher)
+{
+    <div class="service-launcher-panel" style="position: absolute; top: 3.5rem; left: 3rem; background: var(--card-bg); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.4); z-index: 99;">
+        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+            <a href="/manual-admission" class="launcher-item">Nova Admissão</a>
+            <a href="/ongoing-processes" class="launcher-item">Processos em andamento</a>
+            <a href="/usuarios" class="launcher-item">Usuários ativos</a>
+            <a href="/roles" class="launcher-item">Gerenciar roles</a>
+        </div>
+    </div>
+}
 
 <div class="grid-layout">
     <div id="widget-pendentes" class="pending-widget resizable-widget">
@@ -327,6 +361,7 @@
     private bool ExpandGrid = false;
     private string LastChecked = string.Empty;
     private List<RecentAdmissionDto> RecentAdmissions = [];
+    private bool showLauncher = false;
 
     private List<UserDto> ActiveUsers = new()
     {
@@ -451,6 +486,11 @@
     {
         ExpandGrid = !ExpandGrid;
         await JS.InvokeVoidAsync("dashboardState.saveExpandState", ExpandGrid);
+    }
+
+    private void ToggleLauncher()
+    {
+        showLauncher = !showLauncher;
     }
 
     private async Task LoadRecentAdmissions()
