@@ -102,11 +102,12 @@
             <p>Digite suas credenciais para acessar o sistema</p>
         </div>
         <form method="post">
+            @Html.AntiForgeryToken()
             <div class="input-container">
-                <input type="text" name="Username" placeholder="Digite seu login" required />
+                <input type="text" name="Username" placeholder="Digite seu login" required autocomplete="off"/>
             </div>
             <div class="input-container">
-                <input type="password" name="Password" placeholder="Digite sua senha" required />
+                <input type="password" name="Password" placeholder="Digite sua senha" required autocomplete="off"/>
                 <button type="submit">↑</button>
             </div>
         </form>

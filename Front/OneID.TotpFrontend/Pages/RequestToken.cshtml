@@ -8,14 +8,14 @@
 <html lang="pt-br">
 <head>
     <meta charset="utf-8" />
-    <title>Validação TOTP</title>
+    <title>Validação Authenticator</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             background-color: #343541;
             color: white;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -31,12 +31,6 @@
             .header h1 {
                 font-size: 1.6rem;
                 font-weight: bold;
-            }
-
-            .header p {
-                color: #aaa;
-                font-size: 1rem;
-                margin-top: 0.5rem;
             }
 
         .input-container {
@@ -109,11 +103,15 @@
     <div class="container">
         <div class="header">
             <h1>Confirme sua identidade</h1>
-            <p>Digite o código do seu aplicativo Authenticator</p>
         </div>
         <form method="post" onsubmit="handleSubmit(this)" autocomplete="off">
             <div class="input-container">
-                <input type="text" name="TotpCode" placeholder="Digite o código TOTP" maxlength="6" required />
+                <input type="text" 
+                    name="TotpCode" 
+                    placeholder="Digite o código do Authenticator" 
+                    maxlength="6" 
+                    required
+                    autocomplete="off"/>
                 <button type="submit" id="submitBtn">
                     <span id="btnIcon">↑</span>
                 </button>
