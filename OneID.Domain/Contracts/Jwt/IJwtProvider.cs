@@ -15,5 +15,7 @@ namespace OneID.Domain.Contracts.Jwt
         bool ValidateRequestToken(string token);
         Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
         string GenerateRequestToken(string username, Guid correlationId);
+        string GenerateTotpToken(string username, Guid correlationId);
+
     }
 }

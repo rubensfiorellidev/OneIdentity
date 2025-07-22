@@ -34,6 +34,5 @@ namespace OneID.Api.Controllers
             return Ok(result);
         }
 
-
     }
 }

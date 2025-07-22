@@ -119,10 +119,20 @@ namespace OneID.Api.Controllers
 
         }
 
-        [HttpPost("confirm")]
         [Authorize(AuthenticationSchemes = "RequestToken")]
+        [HttpPost("confirm")]
         public async Task<IActionResult> ConfirmAsync([FromBody] ProvisioningConfirmationRequest request, CancellationToken cancellationToken)
         {
+
+            var accessScope = User.FindFirst("access_scope")?.Value ?? "unknown";
+
+            if (accessScope is not ("token_request_only" or "user_access"))
+            {
+                _logger.LogWarning("Token rejeitado. Escopo não autorizado para confirmação: {Scope}", accessScope);
+                return Forbid("RequestToken");
+            }
+
+
             if (string.IsNullOrWhiteSpace(request.TotpCode))
                 return Unauthorized("Por favor, informe o código de verificação.");
 
@@ -151,6 +161,8 @@ namespace OneID.Api.Controllers
 
 
             _logger.LogInformation("Provisionamento confirmado - CorrelationId: {CorrelationId}", request.CorrelationId);
+
+            var totpToken = _jwtProvider.GenerateTotpToken(loggedUser, request.CorrelationId);
 
             return Accepted(new
             {

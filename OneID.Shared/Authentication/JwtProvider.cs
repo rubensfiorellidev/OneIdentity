@@ -414,6 +414,20 @@ namespace OneID.Shared.Authentication
             return GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
         }
 
+        public string GenerateTotpToken(string username, Guid correlationId)
+        {
+            var claims = new Dictionary<string, object>
+            {
+                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+                { JwtClaims.UniqueName, username },
+                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+                { "access_scope", "user_access" },
+                { "correlation_id", correlationId.ToString() }
+            };
+
+            return GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
+        }
+
     }
 
 

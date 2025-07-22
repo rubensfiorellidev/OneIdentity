@@ -1,34 +1,13 @@
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 using OneID.Application;
 using OneID.Data;
 using OneID.Messaging;
 using OneID.Shared;
 using OneID.Shared.Tools;
 using Serilog;
-using System.Security.Authentication;
 
 var builder = WebApplication.CreateBuilder(args);
 var environment = builder.Environment.EnvironmentName;
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ConfigureHttpsDefaults(opt =>
-    {
-        opt.SslProtocols = SslProtocols.Tls13;
-    });
-
-    serverOptions.ListenAnyIP(7200, listenOptions =>
-    {
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-        listenOptions.UseHttps();
-    });
-
-    serverOptions.ConfigureEndpointDefaults(lo =>
-    {
-        lo.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-    });
-
-});
 
 builder.Configuration
     .AddJsonFile("appsettings.json", false, true)
