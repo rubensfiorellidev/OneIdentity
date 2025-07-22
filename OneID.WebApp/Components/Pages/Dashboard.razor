@@ -52,17 +52,6 @@
     </div>
 </div>
 
-@if (showLauncher)
-{
-    <div class="service-launcher-panel" style="position: absolute; top: 3.5rem; left: 3rem; background: var(--card-bg); border-radius: 0.5rem; padding: 1rem; box-shadow: 0 2px 12px rgba(0,0,0,0.4); z-index: 99;">
-        <div style="display: flex; flex-direction: column; gap: 0.8rem;">
-            <a href="/manual-admission" class="launcher-item">Nova Admissão</a>
-            <a href="/ongoing-processes" class="launcher-item">Processos em andamento</a>
-            <a href="/usuarios" class="launcher-item">Usuários ativos</a>
-            <a href="/roles" class="launcher-item">Gerenciar roles</a>
-        </div>
-    </div>
-}
 
 <div class="grid-layout">
     <div id="widget-pendentes" class="pending-widget resizable-widget">
@@ -172,7 +161,6 @@
             </svg>
             Usuários ativos
         </h2>
-
 
         <ul>
             @foreach (var user in ActiveUsers.Take(5))
