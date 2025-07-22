@@ -5,22 +5,29 @@
     <div class="service-launcher-overlay" @onclick="Toggle">
         <div class="service-launcher-panel" @onclick:stopPropagation>
             <div class="launcher-container">
-                <a href="/manual-admission" class="launcher-item">➕ Nova Admissão</a>
-                <a href="/ongoing-processes" class="launcher-item">📄 Processos em andamento</a>
-                <a href="/usuarios" class="launcher-item">👥 Usuários ativos</a>
-                <a href="/roles" class="launcher-item">🛡️ Gerenciar roles</a>
+                <div class="launcher-item" @onclick='() => NavigateToExternal("https://localhost:5001/manual-admission")'>➕ Nova Admissão</div>
+                <div class="launcher-item" @onclick='() => NavigateToExternal("https://localhost:5001/ongoing-processes")'>📄 Processos em andamento</div>
+                <div class="launcher-item" @onclick='() => NavigateToExternal("https://localhost:5001/usuarios")'>👥 Usuários ativos</div>
+                <div class="launcher-item" @onclick='() => NavigateToExternal("https://localhost:5001/roles")'>🛡️ Gerenciar roles</div>
             </div>
         </div>
     </div>
 }
 
 @code {
+    [Inject] private NavigationManager NavManager { get; set; } = default!;
+
     [Parameter] public bool IsVisible { get; set; }
     [Parameter] public EventCallback Toggle { get; set; }
 
-    private void NavigateTo(string url)
+     private void NavigateInternal(string route)
     {
-        Toggle.InvokeAsync(); // Fecha o launcher ao navegar
-        Navigation.NavigateTo(url);
+        NavManager.NavigateTo(route);
+    }
+
+    private void NavigateToExternal(string url)
+    {
+        NavManager.NavigateTo(url, forceLoad: true);
     }
 }
+

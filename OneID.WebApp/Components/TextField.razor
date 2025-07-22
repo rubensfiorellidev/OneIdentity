@@ -1,0 +1,16 @@
+﻿<div class="form-row">
+    <label>@Label</label>
+    <InputText class="input" @bind-Value="Value" />
+</div>
+
+@code {
+    [Parameter] public string Label { get; set; } = string.Empty;
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+
+    private string? internalValue
+    {
+        get => Value;
+        set => ValueChanged.InvokeAsync(value);
+    }
+}
