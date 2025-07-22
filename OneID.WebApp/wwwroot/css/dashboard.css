@@ -22,11 +22,38 @@ body {
 }
 
 
-.top-bar {
+.header-left-fixed {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 1rem;
-    font-size: 0.95rem;
+    align-items: center;
+    gap: 1rem;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+.menu-launcher-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.search-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    position: relative;
+    max-width: 600px;
+    width: 100%;
+}
+
+.logo-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--highlight-color);
+    white-space: nowrap;
+}
+
+.pipe-divider {
+    font-size: 1.2rem;
     color: var(--text-muted);
 }
 
