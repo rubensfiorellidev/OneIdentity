@@ -34,6 +34,27 @@ body {
     transition: fill 0.2s ease;
 }
 
+.service-launcher-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 98;
+    background-color: rgba(0, 0, 0, 0.3); /* Leve escuridão ao redor */
+}
+
+.service-launcher-panel {
+    position: absolute;
+    top: 3.5rem;
+    left: 3rem;
+    background: var(--card-bg, #1b1c1d);
+    border-radius: 0.75rem;
+    padding: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    z-index: 99;
+    width: 280px;
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
 .search-wrapper {
     flex: 1;
     display: flex;
@@ -61,15 +82,26 @@ body {
     margin-top: -1px;
 }
 
+.launcher-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
 .launcher-item {
-    color: var(--highlight-color);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: #c0c0c0; /* prata */
     text-decoration: none;
-    font-weight: 600;
-    transition: color 0.2s;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0.5rem;
+    transition: background 0.2s ease, color 0.2s ease;
 }
 
     .launcher-item:hover {
-        color: white;
+        background-color: rgba(255, 255, 255, 0.06);
+        color: #00b0f4; /* azul neon */
+        cursor: pointer;
     }
 
 

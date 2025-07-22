@@ -52,6 +52,7 @@
     </div>
 </div>
 
+<ServiceLauncher IsVisible="@showLauncher" Toggle="ToggleLauncher" />
 
 <div class="grid-layout">
     <div id="widget-pendentes" class="pending-widget resizable-widget">
@@ -479,6 +480,26 @@
     private void ToggleLauncher()
     {
         showLauncher = !showLauncher;
+    }
+
+    [JSInvokable]
+    public static Task CloseLauncher()
+    {
+        Instance?.HideLauncher();
+        return Task.CompletedTask;
+    }
+
+    private static Dashboard? Instance;
+
+    protected override void OnInitialized()
+    {
+        Instance = this;
+    }
+
+    private void HideLauncher()
+    {
+        showLauncher = false;
+        StateHasChanged();
     }
 
     private async Task LoadRecentAdmissions()

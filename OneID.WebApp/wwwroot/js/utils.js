@@ -14,3 +14,9 @@ window.dashboardState = {
         return localStorage.getItem("dashboard_expand") === "true";
     }
 };
+
+document.addEventListener('click', function () {
+    if (window.DotNet) {
+        DotNet.invokeMethodAsync('OneID.WebApp', 'CloseLauncher');
+    }
+});
