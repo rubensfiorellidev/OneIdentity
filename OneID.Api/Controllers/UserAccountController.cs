@@ -101,7 +101,7 @@ namespace OneID.Api.Controllers
 
             _logger.LogInformation("Provisionamento iniciado - CorrelationId: {CorrelationId}", correlationId);
 
-            var requestToken = _jwtProvider.GenerateRequestToken(loggedUser, correlationId);
+            var requestToken = _jwtProvider.GenerateInitialRequestTokenAsync(loggedUser, correlationId);
 
             Response.Cookies.Append("request_token", requestToken, new CookieOptions
             {
@@ -126,7 +126,7 @@ namespace OneID.Api.Controllers
 
             var accessScope = User.FindFirst("access_scope")?.Value ?? "unknown";
 
-            if (accessScope is not ("token_request_only" or "user_access"))
+            if (accessScope is not ("bootstrap_token" or "user_access"))
             {
                 _logger.LogWarning("Token rejeitado. Escopo não autorizado para confirmação: {Scope}", accessScope);
                 return Forbid("RequestToken");
@@ -162,7 +162,7 @@ namespace OneID.Api.Controllers
 
             _logger.LogInformation("Provisionamento confirmado - CorrelationId: {CorrelationId}", request.CorrelationId);
 
-            var totpToken = _jwtProvider.GenerateTotpToken(loggedUser, request.CorrelationId);
+            var totpToken = _jwtProvider.GenerateUserAccessTokenAsync(loggedUser, request.CorrelationId);
 
             return Accepted(new
             {
@@ -190,7 +190,7 @@ namespace OneID.Api.Controllers
                 { "correlation_id", request.CorrelationId },
             };
 
-            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
+            var token = _jwtProvider.CreateBootstrapToken(claims, TimeSpan.FromMinutes(5));
 
             return Ok(new
             {

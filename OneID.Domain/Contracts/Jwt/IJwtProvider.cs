@@ -7,15 +7,16 @@ namespace OneID.Domain.Contracts.Jwt
 {
     public interface IJwtProvider
     {
-        Task<AuthResult> GenerateTokenAsync(Guid keycloakUserId, string preferredUsername = null, string email = null, string name = null);
+        Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(Guid keycloakUserId, string preferredUsername = null, string email = null, string name = null);
         Task<string> EnsureKeysAsync();
-        string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor);
+        string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor);
         public RsaSecurityKey GetPublicKey();
         IDictionary<string, object> DecodeToken(string token);
         bool ValidateRequestToken(string token);
         Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
-        string GenerateRequestToken(string username, Guid correlationId);
-        string GenerateTotpToken(string username, Guid correlationId);
+        string GenerateInitialRequestTokenAsync(string username, Guid correlationId);
+        string GenerateUserAccessTokenAsync(string username, Guid correlationId);
+        string GenerateBootstrapTokenAsync();
 
     }
 }

@@ -62,7 +62,7 @@ namespace OneID.Api.Controllers
             }
 
             var claims = await GetServiceUserClaimsAsync(BootstraperUserId);
-            var token = _jwtProvider.GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
+            var token = _jwtProvider.CreateBootstrapToken(claims, TimeSpan.FromMinutes(2));
             return Ok(new { token });
         }
 
@@ -112,7 +112,7 @@ namespace OneID.Api.Controllers
 
             var decryptedUser = await _decryptionService.DecryptSensitiveDataAsync(user);
 
-            var authResult = await _jwtProvider.GenerateTokenAsync(
+            var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 decryptedUser.KeycloakUserId,
                 preferredUsername,
                 email,

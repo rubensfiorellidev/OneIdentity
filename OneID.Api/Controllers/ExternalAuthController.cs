@@ -43,7 +43,7 @@ namespace OneID.Api.Controllers
             if (keycloakUserId is null)
                 return Unauthorized("Usuário não encontrado no Keycloak.");
 
-            var jwt = await _jwtProvider.GenerateTokenAsync(
+            var jwt = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 keycloakUserId.Value,
                 preferredUsername: userInfo.Value.Username,
                 email: userInfo.Value.Email,

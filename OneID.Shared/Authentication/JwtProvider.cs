@@ -72,7 +72,8 @@ namespace OneID.Shared.Authentication
 
             return await File.ReadAllTextAsync(_publicKeyPath);
         }
-        public async Task<AuthResult> GenerateTokenAsync(Guid keycloakUserId,
+
+        public async Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(Guid keycloakUserId,
                                                          string preferredUsername = null,
                                                          string email = null,
                                                          string name = null)
@@ -119,7 +120,10 @@ namespace OneID.Shared.Authentication
             if (!string.IsNullOrWhiteSpace(name))
                 claims.Add(new Claim("name", name));
 
+            claims.Add(new Claim("access_scope", "user_access"));
+
             var customClaims = await GetUserClaimsAsync(userId);
+
             claims.AddRange(customClaims);
 
             var descriptor = new SecurityTokenDescriptor
@@ -235,7 +239,7 @@ namespace OneID.Shared.Authentication
 
             return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         }
-        public string GenerateAcceptanceToken(Dictionary<string, object> claims, TimeSpan? validFor)
+        public string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor)
         {
             var handler = new JsonWebTokenHandler();
             var key = GetRSAKey();
@@ -245,7 +249,7 @@ namespace OneID.Shared.Authentication
             if (!claims.ContainsKey("jti"))
                 claims["jti"] = Ulid.NewUlid().ToString();
 
-            claims["access_scope"] = "token_request_only";
+            claims["access_scope"] = "bootstrap_token";
 
             var claimsIdentity = new ClaimsIdentity(claims.Select(c =>
                 new Claim(c.Key, c.Value?.ToString() ?? string.Empty)));
@@ -384,7 +388,7 @@ namespace OneID.Shared.Authentication
 
             var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);
 
-            var authResult = await GenerateTokenAsync(
+            var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 decrypted.KeycloakUserId,
                 decrypted.Login,
                 decrypted.CorporateEmail,
@@ -399,37 +403,46 @@ namespace OneID.Shared.Authentication
 
             return (newJwt, newRefreshToken, true);
         }
-
-        public string GenerateRequestToken(string username, Guid correlationId)
+        private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)
         {
             var claims = new Dictionary<string, object>
             {
                 { JwtClaims.Jti, Ulid.NewUlid().ToString() },
                 { JwtClaims.UniqueName, username },
                 { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-                { "access_scope", "token_request_only" },
+                { "access_scope", accessScope },
                 { "correlation_id", correlationId.ToString() }
             };
 
-            return GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(5));
+            return CreateBootstrapToken(claims, lifetime ?? TimeSpan.FromMinutes(2));
         }
 
-        public string GenerateTotpToken(string username, Guid correlationId)
+        public string GenerateInitialRequestTokenAsync(string username, Guid correlationId)
+            => GenerateScopedJwt(username, correlationId, "token_request_only");
+
+        public string GenerateUserAccessTokenAsync(string username, Guid correlationId)
+            => GenerateScopedJwt(username, correlationId, "user_access");
+
+        public string GenerateBootstrapTokenAsync()
         {
+            var httpContext = _httpContextAccessor.HttpContext;
+
+            var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+            var userAgent = httpContext?.Request?.Headers.UserAgent.ToString() ?? "unknown";
+
             var claims = new Dictionary<string, object>
             {
                 { JwtClaims.Jti, Ulid.NewUlid().ToString() },
-                { JwtClaims.UniqueName, username },
                 { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-                { "access_scope", "user_access" },
-                { "correlation_id", correlationId.ToString() }
+                { "access_scope", "bootstrap_token" },
+                { "ip", ip },
+                { "user_agent", userAgent }
             };
 
-            return GenerateAcceptanceToken(claims, TimeSpan.FromMinutes(2));
+            return CreateBootstrapToken(claims, TimeSpan.FromMinutes(2));
         }
+
 
     }
-
-
 
 }
