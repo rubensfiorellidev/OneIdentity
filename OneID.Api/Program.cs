@@ -4,10 +4,24 @@ using OneID.Messaging;
 using OneID.Shared;
 using OneID.Shared.Tools;
 using Serilog;
+using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 var environment = builder.Environment.EnvironmentName;
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    var certPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+        ".aspnet", "https", "OneID.Api.pfx");
+
+    serverOptions.ConfigureHttpsDefaults(opt =>
+    {
+        opt.ServerCertificate = new X509Certificate2(certPath);
+        opt.SslProtocols = SslProtocols.Tls13;
+    });
+});
 
 builder.Configuration
     .AddJsonFile("appsettings.json", false, true)

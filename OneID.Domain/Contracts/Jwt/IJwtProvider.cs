@@ -12,11 +12,12 @@ namespace OneID.Domain.Contracts.Jwt
         string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor);
         public RsaSecurityKey GetPublicKey();
         IDictionary<string, object> DecodeToken(string token);
-        bool ValidateRequestToken(string token);
+        bool ValidateTokenForLogin(string token, params string[] validScopes);
         Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
         string GenerateInitialRequestTokenAsync(string username, Guid correlationId);
         string GenerateUserAccessTokenAsync(string username, Guid correlationId);
         string GenerateBootstrapTokenAsync();
+        string GenerateBootstrapToken(string username, Guid correlationId, TimeSpan? lifetime = null);
 
     }
 }

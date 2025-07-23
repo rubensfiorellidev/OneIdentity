@@ -44,7 +44,7 @@ public class ConfirmModel : PageModel
         var payload = new
         {
             correlationId = CorrelationId,
-            totp = TotpCode
+            totpCode = TotpCode
         };
 
         var handler = new HttpClientHandler

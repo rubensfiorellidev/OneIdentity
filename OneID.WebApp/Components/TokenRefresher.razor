@@ -1,0 +1,44 @@
+﻿@inject IHttpClientFactory HttpClientFactory
+@inject ILogger<TokenRefresher> Logger
+@inject NavigationManager Navigation
+
+@code {
+    private Timer _timer;
+    private readonly TimeSpan _checkInterval = TimeSpan.FromMinutes(4);
+
+    protected override void OnInitialized()
+    {
+        Logger.LogInformation("TokenRefresher iniciado. Verificando validade do token a cada {Interval}...", _checkInterval);
+
+        _timer = new Timer(async _ => await CheckAndRefreshTokenAsync(), null, TimeSpan.Zero, _checkInterval);
+    }
+
+    private async Task CheckAndRefreshTokenAsync()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var response = await client.PostAsync("https://localhost:7200/v1/auth/refresh-token", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Logger.LogInformation("Token renovado automaticamente com sucesso.");
+            }
+            else
+            {
+                Logger.LogWarning("Falha ao renovar token automaticamente. Redirecionando...");
+                Navigation.NavigateTo("/request-token", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro ao tentar renovar o token automaticamente.");
+            Navigation.NavigateTo("/request-token", forceLoad: true);
+        }
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

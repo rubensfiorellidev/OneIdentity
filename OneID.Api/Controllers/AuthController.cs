@@ -52,6 +52,26 @@ namespace OneID.Api.Controllers
             _totpService = totpService;
         }
 
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpPost("bootstrap-token")]
+        public IActionResult GenerateBootstrapToken([FromBody] Guid correlationId)
+        {
+            if (correlationId == Guid.Empty)
+                return BadRequest("correlationId inválido.");
+
+            var username = User.Identity?.Name
+                        ?? User.FindFirst("preferred_username")?.Value
+                        ?? User.FindFirst(JwtClaims.Sub)?.Value
+                        ?? "unknown";
+
+            var token = _jwtProvider.GenerateBootstrapToken(username, correlationId);
+
+            _logger.LogInformation("Bootstrap token gerado para {Username} com correlationId {CorrelationId}", username, correlationId);
+
+            return Ok(new { token });
+        }
+
+
         [HttpPost("request-token")]
         public async Task<IActionResult> RequestTokenAsync([FromBody] AuthRequest request)
         {
@@ -73,12 +93,13 @@ namespace OneID.Api.Controllers
         {
             var token = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
 
-            if (!_jwtProvider.ValidateRequestToken(token))
+            if (!_jwtProvider.ValidateTokenForLogin(token, "bootstrap_token", "token_request_only"))
                 return Unauthorized("Token de requisição inválido ou expirado.");
 
             var accessScope = _currentUser.GetClaim("access_scope");
-            if (accessScope != "token_request_only")
+            if (accessScope is not ("token_request_only" or "bootstrap_token"))
                 return Forbid("Token não autorizado para login.");
+
 
             var keycloakToken = await _authService.AuthenticateAsync(request.Login, request.Password);
             if (keycloakToken == null)

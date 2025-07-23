@@ -104,38 +104,38 @@ namespace OneID.Shared
                 });
 
             services
-    .AddRateLimiter(opts =>
-    {
-        opts.AddSlidingWindowLimiter("sliding", opts =>
-        {
-            opts.PermitLimit = 1000; // Permitir até 1000 requisições por janela
-            opts.Window = TimeSpan.FromSeconds(60); // Janela de 1 minuto
-            opts.SegmentsPerWindow = 10; // Dividido em 10 segmentos (6 segundos cada)
-            opts.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-            opts.QueueLimit = 100;
+            .AddRateLimiter(opts =>
+            {
+                opts.AddSlidingWindowLimiter("sliding", opts =>
+                {
+                    opts.PermitLimit = 1000; // Permitir até 1000 requisições por janela
+                    opts.Window = TimeSpan.FromSeconds(60); // Janela de 1 minuto
+                    opts.SegmentsPerWindow = 10; // Dividido em 10 segmentos (6 segundos cada)
+                    opts.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    opts.QueueLimit = 100;
 
-        })
-        .OnRejected = async (context, token) =>
-        {
-            var retryAfterHeader = context.Lease != null && context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
-                ? TimeSpan.FromSeconds(retryAfter.TotalSeconds)
-                : TimeSpan.FromSeconds(25);
+                })
+                .OnRejected = async (context, token) =>
+                {
+                    var retryAfterHeader = context.Lease != null && context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter)
+                        ? TimeSpan.FromSeconds(retryAfter.TotalSeconds)
+                        : TimeSpan.FromSeconds(25);
 
-            context.HttpContext.Response.StatusCode = 429;
-            context.HttpContext.Response.Headers.Append("Retry-After", retryAfterHeader.TotalSeconds.ToString());
+                    context.HttpContext.Response.StatusCode = 429;
+                    context.HttpContext.Response.Headers.Append("Retry-After", retryAfterHeader.TotalSeconds.ToString());
 
-            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<object>>();
-            logger.LogWarning(
-                "Rate limit exceeded for {ClientIP} at {Time}.",
-                context.HttpContext.Connection.RemoteIpAddress,
-                DateTime.UtcNow);
+                    var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<object>>();
+                    logger.LogWarning(
+                        "Rate limit exceeded for {ClientIP} at {Time}.",
+                        context.HttpContext.Connection.RemoteIpAddress,
+                        DateTime.UtcNow);
 
-            await context.HttpContext.Response.WriteAsync(
-                $"Rate limit exceeded. Try again after {retryAfterHeader.TotalSeconds} seconds.",
-                cancellationToken: token);
-        };
+                    await context.HttpContext.Response.WriteAsync(
+                        $"Rate limit exceeded. Try again after {retryAfterHeader.TotalSeconds} seconds.",
+                        cancellationToken: token);
+                };
 
-    });
+            });
 
             services.AddCors(options =>
             {
@@ -196,6 +196,16 @@ namespace OneID.Shared
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnTokenValidated = context =>
+                    {
+                        var scope = context.Principal.FindFirst("access_scope")?.Value;
+                        if (scope != "bootstrap_token" && scope != "token_request_only")
+                        {
+                            context.Fail("Token não autorizado para login.");
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnAuthenticationFailed = context =>
                     {
                         context.NoResult();

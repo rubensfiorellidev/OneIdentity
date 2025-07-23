@@ -112,12 +112,22 @@ public class StartModel : PageModel
         {
             { "sub", User.Identity?.Name ?? "unknown" },
             { "preferred_username", User.Identity?.Name ?? "unknown" },
-            { "correlation_id", correlationId! }
+            { "correlation_id", correlationId }
         };
 
-        var requestToken = _totpTokenGenerator.GenerateToken(claims, TimeSpan.FromMinutes(5));
+        var bootstrapResponse = await client.PostAsJsonAsync("https://localhost:7200/v1/auth/bootstrap-token", Guid.Parse(correlationId!));
 
-        Response.Cookies.Append("request_token", requestToken, new CookieOptions
+        if (!bootstrapResponse.IsSuccessStatusCode)
+        {
+            var error = await bootstrapResponse.Content.ReadAsStringAsync();
+            ModelState.AddModelError(string.Empty, $"Erro ao gerar token de confirmação: {error}");
+            return Page();
+        }
+
+        var bootstrapJson = await bootstrapResponse.Content.ReadFromJsonAsync<JsonElement>();
+        var bootstrapToken = bootstrapJson.GetProperty("token").GetString();
+
+        Response.Cookies.Append("request_token", bootstrapToken, new CookieOptions
         {
             HttpOnly = true,
             Secure = true,

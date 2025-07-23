@@ -345,16 +345,18 @@ namespace OneID.Shared.Authentication
             return claims;
         }
 
-        public bool ValidateRequestToken(string token)
+        public bool ValidateTokenForLogin(string token, params string[] validScopes)
         {
-            var principal = ValidateToken(token);
 
+            var principal = ValidateToken(token);
             if (principal == null)
                 return false;
 
-            var scopeClaim = principal.FindFirst("access_scope")?.Value;
-            return scopeClaim == "token_request_only";
+            var scopeClaim = principal.FindFirst("access_scope")?.Value.ToLowerInvariant();
+            return validScopes.Contains(scopeClaim);
         }
+
+
 
         public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken)
         {
@@ -442,6 +444,10 @@ namespace OneID.Shared.Authentication
             return CreateBootstrapToken(claims, TimeSpan.FromMinutes(2));
         }
 
+        public string GenerateBootstrapToken(string username, Guid correlationId, TimeSpan? lifetime = null)
+        {
+            return GenerateScopedJwt(username, correlationId, "bootstrap_token", lifetime ?? TimeSpan.FromMinutes(2));
+        }
 
     }
 
