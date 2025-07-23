@@ -46,6 +46,7 @@ builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddMassTrasitConfig();
 builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
 builder.Services.AddJwtAuthentication(builder.Configuration);
+builder.Services.AddAuthorizationBuilder().SetFallbackPolicy(null);
 builder.Services.AddApiPipelineConfiguration();
 
 

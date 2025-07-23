@@ -1,4 +1,5 @@
-﻿@inject IHttpClientFactory HttpClientFactory
+﻿@using System.Net
+@inject IHttpClientFactory HttpClientFactory
 @inject ILogger<TokenRefresher> Logger
 @inject NavigationManager Navigation
 
@@ -13,53 +14,71 @@
 
         _timer = new PeriodicTimer(_checkInterval);
 
-        _ = Task.Run(async () =>
+        _ = LoopTokenRefreshAsync();
+    }
+
+    private async Task LoopTokenRefreshAsync()
+    {
+        while (await _timer!.WaitForNextTickAsync(_cts.Token))
         {
-            while (await _timer.WaitForNextTickAsync(_cts.Token))
+            await InvokeAsync(async () =>
             {
                 try
                 {
-                    await InvokeAsync(async () => await CheckAndRefreshTokenAsync());
+                    await CheckAndRefreshTokenAsync();
                 }
                 catch (Exception ex)
                 {
                     Logger.LogError(ex, "Erro inesperado ao renovar token.");
+                    Navigation.NavigateTo("/request-token", forceLoad: true);
                 }
-            }
-        }, _cts.Token);
+            });
+        }
     }
 
     private async Task CheckAndRefreshTokenAsync()
     {
-        try
-        {
-            var client = HttpClientFactory.CreateClient();
-            var response = await client.PostAsync("https://localhost:7200/v1/auth/refresh-token", null, _cts.Token);
+        var client = HttpClientFactory.CreateClient("OneID.ApiClient");
+        var response = await client.PostAsync("v1/auth/refresh-token", null, _cts.Token);
 
-            if (response.IsSuccessStatusCode)
-            {
-                Logger.LogInformation("Token renovado automaticamente com sucesso.");
-            }
-            else
-            {
-                Logger.LogWarning("Falha ao renovar token automaticamente. Redirecionando...");
-                Navigation.NavigateTo("/request-token", forceLoad: true);
-            }
-        }
-        catch (TaskCanceledException)
+        if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
+            Logger.LogWarning("Refresh token expirado. Redirecionando para /request-token...");
+            if (!_cts.IsCancellationRequested)
+            {
+                try
+                {
+                    Navigation.NavigateTo("/request-token", forceLoad: true);
+                }
+                catch (NavigationException navEx)
+                {
+                    Logger.LogWarning(navEx, "Navegação falhou: circuito pode ter sido finalizado.");
+                }
+            }
+
+            return;
         }
-        catch (Exception ex)
+
+
+        if (!response.IsSuccessStatusCode)
         {
-            Logger.LogError(ex, "Erro ao tentar renovar o token automaticamente.");
-            Navigation.NavigateTo("/request-token", forceLoad: true);
+            Logger.LogWarning("Erro ao renovar token. Status: {StatusCode}", response.StatusCode);
+            return;
         }
+
+        Logger.LogInformation("Token renovado automaticamente com sucesso.");
     }
 
     public void Dispose()
     {
         _cts.Cancel();
-        _timer?.Dispose();
+
+        try
+        {
+            _timer?.Dispose();
+        }
+        catch (ObjectDisposedException) { }
+
         _cts.Dispose();
     }
 }

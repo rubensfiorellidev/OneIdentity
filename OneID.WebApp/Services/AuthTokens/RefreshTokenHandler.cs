@@ -1,35 +1,25 @@
-﻿using Microsoft.AspNetCore.Components;
-using System.Net;
-
-namespace OneID.WebApp.Services.AuthTokens;
+﻿using System.Net;
 
 public class RefreshTokenHandler : DelegatingHandler
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly NavigationManager _navigation;
-    private readonly ILogger<RefreshTokenHandler> _logger;
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly ILogger<RefreshTokenHandler> _logger;
 
     public RefreshTokenHandler(
-        IHttpContextAccessor httpContextAccessor,
-        NavigationManager navigation,
-        ILogger<RefreshTokenHandler> logger,
-        IHttpClientFactory httpClientFactory)
+        IHttpClientFactory httpClientFactory,
+        ILogger<RefreshTokenHandler> logger)
     {
-        _httpContextAccessor = httpContextAccessor;
-        _navigation = navigation;
-        _logger = logger;
         _httpClientFactory = httpClientFactory;
+        _logger = logger;
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        // Tenta enviar a requisição normalmente
         var response = await base.SendAsync(request, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            _logger.LogWarning("Token expirado ou inválido. Iniciando tentativa de refresh.");
+            _logger.LogWarning("Token expirado. Tentando fazer refresh...");
 
             try
             {
@@ -38,23 +28,23 @@ public class RefreshTokenHandler : DelegatingHandler
 
                 if (refreshResponse.IsSuccessStatusCode)
                 {
-                    _logger.LogInformation("Token atualizado com sucesso. Reenviando requisição original.");
+                    _logger.LogInformation("Token renovado com sucesso. Reenviando requisição original...");
 
-                    // Clona a requisição original
                     var clonedRequest = await CloneHttpRequestMessageAsync(request);
-
                     return await base.SendAsync(clonedRequest, cancellationToken);
                 }
                 else
                 {
-                    _logger.LogWarning("Falha ao atualizar o token. Redirecionando para /request-token");
-                    _navigation.NavigateTo("/request-token");
+                    _logger.LogWarning("Refresh token falhou. Sinalizando para UI tomar ação.");
+
+                    response.Headers.Add("X-Token-Expired", "true");
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Erro ao tentar atualizar o token.");
-                _navigation.NavigateTo("/request-token");
+                _logger.LogError(ex, "Erro ao tentar renovar o token.");
+
+                response.Headers.Add("X-Token-Expired", "true");
             }
         }
 
@@ -65,26 +55,19 @@ public class RefreshTokenHandler : DelegatingHandler
     {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri);
 
-        // Copia o conteúdo (se tiver)
         if (request.Content != null)
         {
             var content = await request.Content.ReadAsByteArrayAsync();
             clone.Content = new ByteArrayContent(content);
-            if (request.Content.Headers != null)
-            {
-                foreach (var h in request.Content.Headers)
-                    clone.Content.Headers.Add(h.Key, h.Value);
-            }
+
+            foreach (var h in request.Content.Headers)
+                clone.Content.Headers.Add(h.Key, h.Value);
         }
 
-        // Copia os headers
         foreach (var header in request.Headers)
-        {
             clone.Headers.TryAddWithoutValidation(header.Key, header.Value);
-        }
 
         clone.Version = request.Version;
-
         return clone;
     }
 }

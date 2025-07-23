@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.JsonWebTokens;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Interceptor;
@@ -12,7 +13,6 @@ using OneID.Application.Interfaces.TotpServices;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -54,7 +54,7 @@ namespace OneID.Api.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("bootstrap-token")]
-        public IActionResult GenerateBootstrapToken([FromBody] Guid correlationId)
+        public IActionResult GenerateBootstrapToken(Guid correlationId)
         {
             if (correlationId == Guid.Empty)
                 return BadRequest("correlationId inválido.");
@@ -89,7 +89,7 @@ namespace OneID.Api.Controllers
 
         [HttpPost("login")]
         [Authorize(AuthenticationSchemes = "RequestToken")]
-        public async Task<IActionResult> LoginAsync([FromBody] LoginRequest request)
+        public async Task<IActionResult> LoginAsync(LoginRequest request)
         {
             var token = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
 
@@ -165,7 +165,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             var refreshToken = Request.Cookies["refresh_token"];
@@ -173,7 +173,9 @@ namespace OneID.Api.Controllers
             if (string.IsNullOrWhiteSpace(refreshToken))
                 return Unauthorized("Refresh token ausente");
 
-            var userUpn = User.FindFirstValue(JwtClaims.Sub);
+            var handler = new JsonWebTokenHandler();
+            var token = handler.ReadJsonWebToken(refreshToken);
+            var userUpn = token?.Subject;
 
             var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpn, refreshToken);
 
