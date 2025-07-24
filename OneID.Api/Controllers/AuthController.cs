@@ -99,7 +99,7 @@ namespace OneID.Api.Controllers
             }
             else
             {
-                token = token["Bearer ".Length..].Trim(); // Remove "Bearer "
+                token = token["Bearer ".Length..].Trim();
             }
 
             if (string.IsNullOrWhiteSpace(token))
@@ -180,17 +180,26 @@ namespace OneID.Api.Controllers
         {
             var refreshToken = Request.Cookies["refresh_token"];
 
+            if (string.IsNullOrWhiteSpace(refreshToken) &&
+                Request.Headers.Authorization.Count > 0)
+            {
+                var authHeader = Request.Headers.Authorization.ToString();
+                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    refreshToken = authHeader["Bearer ".Length..].Trim();
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(refreshToken))
-                return Unauthorized("Refresh token ausente");
+                return Unauthorized("Refresh token ausente.");
 
             var handler = new JsonWebTokenHandler();
             var token = handler.ReadJsonWebToken(refreshToken);
             var userUpn = token?.Subject;
 
             var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpn, refreshToken);
-
             if (!success)
-                return Unauthorized("Refresh token inválido ou expirado");
+                return Unauthorized("Refresh token inválido ou expirado.");
 
             Response.Cookies.Append("access_token", newJwt, new CookieOptions
             {
@@ -208,7 +217,12 @@ namespace OneID.Api.Controllers
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
-            return Ok(new { success = true });
+            return Ok(new
+            {
+                success = true,
+                token = newJwt,
+                refreshToken = newRefresh
+            });
         }
 
         private async Task<Dictionary<string, object>> GetServiceUserClaimsAsync(string serviceUserId)

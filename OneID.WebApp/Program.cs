@@ -29,7 +29,8 @@ builder.Services.AddHttpClient("AuthenticatedClient", client =>
 {
     UseCookies = true,
     UseDefaultCredentials = true
-});
+
+}).AddHttpMessageHandler<RefreshTokenHandler>();
 
 builder.Services.AddScoped<RefreshTokenHandler>();
 builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();

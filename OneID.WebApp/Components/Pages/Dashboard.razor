@@ -402,16 +402,6 @@
         var token = request?.Cookies["access_token"];
         if (string.IsNullOrWhiteSpace(token)) return;
 
-        //Ativar depois de resolver o problema de token
-
-        // if (string.IsNullOrWhiteSpace(token))
-        // {
-        //     Navigation.NavigateTo("/request-token", forceLoad: true);
-        //     return;
-        // }
-
-
-
         var handler = new JwtSecurityTokenHandler();
         try
         {
