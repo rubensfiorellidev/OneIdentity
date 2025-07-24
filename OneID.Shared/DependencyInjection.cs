@@ -196,6 +196,16 @@ namespace OneID.Shared
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Cookies["access_token"];
+                        if (!string.IsNullOrWhiteSpace(accessToken))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     OnTokenValidated = context =>
                     {
                         var scope = context.Principal.FindFirst("access_scope")?.Value;
