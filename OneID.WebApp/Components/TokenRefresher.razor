@@ -38,7 +38,7 @@
 
     private async Task CheckAndRefreshTokenAsync()
     {
-        var client = HttpClientFactory.CreateClient("OneID.ApiClient");
+        var client = HttpClientFactory.CreateClient("AuthenticatedClient");
         var response = await client.PostAsync("v1/auth/refresh-token", null, _cts.Token);
 
         if (response.StatusCode == HttpStatusCode.Unauthorized)

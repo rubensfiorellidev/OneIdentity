@@ -9,7 +9,6 @@ builder.Logging.SetMinimumLevel(LogLevel.Information);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthentication("Cookies")
@@ -25,6 +24,7 @@ builder.Services.AddAuthentication("Cookies")
 builder.Services.AddHttpClient("AuthenticatedClient", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7200/");
+
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
     UseCookies = true,
