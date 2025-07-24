@@ -91,7 +91,19 @@ namespace OneID.Api.Controllers
         [Authorize(AuthenticationSchemes = "RequestToken")]
         public async Task<IActionResult> LoginAsync(LoginRequest request)
         {
-            var token = Request.Headers.Authorization.ToString().Replace("Bearer ", "");
+            var token = Request.Headers.Authorization.ToString();
+            if (string.IsNullOrWhiteSpace(token) || !token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                // Fallback para cookie (útil em domínio unificado ou frontend Razor)
+                token = Request.Cookies["request_token"];
+            }
+            else
+            {
+                token = token["Bearer ".Length..].Trim(); // Remove "Bearer "
+            }
+
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized("Token ausente. Tente novamente após confirmar o TOTP.");
 
             if (!_jwtProvider.ValidateTokenForLogin(token, "bootstrap_token", "token_request_only"))
                 return Unauthorized("Token de requisição inválido ou expirado.");
@@ -99,7 +111,6 @@ namespace OneID.Api.Controllers
             var accessScope = _currentUser.GetClaim("access_scope");
             if (accessScope is not ("token_request_only" or "bootstrap_token"))
                 return Forbid("Token não autorizado para login.");
-
 
             var keycloakToken = await _authService.AuthenticateAsync(request.Login, request.Password);
             if (keycloakToken == null)
@@ -156,16 +167,11 @@ namespace OneID.Api.Controllers
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
-
-            return NoContent();
-
-            // Se precisar retornar o token e refresh token no corpo da resposta, descomente abaixo
-
-            //return Ok(new
-            //{
-            //    token = authResult.Jwtoken,
-            //    refreshToken = authResult.RefreshToken
-            //});
+            return Ok(new
+            {
+                token = authResult.Jwtoken,
+                refreshToken = authResult.RefreshToken
+            });
         }
 
         [HttpPost("refresh-token")]

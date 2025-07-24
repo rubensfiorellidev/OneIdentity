@@ -441,7 +441,7 @@ namespace OneID.Shared.Authentication
                 { "user_agent", userAgent }
             };
 
-            return CreateBootstrapToken(claims, TimeSpan.FromMinutes(2));
+            return CreateBootstrapToken(claims, TimeSpan.FromMinutes(5));
         }
 
         public string GenerateBootstrapToken(string username, Guid correlationId, TimeSpan? lifetime = null)

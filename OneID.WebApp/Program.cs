@@ -12,14 +12,26 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpClient();
 builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddHttpClient("OneID.ApiClient", client =>
+builder.Services.AddAuthentication("Cookies")
+    .AddCookie("Cookies", options =>
+    {
+        options.Cookie.Name = "access_token";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    });
+
+
+builder.Services.AddHttpClient("AuthenticatedClient", client =>
 {
     client.BaseAddress = new Uri("https://localhost:7200/");
-
-}).AddHttpMessageHandler<RefreshTokenHandler>();
+}).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+{
+    UseCookies = true,
+    UseDefaultCredentials = true
+});
 
 builder.Services.AddScoped<RefreshTokenHandler>();
-
 builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
 
 
@@ -34,6 +46,8 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 app.MapRazorComponents<App>()

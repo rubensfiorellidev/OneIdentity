@@ -89,7 +89,7 @@
                             </svg>
                         </div>
                     </div>
-                    <button class="resume-button" title="Retomar processo" @onclick="() => Retomar(item.CorrelationId)">
+                    <button class="resume-button" title="Retomar processo" @onclick="() => Resume(item.CorrelationId)">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--highlight-color)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M6.67742 20.5673C2.53141 18.0212 0.758026 12.7584 2.71678 8.1439C4.87472 3.0601 10.7453 0.68822 15.8291 2.84617C20.9129 5.00412 23.2848 10.8747 21.1269 15.9585C20.2837 17.945 18.8736 19.5174 17.1651 20.5673" />
                             <path d="M17 16V20.4C17 20.7314 17.2686 21 17.6 21H22" />
@@ -247,15 +247,15 @@
             Atividades recentes no IAM
         </h2>
 
-            <ul>
-                @foreach (var item in RecentIamLogs)
-                {
-                    <li class="log-entry">
-                        <div><strong>@item.Actor</strong> @item.Action <strong>@item.Target</strong></div>
-                        <div class="timestamp">@item.Timestamp.ToString("HH:mm")</div>
-                    </li>
-                }
-            </ul>
+        <ul>
+            @foreach (var item in RecentIamLogs)
+            {
+                <li class="log-entry">
+                    <div><strong>@item.Actor</strong> @item.Action <strong>@item.Target</strong></div>
+                    <div class="timestamp">@item.Timestamp.ToString("HH:mm")</div>
+                </li>
+            }
+        </ul>
     </div>
 
     <div id="widget-alertas" class="admissions-widget resizable-widget">
@@ -278,16 +278,16 @@
             Alertas de segurança
         </h2>
 
-            <ul>
-                @foreach (var alert in SecurityAlerts)
-                {
-                    <li class="alert-entry" data-level="@alert.Level">
-                        <div><strong>@alert.Title</strong></div>
-                        <div class="timestamp">@alert.Timestamp.ToString("HH:mm")</div>
-                    </li>
-                }
-            </ul>
-        </div>
+        <ul>
+            @foreach (var alert in SecurityAlerts)
+            {
+                <li class="alert-entry" data-level="@alert.Level">
+                    <div><strong>@alert.Title</strong></div>
+                    <div class="timestamp">@alert.Timestamp.ToString("HH:mm")</div>
+                </li>
+            }
+        </ul>
+    </div>
 
     <div id="widget-auditoria" class="admissions-widget resizable-widget">
         <h2>
@@ -314,16 +314,16 @@
             Auditoria de admissão
         </h2>
         <ul>
-                @foreach (var log in AdmissionAudits)
-                {
-                    <li class="audit-entry">
-                        <div><strong>@log.FirstName @log.LastName</strong> – @log.EventName</div>
-                        <div>@log.Description</div>
-                        <div class="timestamp">@log.ProvisioningDate.ToString("dd/MM/yyyy HH:mm")</div>
-                    </li>
-                }
-            </ul>
-        </div>
+            @foreach (var log in AdmissionAudits)
+            {
+                <li class="audit-entry">
+                    <div><strong>@log.FirstName @log.LastName</strong> – @log.EventName</div>
+                    <div>@log.Description</div>
+                    <div class="timestamp">@log.ProvisioningDate.ToString("dd/MM/yyyy HH:mm")</div>
+                </li>
+            }
+        </ul>
+    </div>
 </div>
 
 <footer class="custom-footer">
@@ -402,6 +402,16 @@
         var token = request?.Cookies["access_token"];
         if (string.IsNullOrWhiteSpace(token)) return;
 
+        //Ativar depois de resolver o problema de token
+
+        // if (string.IsNullOrWhiteSpace(token))
+        // {
+        //     Navigation.NavigateTo("/request-token", forceLoad: true);
+        //     return;
+        // }
+
+
+
         var handler = new JwtSecurityTokenHandler();
         try
         {
@@ -415,7 +425,7 @@
             OperatorName = "erro ao ler token";
         }
 
-        var client = HttpClientFactory.CreateClient();
+        var client = HttpClientFactory.CreateClient("AuthenticatedClient");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.GetAsync("https://localhost:7200/v1/pendings");
@@ -443,12 +453,20 @@
         Navigation.NavigateTo("/usuarios");
     }
 
-    private async Task Retomar(string correlationId)
+    private async Task Resume(string correlationId)
     {
-        var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
-        if (string.IsNullOrWhiteSpace(token)) return;
+        var request = HttpContextAccessor.HttpContext?.Request;
+        var token = request?.Cookies["access_token"]
+                  ?? request?.Headers["Authorization"].ToString().Replace("Bearer ", "", StringComparison.OrdinalIgnoreCase);
 
-        var client = HttpClientFactory.CreateClient();
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            // Exemplo: exibe aviso ou redireciona para /request-token
+            Navigation.NavigateTo("/request-token", forceLoad: true);
+            return;
+        }
+
+        var client = HttpClientFactory.CreateClient("AuthenticatedClient");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var payload = new { CorrelationId = correlationId };
@@ -507,7 +525,7 @@
         var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
         if (string.IsNullOrWhiteSpace(token)) return;
 
-        var client = HttpClientFactory.CreateClient();
+        var client = HttpClientFactory.CreateClient("AuthenticatedClient");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await client.GetAsync("https://localhost:7200/v1/staging/admissions-recents?limit=10");

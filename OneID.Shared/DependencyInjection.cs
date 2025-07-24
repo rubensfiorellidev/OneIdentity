@@ -198,12 +198,7 @@ namespace OneID.Shared
                 {
                     OnMessageReceived = context =>
                     {
-                        var accessToken = context.Request.Cookies["access_token"];
-                        if (!string.IsNullOrWhiteSpace(accessToken))
-                        {
-                            context.Token = accessToken;
-                        }
-
+                        context.Token = ExtractToken(context.Request);
                         return Task.CompletedTask;
                     },
                     OnTokenValidated = context =>
@@ -282,6 +277,18 @@ namespace OneID.Shared
 
             return services;
         }
+        private static string ExtractToken(HttpRequest request)
+        {
+            var authHeader = request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                return authHeader["Bearer ".Length..].Trim();
+            }
+
+            var cookieToken = request.Cookies["access_token"];
+            return !string.IsNullOrWhiteSpace(cookieToken) ? cookieToken : null;
+        }
+
         #endregion
 
     }
