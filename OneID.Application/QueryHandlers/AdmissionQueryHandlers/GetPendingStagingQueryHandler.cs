@@ -16,15 +16,7 @@ namespace OneID.Application.QueryHandlers.AdmissionQueryHandlers
 
         public async Task<List<PendingProcessDto>> Handle(GetPendingStagingQuery query, CancellationToken cancellationToken)
         {
-            var result = await _repository.GetPendingAsync(cancellationToken);
-
-            return [.. result
-                .Select(x => new PendingProcessDto
-                {
-                    CorrelationId = x.CorrelationId,
-                    FullName = x.FullName,
-                    CreatedAt = x.CreatedAt
-                })];
+            return await _repository.GetPendingAsync(cancellationToken);
         }
     }
 

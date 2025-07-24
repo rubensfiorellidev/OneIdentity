@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
@@ -25,16 +26,21 @@ namespace OneID.Data.Repositories.AdmissionContext
 
         }
 
-        public async Task<List<AccountAdmissionStaging>> GetPendingAsync(CancellationToken cancellationToken)
+        public async Task<List<PendingProcessDto>> GetPendingAsync(CancellationToken cancellationToken)
         {
             await using var db = _dbContextFactory.CreateDbContext();
 
-            var result = await db.AccountAdmissionStagings
+            return await db.AccountAdmissionStagings
                 .Where(x => x.Status == AdmissionStatus.Pending)
                 .OrderByDescending(x => x.CreatedAt)
+                .AsNoTracking()
+                .Select(x => new PendingProcessDto
+                {
+                    CorrelationId = x.CorrelationId,
+                    FullName = x.FullName,
+                    CreatedAt = x.CreatedAt
+                })
                 .ToListAsync(cancellationToken);
-
-            return result;
         }
     }
 }

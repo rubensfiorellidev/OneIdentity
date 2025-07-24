@@ -57,9 +57,6 @@ namespace OneID.Api.Controllers
             _queryExecutor = queryExecutor;
         }
 
-        /// <summary>
-        /// Etapa 1 - Inicia o provisionamento e grava na tabela de staging.
-        /// </summary>
         [HttpPost("start")]
         [Authorize(Roles = "admin")]
         public async Task<IActionResult> StartAsync([FromBody] SecureProvisioningRequest request, CancellationToken cancellationToken)

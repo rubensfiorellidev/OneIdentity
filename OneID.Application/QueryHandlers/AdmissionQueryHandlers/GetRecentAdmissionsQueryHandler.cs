@@ -22,12 +22,11 @@ namespace OneID.Application.QueryHandlers.AdmissionQueryHandlers
 
             return [.. accounts.Select(x => new RecentAdmissionDto
             {
-                AccountId = x.Id,
+                AccountId = x.AccountId,
                 FullName = x.FullName,
                 JobTitleName = x.JobTitleName,
                 DepartmentName = x.DepartmentName,
                 Company = x.Company,
-                LoginManager = x.LoginManager,
                 ProvisioningAt = x.ProvisioningAt
             })];
         }

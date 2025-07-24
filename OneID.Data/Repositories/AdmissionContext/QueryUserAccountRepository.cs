@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using OneID.Application.DTOs.Admission;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Data.Interfaces;
 using OneID.Domain.Entities.UserContext;
@@ -33,13 +34,22 @@ namespace OneID.Data.Repositories.AdmissionContext
                 .FirstOrDefaultAsync(u => u.CpfHash == cpfHash, cancellationToken);
         }
 
-        public async Task<List<UserAccount>> GetRecentAdmissionsAsync(int limit, CancellationToken cancellationToken = default)
+        public async Task<List<RecentAdmissionDto>> GetRecentAdmissionsAsync(int limit, CancellationToken cancellationToken = default)
         {
             await using var dbContext = _dbContextFactory.CreateDbContext();
 
             return await dbContext.UserAccounts
                 .OrderByDescending(x => x.ProvisioningAt)
                 .Take(limit)
+                .AsNoTracking()
+                .Select(x => new RecentAdmissionDto
+                {
+                    AccountId = x.Id,
+                    FullName = x.FullName,
+                    DepartmentName = x.DepartmentName,
+                    JobTitleName = x.JobTitleName,
+                    ProvisioningAt = x.ProvisioningAt
+                })
                 .ToListAsync(cancellationToken);
 
         }
