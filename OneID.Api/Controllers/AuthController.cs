@@ -157,11 +157,15 @@ namespace OneID.Api.Controllers
             });
 
 
-            return Ok(new
-            {
-                token = authResult.Jwtoken,
-                refreshToken = authResult.RefreshToken
-            });
+            return NoContent();
+
+            // Se precisar retornar o token e refresh token no corpo da resposta, descomente abaixo
+
+            //return Ok(new
+            //{
+            //    token = authResult.Jwtoken,
+            //    refreshToken = authResult.RefreshToken
+            //});
         }
 
         [HttpPost("refresh-token")]
