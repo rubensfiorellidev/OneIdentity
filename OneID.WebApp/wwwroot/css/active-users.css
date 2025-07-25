@@ -217,3 +217,18 @@ input[type="checkbox"],
         color: var(--text-muted);
         opacity: 0.6;
     }
+
+.last-activity {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #00c47d; /* verde AWS */
+    font-weight: 500;
+}
+
+.check-circle-icon {
+    width: 16px;
+    height: 16px;
+    stroke: #00c47d;
+}
+

@@ -54,28 +54,32 @@
                     <td>@user.DepartmentName</td>
                     <td>@user.Company</td>
                     <td>@user.Login</td>
-                    <td>@(string.IsNullOrWhiteSpace(user.LastActivity) ? "-" : user.LastActivity)</td>
-                </tr>
-            }
-        </tbody>
-        <tbody>
-            @foreach (var user in FilteredUsers)
-            {
-                <tr>
-                    <td class="checkbox-cell">
-                        <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
-                    </td>
                     <td>
-                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link">
-                            <span class="status-indicator @(user.Status == "Ativo" ? "green" : "red")"></span>
-                            @user.FullName
-                        </a>
+                        @if (user.LastActivity.HasValue)
+                        {
+                            var daysAgo = (DateTime.UtcNow.Date - user.LastActivity.Value.Date).Days;
+                            var display = daysAgo switch
+                            {
+                                0 => "hoje",
+                                1 => "ontem",
+                                _ => $"{daysAgo} dias atrás"
+                            };
+
+                            <div class="last-activity">
+                                <svg xmlns="http://www.w3.org/2000/svg"
+                                     fill="none" viewBox="0 0 24 24" stroke-width="2"
+                                     stroke="currentColor" class="check-circle-icon">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                          d="M9 12l2 2 4-4m5 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span>@display</span>
+                            </div>
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
                     </td>
-                    <td>@user.JobTitleName</td>
-                    <td>@user.DepartmentName</td>
-                    <td>@user.Company</td>
-                    <td>@user.Login</td>
-                    <td>@(string.IsNullOrWhiteSpace(user.LastActivity) ? "-" : user.LastActivity)</td>
                 </tr>
             }
         </tbody>
@@ -101,8 +105,8 @@
     __builder.AddAttribute(10, "stroke-linejoin", "round");
     __builder.OpenElement(11, "polyline");
     __builder.AddAttribute(12, "points", "6 9 12 15 18 9");
-    __builder.CloseElement(); // polyline
-    __builder.CloseElement(); // svg
+    __builder.CloseElement();
+    __builder.CloseElement();
 };
 
     private List<ActiveUserViewModel> AllUsers = [];
@@ -174,19 +178,27 @@
 
     private void ApplySorting()
     {
-        Func<ActiveUserViewModel, object> keySelector = CurrentSort switch
-        {
-            nameof(ActiveUserViewModel.FullName) => u => u.FullName,
-            nameof(ActiveUserViewModel.JobTitleName) => u => u.JobTitleName,
-            nameof(ActiveUserViewModel.DepartmentName) => u => u.DepartmentName,
-            nameof(ActiveUserViewModel.Company) => u => u.Company,
-            nameof(ActiveUserViewModel.Login) => u => u.Login,
-            _ => u => u.FullName
-        };
+        var comparer = StringComparer.Create(new CultureInfo("pt-BR"), ignoreCase: true);
 
-        FilteredUsers = IsDescending
-            ? FilteredUsers.OrderByDescending(keySelector).ToList()
-            : FilteredUsers.OrderBy(keySelector).ToList();
+        FilteredUsers = CurrentSort switch
+        {
+            nameof(ActiveUserViewModel.FullName) => SortList(FilteredUsers, u => u.FullName, comparer),
+            nameof(ActiveUserViewModel.JobTitleName) => SortList(FilteredUsers, u => u.JobTitleName, comparer),
+            nameof(ActiveUserViewModel.DepartmentName) => SortList(FilteredUsers, u => u.DepartmentName, comparer),
+            nameof(ActiveUserViewModel.Company) => SortList(FilteredUsers, u => u.Company, comparer),
+            nameof(ActiveUserViewModel.Login) => SortList(FilteredUsers, u => u.Login, comparer),
+            _ => FilteredUsers
+        };
+    }
+
+    private List<ActiveUserViewModel> SortList(
+    List<ActiveUserViewModel> source,
+    Func<ActiveUserViewModel, string> keySelector,
+    StringComparer comparer)
+    {
+        return IsDescending
+            ? source.OrderByDescending(keySelector, comparer).ToList()
+            : source.OrderBy(keySelector, comparer).ToList();
     }
 
     private static string Normalize(string input)
@@ -218,6 +230,8 @@
         return IsDescending ? "desc" : "asc";
     }
 
+
+
     public class ActiveUserViewModel
     {
         public string Id { get; set; } = string.Empty;
@@ -227,7 +241,7 @@
         public string Company { get; set; } = string.Empty;
         public string Login { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
-        public string LastActivity { get; set; } = string.Empty;
+        public DateTime? LastActivity { get; set; }
         public bool IsSelected { get; set; } = false;
     }
 }
