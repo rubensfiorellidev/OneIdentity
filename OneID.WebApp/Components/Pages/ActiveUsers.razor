@@ -1,8 +1,11 @@
 ﻿@page "/active-users"
 @rendermode InteractiveServer
 
+@using System.Text
+@using System.Globalization
+@using System.Timers
 @using OneID.WebApp.Components
-@using OneID.WebApp.Models
+@using OneID.WebApp.Interfaces
 
 @inject IOneIdUserService UserService
 
@@ -12,7 +15,7 @@
     <div class="card-header flex-between">
         <div class="flex-center">
             <input type="checkbox" @onchange="ToggleSelectAll" />
-            <input class="search-box" type="text" placeholder="Pesquisar" @bind="searchTerm" @bind:event="oninput" />
+            <input class="search-box" type="text" placeholder="Pesquisar" @bind="SearchTerm" @bind:event="oninput" />
             <button class="search-button" @onclick="ApplySearch">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
                     <circle cx="11" cy="11" r="8" />
@@ -20,9 +23,6 @@
                 </svg>
             </button>
         </div>
-        <button class="btn-danger" @onclick="DeactivateSelected" disabled="@(SelectedCount == 0)">
-            Desativar selecionados (@SelectedCount)
-        </button>
     </div>
 
     <div class="table-container">
@@ -47,6 +47,7 @@
                         </td>
                         <td>
                             <a href="/user-details/@user.Id" class="link-with-icon">
+                                <span class="status-indicator active"></span>
                                 <span>@user.FullName</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link">
                                     <path d="M18 13v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -69,21 +70,36 @@
 
 @code {
     private List<ActiveUserViewModel> AllUsers = [];
-    private List<ActiveUserViewModel> FilteredUsers => string.IsNullOrWhiteSpace(searchTerm)
-        ? AllUsers
-        : AllUsers.Where(u => u.FullName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                           || u.Login.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                           || u.JobTitleName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
-                           || u.DepartmentName.Contains(searchTerm, StringComparison.OrdinalIgnoreCase))
-                  .ToList();
+    private List<ActiveUserViewModel> FilteredUsers = [];
 
-    private string searchTerm = string.Empty;
+    private string _searchTerm = string.Empty;
+    private Timer? _debounceTimer;
 
-    private int SelectedCount => AllUsers.Count(u => u.IsSelected);
+    public string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            _searchTerm = value;
+
+            _debounceTimer?.Stop();
+            _debounceTimer = new Timer(300); // 300ms debounce
+            _debounceTimer.Elapsed += (_, _) =>
+            {
+                _debounceTimer.Dispose();
+                _debounceTimer = null;
+                InvokeAsync(ApplySearch);
+            };
+            _debounceTimer.Start();
+        }
+    }
+
+    private int SelectedCount => FilteredUsers.Count(u => u.IsSelected);
 
     protected override async Task OnInitializedAsync()
     {
         AllUsers = await UserService.GetActiveUsersAsync();
+        FilteredUsers = AllUsers;
     }
 
     private void ToggleSelectAll(ChangeEventArgs e)
@@ -95,14 +111,32 @@
 
     private void ApplySearch()
     {
-        // Triggered by search button (optional)
+        var normalizedTerm = Normalize(SearchTerm);
+
+        FilteredUsers = string.IsNullOrWhiteSpace(normalizedTerm)
+            ? AllUsers
+            : AllUsers.Where(u =>
+                  Normalize(u.FullName).Contains(normalizedTerm)
+                  || Normalize(u.Login).Contains(normalizedTerm)
+                  || Normalize(u.JobTitleName).Contains(normalizedTerm)
+                  || Normalize(u.DepartmentName).Contains(normalizedTerm))
+              .ToList();
+
+        StateHasChanged();
     }
 
-    private async Task DeactivateSelected()
+    private static string Normalize(string input)
     {
-        var selectedIds = AllUsers.Where(u => u.IsSelected).Select(u => u.Id).ToList();
-        await UserService.DeactivateUsersAsync(selectedIds);
-        AllUsers.RemoveAll(u => selectedIds.Contains(u.Id));
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+
+        var normalized = input.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString().ToLowerInvariant();
     }
 
     public class ActiveUserViewModel

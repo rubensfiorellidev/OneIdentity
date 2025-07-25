@@ -8,6 +8,8 @@
 @using System.IdentityModel.Tokens.Jwt
 @using System.Net.Http.Headers
 @using System.Text.Json
+@using System.Text
+@using System.Globalization
 
 <div class="custom-header">
     <div class="header-left-fixed" style="display: flex; align-items: center; gap: 0.8rem;">
@@ -42,7 +44,10 @@
                 <circle cx="11" cy="11" r="8" />
                 <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
-            <input type="text" placeholder="Search" class="search-input" />
+            <input type="text"
+                   placeholder="Search"
+                   class="search-input"
+                   @oninput="OnSearchInput" />
         </div>
     </div>
 
@@ -357,6 +362,23 @@
     private string LastChecked = string.Empty;
     private List<RecentAdmissionDto> RecentAdmissions = [];
     private bool showLauncher = false;
+    private string searchTerm = string.Empty;
+    private Timer? debounceTimer;
+
+    private readonly Dictionary<string, string> searchRoutes = new(StringComparer.OrdinalIgnoreCase)
+{
+    { "usuario", "/active-users" },
+    { "usuarios", "/active-users" },
+    { "usuário", "/active-users" },
+    { "usuários", "/active-users" },
+    { "auditoria", "/dashboard#auditoria" },
+    { "logs", "/dashboard#iam-logs" },
+    { "seguranca", "/dashboard#security-alerts" },
+    { "alertas", "/dashboard#security-alerts" },
+    { "admissoes", "/dashboard#admissoes" },
+    { "processos", "/dashboard#pendentes" },
+    { "status", "/dashboard#status" }
+};
 
     private List<UserDto> ActiveUsers = new()
     {
@@ -457,7 +479,6 @@
 
         if (string.IsNullOrWhiteSpace(token))
         {
-            // Exemplo: exibe aviso ou redireciona para /request-token
             Navigation.NavigateTo("/request-token", forceLoad: true);
             return;
         }
@@ -549,4 +570,65 @@
         public string LoginManager { get; set; } = string.Empty;
         public string AccountId { get; set; } = string.Empty;
     }
+
+    private List<string> suggestions = [];
+    private bool showSuggestions = false;
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        searchTerm = e.Value?.ToString() ?? string.Empty;
+
+        debounceTimer?.Dispose();
+        debounceTimer = new Timer(OnSearchDebounced, null, 400, Timeout.Infinite);
+
+        var input = NormalizeSearch(searchTerm);
+        suggestions = searchRoutes.Keys
+            .Where(k => NormalizeSearch(k).Contains(input))
+            .Distinct()
+            .Take(5)
+            .ToList();
+
+        showSuggestions = suggestions.Any();
+    }
+
+    private void SelectSuggestion(string term)
+    {
+        searchTerm = term;
+        showSuggestions = false;
+        StateHasChanged();
+    }
+
+
+    private void OnSearchDebounced(object? _)
+    {
+        var normalized = NormalizeSearch(searchTerm);
+
+        foreach (var kv in searchRoutes)
+        {
+            if (normalized.Contains(NormalizeSearch(kv.Key)))
+            {
+                InvokeAsync(() => Navigation.NavigateTo(kv.Value));
+                break;
+            }
+        }
+    }
+
+    private static string NormalizeSearch(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input))
+            return string.Empty;
+
+        var normalized = input.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+
+        foreach (var c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(char.ToLowerInvariant(c));
+        }
+
+        return sb.ToString();
+    }
+
+
 }

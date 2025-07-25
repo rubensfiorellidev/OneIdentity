@@ -1,4 +1,6 @@
 using OneID.WebApp.Components;
+using OneID.WebApp.Interfaces;
+using OneID.WebApp.Services.ActiveUsers;
 using OneID.WebApp.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,6 +36,12 @@ builder.Services.AddHttpClient("AuthenticatedClient", client =>
 
 builder.Services.AddScoped<RefreshTokenHandler>();
 builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
+builder.Services.AddScoped<IOneIdUserService>(sp =>
+{
+    var factory = sp.GetRequiredService<IHttpClientFactory>();
+    var client = factory.CreateClient("AuthenticatedClient");
+    return new OneIdUserService(client);
+});
 
 
 var app = builder.Build();

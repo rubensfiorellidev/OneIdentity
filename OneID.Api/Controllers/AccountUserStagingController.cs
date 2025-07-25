@@ -17,10 +17,9 @@ using System.Security.Claims;
 namespace OneID.Api.Controllers
 {
     [Route("v1/staging")]
-    [ApiController]
-    public class UserAccountController : MainController
+    public class AccountUserStagingController : MainController
     {
-        private readonly ILogger<UserAccountController> _logger;
+        private readonly ILogger<AccountUserStagingController> _logger;
         private readonly IBus _bus;
         private readonly IHashService _hashService;
         private readonly IDeduplicationKeyRepository _keyRepository;
@@ -32,9 +31,9 @@ namespace OneID.Api.Controllers
         private readonly IQueryExecutor _queryExecutor;
 
 
-        public UserAccountController(
+        public AccountUserStagingController(
             ISender send,
-            ILogger<UserAccountController> logger,
+            ILogger<AccountUserStagingController> logger,
             IHashService hashService,
             IDeduplicationKeyRepository keyRepository,
             IDeduplicationRepository deduplicationRepository,
