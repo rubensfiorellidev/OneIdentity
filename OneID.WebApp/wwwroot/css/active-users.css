@@ -1,0 +1,103 @@
+﻿.active-users-page {
+    padding: 2rem;
+    color: var(--text-color, #e0e0e0);
+    font-family: 'Inter', sans-serif;
+}
+
+.active-users-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+    .active-users-header h1 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--highlight-color, #c4b5fd);
+    }
+
+.search-container {
+    position: relative;
+    flex: 1;
+    margin-left: 2rem;
+}
+
+    .search-container input {
+        width: 100%;
+        background: #1f1f1f;
+        border: 1px solid #3a3a3a;
+        color: #ddd;
+        padding: 0.6rem 1rem;
+        border-radius: 8px;
+        font-size: 0.95rem;
+    }
+
+        .search-container input:focus {
+            outline: none;
+            border-color: var(--highlight-color, #c084fc);
+            box-shadow: 0 0 0 2px rgba(192, 132, 252, 0.2);
+        }
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+}
+
+    .user-table thead {
+        background: #212121;
+        color: #bbb;
+    }
+
+    .user-table th,
+    .user-table td {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        border-bottom: 1px solid #2c2c2c;
+    }
+
+    .user-table tr:hover {
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+.user-name-link {
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+    .user-name-link svg {
+        margin-left: 0.4rem;
+        stroke: var(--highlight-color, #c084fc);
+        width: 16px;
+        height: 16px;
+    }
+
+    .user-name-link:hover {
+        text-decoration: underline;
+        color: var(--highlight-color, #c084fc);
+    }
+
+/* Checkbox */
+input[type="checkbox"] {
+    accent-color: var(--highlight-color, #c084fc);
+}
+
+/* Botão desativar */
+button {
+    background-color: var(--highlight-color, #c084fc);
+    color: #000;
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.2s ease-in-out;
+}
+
+    button:hover {
+        background-color: #a855f7;
+    }
