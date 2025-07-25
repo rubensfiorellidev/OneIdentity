@@ -22,58 +22,54 @@
     <table class="aws-style-table">
         <thead>
             <tr>
-                <th>
+                <th class="checkbox-header">
                     <input type="checkbox" @onchange="ToggleSelectAll" class="header-checkbox" />
                 </th>
-
                 <th @onclick="() => SortBy(nameof(ActiveUserViewModel.FullName))">
                     Nome do usuário
                     @SortIcon(nameof(ActiveUserViewModel.FullName))
                     <span class="pipe-divider">|</span>
                 </th>
-
-                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.JobTitleName))">
-                    Cargo
-                    @SortIcon(nameof(ActiveUserViewModel.JobTitleName))
-                    <span class="pipe-divider">|</span>
-                </th>
-
-                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.DepartmentName))">
-                    Departamento
-                    @SortIcon(nameof(ActiveUserViewModel.DepartmentName))
-                    <span class="pipe-divider">|</span>
-                </th>
-
-                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Company))">
-                    Empresa
-                    @SortIcon(nameof(ActiveUserViewModel.Company))
-                    <span class="pipe-divider">|</span>
-                </th>
-
-                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Login))">
-                    Login
-                    @SortIcon(nameof(ActiveUserViewModel.Login))
-                    <span class="pipe-divider">|</span>
-                </th>
-
-                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.LastActivity))">
-                    Última atividade
-                    @SortIcon(nameof(ActiveUserViewModel.LastActivity))
-                </th>
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.JobTitleName))">Cargo @SortIcon(nameof(ActiveUserViewModel.JobTitleName)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.DepartmentName))">Departamento @SortIcon(nameof(ActiveUserViewModel.DepartmentName)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Company))">Empresa @SortIcon(nameof(ActiveUserViewModel.Company)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Login))">Login @SortIcon(nameof(ActiveUserViewModel.Login)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.LastActivity))">Última atividade @SortIcon(nameof(ActiveUserViewModel.LastActivity))</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var user in FilteredUsers)
             {
                 <tr>
+                    <td class="checkbox-cell">
+                        <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
+                    </td>
                     <td>
-                        <div class="user-cell">
-                            <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
-                            <a href="/user-details/@user.Id" class="aws-user-link">
-                                <span class="status-indicator @(user.Status == "Ativo" ? "green" : "red")"></span>
-                                @user.FullName
-                            </a>
-                        </div>
+                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link">
+                            <span class="status-indicator @(user.Status == "Ativo" ? "green" : "red")"></span>
+                            @user.FullName
+                        </a>
+                    </td>
+                    <td>@user.JobTitleName</td>
+                    <td>@user.DepartmentName</td>
+                    <td>@user.Company</td>
+                    <td>@user.Login</td>
+                    <td>@(string.IsNullOrWhiteSpace(user.LastActivity) ? "-" : user.LastActivity)</td>
+                </tr>
+            }
+        </tbody>
+        <tbody>
+            @foreach (var user in FilteredUsers)
+            {
+                <tr>
+                    <td class="checkbox-cell">
+                        <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
+                    </td>
+                    <td>
+                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link">
+                            <span class="status-indicator @(user.Status == "Ativo" ? "green" : "red")"></span>
+                            @user.FullName
+                        </a>
                     </td>
                     <td>@user.JobTitleName</td>
                     <td>@user.DepartmentName</td>
