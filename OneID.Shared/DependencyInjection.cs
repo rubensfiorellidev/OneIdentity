@@ -87,6 +87,17 @@ namespace OneID.Shared
                    opts.Providers.Add<GzipCompressionProvider>();
                    opts.Providers.Add<BrotliCompressionProvider>();
                    opts.EnableForHttps = true;
+
+                   opts.MimeTypes =
+                    [
+                        "application/json",
+                        "application/xml",
+                        "text/plain",
+                        "text/json",
+                        "text/html",
+                        "text/css",
+                        "application/javascript"
+                    ];
                });
 
             services

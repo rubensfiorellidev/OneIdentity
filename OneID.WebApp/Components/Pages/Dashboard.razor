@@ -215,7 +215,13 @@
                         <div class="day">@item.ProvisioningAt.Day</div>
                     </div>
                     <div class="admission-info">
-                        <strong>@item.FullName</strong>
+                        <a class="external-link" href="@($"/admission-details/{item.AccountId}")" target="_blank">
+                            <strong>@item.FullName</strong>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="external-icon" viewBox="0 0 24 24" width="14" height="14">
+                                <path fill="currentColor" d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42L17.59 5H14V3z" />
+                                <path fill="currentColor" d="M5 5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7H5V5z" />
+                            </svg>
+                        </a>
                         <div class="muted">@item.JobTitleName</div>
                         <div class="muted">@item.DepartmentName</div>
                         <div class="muted">@item.Company</div>

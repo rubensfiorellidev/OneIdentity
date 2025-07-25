@@ -4,6 +4,7 @@ using OneID.Messaging;
 using OneID.Shared;
 using OneID.Shared.Tools;
 using Serilog;
+using System.IO.Compression;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
 
@@ -115,13 +116,30 @@ if (!app.Environment.IsDevelopment())
 }
 
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseHttpsRedirection();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Method == HttpMethods.Post &&
+        context.Request.Headers.TryGetValue("Content-Encoding", out var encoding) &&
+        encoding.ToString().Contains("gzip", StringComparison.OrdinalIgnoreCase))
+    {
+        using var decompressedBody = new MemoryStream();
+        using var gzipStream = new GZipStream(context.Request.Body, CompressionMode.Decompress);
+        await gzipStream.CopyToAsync(decompressedBody);
+        decompressedBody.Seek(0, SeekOrigin.Begin);
+        context.Request.Body = decompressedBody;
+    }
+
+    await next();
+});
 
 app.UseResponseCompression();
+
+app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseRateLimiter();
-
-
 app.MapControllers();
 
 app.Run();

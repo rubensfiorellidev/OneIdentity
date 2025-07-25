@@ -585,6 +585,32 @@ h2 svg {
     font-style: italic;
 }
 
+.external-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    transition: color 0.2s ease;
+}
+
+    .external-link:hover {
+        text-decoration: underline;
+    }
+
+.external-icon {
+    display: inline-block;
+    vertical-align: middle;
+    opacity: 0.8;
+    transition: transform 0.2s ease;
+}
+
+.external-link:hover .external-icon {
+    transform: translateY(-1px);
+    opacity: 1;
+}
+
+
 *, *::before, *::after {
     font-family: var(--font-main);
     font-weight: 700;
