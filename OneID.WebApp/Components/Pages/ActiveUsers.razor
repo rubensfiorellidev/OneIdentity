@@ -1,70 +1,120 @@
 ﻿@page "/active-users"
 @rendermode InteractiveServer
-@inject NavigationManager Navigation
 
 @using System.Text
 @using System.Globalization
 @using System.Timers
-@using OneID.WebApp.Components
 @using OneID.WebApp.Interfaces
+@using OneID.WebApp.Components
+
 
 @inject IOneIdUserService UserService
+@inject NavigationManager Navigation
 
 <PageTitle>Usuários Ativos</PageTitle>
 
-<div class="card">
-    <div class="active-users-header">
-        <h1>Usuários</h1>
-        <div class="search-actions-wrapper">
-            <div class="search-container">
-                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
-                <input type="text" class="search-box" placeholder="Pesquisar no IAM" @bind="SearchTerm" @bind:event="oninput" />
-            </div>
-            <button class="create-user-button" @onclick="CreateUser">Criar usuário</button>
-        </div>
+<div class="user-container">
+    <div class="user-header">
+        <input class="search-input" type="text" placeholder="Pesquisar no IAM" @bind="SearchTerm" @bind:event="oninput" />
+        <button class="create-user-button" @onclick="@(() => Navigation.NavigateTo("/create-user"))">Criar usuário</button>
     </div>
 
-    <div class="table-container">
-        <table class="user-table">
-            <thead>
+    <table class="aws-style-table">
+        <thead>
+            <tr>
+                <th>
+                    <input type="checkbox" @onchange="ToggleSelectAll" class="header-checkbox" />
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.FullName))">
+                    Nome do usuário
+                    @SortIcon(nameof(ActiveUserViewModel.FullName))
+                    <span class="pipe-divider">|</span>
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.JobTitleName))">
+                    Cargo
+                    @SortIcon(nameof(ActiveUserViewModel.JobTitleName))
+                    <span class="pipe-divider">|</span>
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.DepartmentName))">
+                    Departamento
+                    @SortIcon(nameof(ActiveUserViewModel.DepartmentName))
+                    <span class="pipe-divider">|</span>
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Company))">
+                    Empresa
+                    @SortIcon(nameof(ActiveUserViewModel.Company))
+                    <span class="pipe-divider">|</span>
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Login))">
+                    Login
+                    @SortIcon(nameof(ActiveUserViewModel.Login))
+                    <span class="pipe-divider">|</span>
+                </th>
+
+                <th @onclick="() => SortBy(nameof(ActiveUserViewModel.LastActivity))">
+                    Última atividade
+                    @SortIcon(nameof(ActiveUserViewModel.LastActivity))
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in FilteredUsers)
+            {
                 <tr>
-                    <th><input type="checkbox" @onchange="ToggleSelectAll" /></th>
-                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.FullName))">Nome do usuário</th>
-                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.JobTitleName))">Cargo</th>
-                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.DepartmentName))">Departamento</th>
-                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Company))">Empresa</th>
-                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Login))">Login</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var user in FilteredUsers)
-                {
-                    var isActive = user.Status.ToLowerInvariant() == "ativo";
-                    <tr>
-                        <td><input type="checkbox" @bind="user.IsSelected" /></td>
-                        <td>
-                            <a href="/user-details/@user.Id" class="user-name-link">
-                                <span class="status-indicator @(isActive ? "green" : "red")"></span>
-                                <span>@user.FullName</span>
+                    <td>
+                        <div class="user-cell">
+                            <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
+                            <a href="/user-details/@user.Id" class="aws-user-link">
+                                <span class="status-indicator @(user.Status == "Ativo" ? "green" : "red")"></span>
+                                @user.FullName
                             </a>
-                        </td>
-                        <td class="pipe">@user.JobTitleName</td>
-                        <td class="pipe">@user.DepartmentName</td>
-                        <td class="pipe">@user.Company</td>
-                        <td class="pipe">@user.Login</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+                        </div>
+                    </td>
+                    <td>@user.JobTitleName</td>
+                    <td>@user.DepartmentName</td>
+                    <td>@user.Company</td>
+                    <td>@user.Login</td>
+                    <td>@(string.IsNullOrWhiteSpace(user.LastActivity) ? "-" : user.LastActivity)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
+
 @code {
+
+    private RenderFragment SortIcon(string column) => __builder =>
+{
+    var sortClass = GetSortDirectionClass(column);
+    __builder.OpenElement(0, "svg");
+    __builder.AddAttribute(1, "class", $"sort-indicator {sortClass}");
+    __builder.AddAttribute(2, "xmlns", "http://www.w3.org/2000/svg");
+    __builder.AddAttribute(3, "width", "14");
+    __builder.AddAttribute(4, "height", "14");
+    __builder.AddAttribute(5, "viewBox", "0 0 24 24");
+    __builder.AddAttribute(6, "fill", "none");
+    __builder.AddAttribute(7, "stroke", "currentColor");
+    __builder.AddAttribute(8, "stroke-width", "2");
+    __builder.AddAttribute(9, "stroke-linecap", "round");
+    __builder.AddAttribute(10, "stroke-linejoin", "round");
+    __builder.OpenElement(11, "polyline");
+    __builder.AddAttribute(12, "points", "6 9 12 15 18 9");
+    __builder.CloseElement(); // polyline
+    __builder.CloseElement(); // svg
+};
+
     private List<ActiveUserViewModel> AllUsers = [];
     private List<ActiveUserViewModel> FilteredUsers = [];
-
     private string _searchTerm = string.Empty;
     private Timer? _debounceTimer;
+    private string? CurrentSort;
+    private bool IsDescending = false;
 
     public string SearchTerm
     {
@@ -72,7 +122,6 @@
         set
         {
             _searchTerm = value;
-
             _debounceTimer?.Stop();
             _debounceTimer = new Timer(300);
             _debounceTimer.Elapsed += (_, _) =>
@@ -84,33 +133,6 @@
             _debounceTimer.Start();
         }
     }
-
-    private string SortColumn = string.Empty;
-    private bool SortAsc = true;
-
-    private void SortBy(string column)
-    {
-        if (SortColumn == column)
-            SortAsc = !SortAsc;
-        else
-        {
-            SortColumn = column;
-            SortAsc = true;
-        }
-
-        FilteredUsers = SortAsc
-            ? FilteredUsers.OrderBy(u => GetPropertyValue(u, column)).ToList()
-            : FilteredUsers.OrderByDescending(u => GetPropertyValue(u, column)).ToList();
-
-        StateHasChanged();
-    }
-
-    private static object? GetPropertyValue(object obj, string prop)
-    {
-        return obj.GetType().GetProperty(prop)?.GetValue(obj, null);
-    }
-
-    private int SelectedCount => FilteredUsers.Count(u => u.IsSelected);
 
     protected override async Task OnInitializedAsync()
     {
@@ -128,37 +150,76 @@
     private void ApplySearch()
     {
         var normalizedTerm = Normalize(SearchTerm);
-
         FilteredUsers = string.IsNullOrWhiteSpace(normalizedTerm)
             ? AllUsers
             : AllUsers.Where(u =>
-                  Normalize(u.FullName).Contains(normalizedTerm)
-                  || Normalize(u.Login).Contains(normalizedTerm)
-                  || Normalize(u.JobTitleName).Contains(normalizedTerm)
-                  || Normalize(u.DepartmentName).Contains(normalizedTerm))
-              .ToList();
-
+                Normalize(u.FullName).Contains(normalizedTerm) ||
+                Normalize(u.Login).Contains(normalizedTerm) ||
+                Normalize(u.JobTitleName).Contains(normalizedTerm) ||
+                Normalize(u.DepartmentName).Contains(normalizedTerm)
+            ).ToList();
         StateHasChanged();
+    }
+
+    private void SortBy(string column)
+    {
+        if (CurrentSort == column)
+        {
+            IsDescending = !IsDescending;
+        }
+        else
+        {
+            CurrentSort = column;
+            IsDescending = false;
+        }
+
+        ApplySorting();
+    }
+
+    private void ApplySorting()
+    {
+        Func<ActiveUserViewModel, object> keySelector = CurrentSort switch
+        {
+            nameof(ActiveUserViewModel.FullName) => u => u.FullName,
+            nameof(ActiveUserViewModel.JobTitleName) => u => u.JobTitleName,
+            nameof(ActiveUserViewModel.DepartmentName) => u => u.DepartmentName,
+            nameof(ActiveUserViewModel.Company) => u => u.Company,
+            nameof(ActiveUserViewModel.Login) => u => u.Login,
+            _ => u => u.FullName
+        };
+
+        FilteredUsers = IsDescending
+            ? FilteredUsers.OrderByDescending(keySelector).ToList()
+            : FilteredUsers.OrderBy(keySelector).ToList();
     }
 
     private static string Normalize(string input)
     {
         if (string.IsNullOrWhiteSpace(input)) return string.Empty;
-
         var normalized = input.Normalize(NormalizationForm.FormD);
         var sb = new StringBuilder();
         foreach (var c in normalized)
-        {
             if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
                 sb.Append(c);
-        }
         return sb.ToString().ToLowerInvariant();
     }
 
-    private void CreateUser()
+    private string GetSortIcon(string column)
     {
-        // Redirecionar para rota de criação
-        Navigation.NavigateTo("/create-user");
+        return CurrentSort == column
+            ? (IsDescending ? "▾" : "▴")
+            : "▾";
+    }
+
+    private string GetSortClass(string column)
+    {
+        return CurrentSort == column && IsDescending ? "desc" : "";
+    }
+
+    private string GetSortDirectionClass(string column)
+    {
+        if (CurrentSort != column) return "unsorted";
+        return IsDescending ? "desc" : "asc";
     }
 
     public class ActiveUserViewModel
@@ -170,6 +231,7 @@
         public string Company { get; set; } = string.Empty;
         public string Login { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public string LastActivity { get; set; } = string.Empty;
         public bool IsSelected { get; set; } = false;
     }
 }
