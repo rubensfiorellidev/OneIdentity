@@ -1,5 +1,6 @@
 ﻿@page "/active-users"
 @rendermode InteractiveServer
+@inject NavigationManager Navigation
 
 @using System.Text
 @using System.Globalization
@@ -12,16 +13,14 @@
 <PageTitle>Usuários Ativos</PageTitle>
 
 <div class="card">
-    <div class="card-header flex-between">
-        <div class="flex-center">
-            <input type="checkbox" @onchange="ToggleSelectAll" />
-            <input class="search-box" type="text" placeholder="Pesquisar" @bind="SearchTerm" @bind:event="oninput" />
-            <button class="search-button" @onclick="ApplySearch">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                </svg>
-            </button>
+    <div class="active-users-header">
+        <h1>Usuários</h1>
+        <div class="search-actions-wrapper">
+            <div class="search-container">
+                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></svg>
+                <input type="text" class="search-box" placeholder="Pesquisar no IAM" @bind="SearchTerm" @bind:event="oninput" />
+            </div>
+            <button class="create-user-button" @onclick="CreateUser">Criar usuário</button>
         </div>
     </div>
 
@@ -29,38 +28,30 @@
         <table class="user-table">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>Nome</th>
-                    <th>Cargo</th>
-                    <th>Departamento</th>
-                    <th>Empresa</th>
-                    <th>Login</th>
-                    <th>Status</th>
+                    <th><input type="checkbox" @onchange="ToggleSelectAll" /></th>
+                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.FullName))">Nome do usuário</th>
+                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.JobTitleName))">Cargo</th>
+                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.DepartmentName))">Departamento</th>
+                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Company))">Empresa</th>
+                    <th @onclick="() => SortBy(nameof(ActiveUserViewModel.Login))">Login</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var user in FilteredUsers)
                 {
+                    var isActive = user.Status.ToLowerInvariant() == "ativo";
                     <tr>
+                        <td><input type="checkbox" @bind="user.IsSelected" /></td>
                         <td>
-                            <input type="checkbox" @bind="user.IsSelected" />
-                        </td>
-                        <td>
-                            <a href="/user-details/@user.Id" class="link-with-icon">
-                                <span class="status-indicator active"></span>
+                            <a href="/user-details/@user.Id" class="user-name-link">
+                                <span class="status-indicator @(isActive ? "green" : "red")"></span>
                                 <span>@user.FullName</span>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-external-link">
-                                    <path d="M18 13v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                    <polyline points="15 3 21 3 21 9" />
-                                    <line x1="10" x2="21" y1="14" y2="3" />
-                                </svg>
                             </a>
                         </td>
-                        <td>@user.JobTitleName</td>
-                        <td>@user.DepartmentName</td>
-                        <td>@user.Company</td>
-                        <td>@user.Login</td>
-                        <td class="status">@user.Status</td>
+                        <td class="pipe">@user.JobTitleName</td>
+                        <td class="pipe">@user.DepartmentName</td>
+                        <td class="pipe">@user.Company</td>
+                        <td class="pipe">@user.Login</td>
                     </tr>
                 }
             </tbody>
@@ -83,7 +74,7 @@
             _searchTerm = value;
 
             _debounceTimer?.Stop();
-            _debounceTimer = new Timer(300); // 300ms debounce
+            _debounceTimer = new Timer(300);
             _debounceTimer.Elapsed += (_, _) =>
             {
                 _debounceTimer.Dispose();
@@ -92,6 +83,31 @@
             };
             _debounceTimer.Start();
         }
+    }
+
+    private string SortColumn = string.Empty;
+    private bool SortAsc = true;
+
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+            SortAsc = !SortAsc;
+        else
+        {
+            SortColumn = column;
+            SortAsc = true;
+        }
+
+        FilteredUsers = SortAsc
+            ? FilteredUsers.OrderBy(u => GetPropertyValue(u, column)).ToList()
+            : FilteredUsers.OrderByDescending(u => GetPropertyValue(u, column)).ToList();
+
+        StateHasChanged();
+    }
+
+    private static object? GetPropertyValue(object obj, string prop)
+    {
+        return obj.GetType().GetProperty(prop)?.GetValue(obj, null);
     }
 
     private int SelectedCount => FilteredUsers.Count(u => u.IsSelected);
@@ -137,6 +153,12 @@
                 sb.Append(c);
         }
         return sb.ToString().ToLowerInvariant();
+    }
+
+    private void CreateUser()
+    {
+        // Redirecionar para rota de criação
+        Navigation.NavigateTo("/create-user");
     }
 
     public class ActiveUserViewModel

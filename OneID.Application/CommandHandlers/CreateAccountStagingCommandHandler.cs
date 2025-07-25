@@ -3,7 +3,6 @@ using OneID.Application.Commands;
 using OneID.Application.Interfaces.Builders;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Application.Interfaces.Services;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
@@ -18,25 +17,19 @@ namespace OneID.Application.CommandHandlers
         private readonly IUserAccountStagingBuilder _builder;
         private readonly IDeduplicationKeyRepository _keyRepository;
         private readonly IDeduplicationRepository _deduplicationRepository;
-        private readonly ISender _sender;
-        private readonly ILoggedUserAccessor _userAccessor;
 
         public CreateAccountStagingCommandHandler(
             IAddUserAccountStagingRepository repository,
             ILogger<CreateAccountStagingCommandHandler> logger,
             IUserAccountStagingBuilder userAccountStagingBuilder,
             IDeduplicationKeyRepository keyRepository,
-            IDeduplicationRepository deduplicationRepository,
-            ISender sender,
-            ILoggedUserAccessor userAccessor)
+            IDeduplicationRepository deduplicationRepository)
         {
             _repository = repository;
             _logger = logger;
             _builder = userAccountStagingBuilder;
             _keyRepository = keyRepository;
             _deduplicationRepository = deduplicationRepository;
-            _sender = sender;
-            _userAccessor = userAccessor;
         }
 
         public async Task<IResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)

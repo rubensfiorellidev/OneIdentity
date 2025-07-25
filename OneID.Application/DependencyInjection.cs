@@ -82,12 +82,10 @@ namespace OneID.Application
                 var logger = provider.GetRequiredService<ILogger<AesCryptoService>>();
 
                 var key = config["EncryptionSettings:Key"];
-                var crypt = config["EncryptionSettings:Crypt"];
 
                 if (string.IsNullOrWhiteSpace(key)) throw new InvalidOperationException("EncryptionSettings:Key is missing.");
-                if (string.IsNullOrWhiteSpace(crypt)) throw new InvalidOperationException("EncryptionSettings:Crypt is missing.");
 
-                return new AesCryptoService(key, crypt, logger);
+                return new AesCryptoService(key, logger);
             });
 
             services.AddTransient<IHashService, Sha3HashService>();

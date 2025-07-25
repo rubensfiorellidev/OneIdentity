@@ -4,6 +4,6 @@
     {
         string Encrypt(string plainText);
         string Decrypt(string cipherText);
-
+        (string Encrypted, string Hash) EncryptWithHash(string input);
     }
 }

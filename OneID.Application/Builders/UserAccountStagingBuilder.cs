@@ -1,39 +1,55 @@
 ﻿using OneID.Application.DTOs.Admission;
+using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
-using OneID.Application.Interfaces.Services;
 
+#nullable disable
 namespace OneID.Application.Builders
 {
     public sealed class UserAccountStagingBuilder : IUserAccountStagingBuilder
     {
-        private readonly IHashService _hashService;
-        public UserAccountStagingBuilder(IHashService hashService)
+        private readonly ICryptoService _cryptoService;
+
+        public UserAccountStagingBuilder(ICryptoService cryptoService)
         {
-            _hashService = hashService;
+            _cryptoService = cryptoService;
         }
 
-        public async Task<AccountRequest> BuildAsync(AccountRequest request)
+        public Task<AccountRequest> BuildAsync(AccountRequest request)
         {
             var correlationId = Guid.NewGuid();
 
-            return request with
+            var (cpf, cpfHash) = EncryptField(request.Cpf);
+            var (fiscal, fiscalHash) = EncryptField(request.FiscalNumberIdentity);
+            var (login, loginHash) = EncryptField(request.Login);
+            var (personalEmail, personalEmailHash) = EncryptField(request.PersonalEmail);
+            var (corpEmail, corpEmailHash) = EncryptField(request.CorporateEmail);
+
+            return Task.FromResult(request with
             {
                 CorrelationId = correlationId,
 
-                CpfHash = await _hashService.ComputeSha3HashAsync(request.Cpf),
+                Cpf = cpf,
+                CpfHash = cpfHash,
 
-                FiscalNumberIdentityHash = string.IsNullOrEmpty(request.FiscalNumberIdentity)
-                    ? null : await _hashService.ComputeSha3HashAsync(request.FiscalNumberIdentity),
+                FiscalNumberIdentity = fiscal,
+                FiscalNumberIdentityHash = fiscalHash,
 
-                LoginHash = string.IsNullOrEmpty(request.Login)
-                    ? null : await _hashService.ComputeSha3HashAsync(request.Login),
+                Login = login,
+                LoginHash = loginHash,
 
-                PersonalEmailHash = string.IsNullOrEmpty(request.PersonalEmail)
-                    ? null : await _hashService.ComputeSha3HashAsync(request.PersonalEmail),
+                PersonalEmail = personalEmail,
+                PersonalEmailHash = personalEmailHash,
 
-                CorporateEmailHash = string.IsNullOrEmpty(request.CorporateEmail)
-                    ? null : await _hashService.ComputeSha3HashAsync(request.CorporateEmail)
-            };
+                CorporateEmail = corpEmail,
+                CorporateEmailHash = corpEmailHash
+            });
+        }
+
+        private (string Encrypted, string Hash) EncryptField(string value)
+        {
+            return string.IsNullOrWhiteSpace(value)
+                ? (null, null)
+                : _cryptoService.EncryptWithHash(value);
         }
     }
 }

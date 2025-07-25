@@ -4,6 +4,7 @@ using Org.BouncyCastle.Crypto.Digests;
 using Org.BouncyCastle.Crypto.Macs;
 using Org.BouncyCastle.Crypto.Parameters;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace OneID.Application.Services.AesCryptoServices
 {
@@ -67,6 +68,15 @@ namespace OneID.Application.Services.AesCryptoServices
 
             try
             {
+
+                // 🎯 Se for legado com CRYPT_PREFIX_, chama método antigo
+                if (cipherText.StartsWith("CRYPT_PREFIX_"))
+                {
+                    var base64 = cipherText["CRYPT_PREFIX_".Length..];
+                    return DecryptLegacy(base64);
+                }
+
+                // 🔐 Novo formato com prefixo binário, IV, HMAC
                 if (!IsBase64String(cipherText))
                     throw new FormatException("Cipher text is not valid base64.");
 
@@ -135,6 +145,70 @@ namespace OneID.Application.Services.AesCryptoServices
             Span<byte> buffer = new Span<byte>(new byte[input.Length]);
             return Convert.TryFromBase64String(input, buffer, out _);
         }
+
+        public (string Encrypted, string Hash) EncryptWithHash(string input)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+                return (string.Empty, string.Empty);
+
+            var encrypted = Encrypt(input);
+            var hash = ComputeSha3Hash(input);
+            return (encrypted, hash);
+        }
+
+        private string ComputeSha3Hash(string input)
+        {
+            var digest = new Sha3Digest(384);
+            var inputBytes = Encoding.UTF8.GetBytes(input);
+            digest.BlockUpdate(inputBytes, 0, inputBytes.Length);
+
+            var result = new byte[digest.GetDigestSize()];
+            digest.DoFinal(result, 0);
+
+            var sb = new StringBuilder(result.Length * 2);
+            foreach (var b in result)
+                sb.Append(b.ToString("x2"));
+
+            return sb.ToString();
+        }
+
+        private string CleanCipher(string cipherText)
+        {
+            const string legacyPrefix = "CRYPT_PREFIX_";
+            return cipherText.StartsWith(legacyPrefix)
+                ? cipherText[legacyPrefix.Length..]
+                : cipherText;
+        }
+
+        private string DecryptLegacy(string base64CipherText)
+        {
+            try
+            {
+                var fullBytes = Convert.FromBase64String(base64CipherText);
+
+                // Supondo que IV está embutido nos primeiros 16 bytes
+                var iv = fullBytes[..16];
+                var encrypted = fullBytes[16..];
+
+                using Aes aes = Aes.Create();
+                aes.Key = _encryptionKey;
+                aes.IV = iv;
+                aes.Padding = PaddingMode.PKCS7;
+
+                using var decryptor = aes.CreateDecryptor();
+                using var ms = new MemoryStream(encrypted);
+                using var cryptoStream = new CryptoStream(ms, decryptor, CryptoStreamMode.Read);
+                using var reader = new StreamReader(cryptoStream);
+
+                return reader.ReadToEnd();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Legacy decryption failed.");
+                throw;
+            }
+        }
+
     }
 
 }
