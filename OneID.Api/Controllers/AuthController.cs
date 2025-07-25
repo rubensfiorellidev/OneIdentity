@@ -180,8 +180,7 @@ namespace OneID.Api.Controllers
         {
             var refreshToken = Request.Cookies["refresh_token"];
 
-            if (string.IsNullOrWhiteSpace(refreshToken) &&
-                Request.Headers.Authorization.Count > 0)
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 var authHeader = Request.Headers.Authorization.ToString();
                 if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
@@ -190,8 +189,11 @@ namespace OneID.Api.Controllers
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(refreshToken))
-                return Unauthorized("Refresh token ausente.");
+            if (string.IsNullOrWhiteSpace(refreshToken) || !refreshToken.Contains('.'))
+            {
+                _logger.LogWarning("Refresh token malformado ou ausente: {Token}", refreshToken);
+                return Unauthorized("Refresh token inválido.");
+            }
 
             var handler = new JsonWebTokenHandler();
             var token = handler.ReadJsonWebToken(refreshToken);
