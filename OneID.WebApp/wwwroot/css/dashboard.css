@@ -17,7 +17,7 @@ body {
     background-color: #152125;
     color: var(--text-color);
     font-family: var(--font-main);
-    font-weight: 700;
+    font-weight: 500;
     height: 100%;
     overflow-x: hidden;
     font-size: var(--font-size-base);
