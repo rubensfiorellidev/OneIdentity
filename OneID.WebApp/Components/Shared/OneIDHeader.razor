@@ -47,9 +47,12 @@
     </div>
 </div>
 
+<ServiceLauncher IsVisible="@showLauncher" Toggle="ToggleLauncher" />
+
 @code {
     private string Email = "desconhecido@oneid.com";
     private string AccountId = "N/A";
+    private bool showLauncher = false;
 
     protected override void OnInitialized()
     {
@@ -61,7 +64,13 @@
 
     private void ToggleLauncher()
     {
-        Console.WriteLine("Abrir painel lateral");
+        showLauncher = !showLauncher;
+    }
+
+    private Task CloseLauncher()
+    {
+        showLauncher = false;
+        return Task.CompletedTask;
     }
 
     private void OnSearchInput(ChangeEventArgs e)

@@ -3,7 +3,7 @@
     --font-main: 'Inter', sans-serif;
     --text-color: #e6f6ff; /* Azul claro para textos */
     --text-muted: #a1a1aa; /* Pode manter ou suavizar para #94a3b8 */
-    --background-color: #1b1c1d;
+    --background-color: #152125;
     --highlight-color: #00b3ff; /* Azul principal */
     --link-hover-color: #33ccff; /* Azul hover */
     --card-bg: rgba(36, 39, 46, 0.85);
@@ -14,7 +14,7 @@
 body {
     margin: 0;
     padding: 0;
-    background-color: #343541;
+    background-color: #152125;
     color: var(--text-color);
     font-family: var(--font-main);
     font-weight: 700;

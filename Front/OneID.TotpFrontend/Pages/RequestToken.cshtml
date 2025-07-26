@@ -13,8 +13,8 @@
         body {
             margin: 0;
             padding: 0;
-            background-color: #343541;
-            color: white;
+            background-color: #152125;
+            color: #f3f3f3;
             font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
@@ -23,64 +23,90 @@
             height: 100vh;
         }
 
+        .container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
         .header {
             margin-bottom: 2rem;
             text-align: center;
         }
 
             .header h1 {
-                font-size: 1.6rem;
-                font-weight: bold;
+                font-size: 1.4rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+                color: #f1f1f1;
             }
 
         .input-container {
             display: flex;
             align-items: center;
-            background-color: #40414f;
-            padding: 0.75rem 1rem;
-            border-radius: 20px;
-            width: 800px;
-            max-width: 680px;
-            box-shadow: 0 0 3px #00000055;
+            background-color: #2a2f32;
+            border: 1px solid #3c454a;
+            padding: 0.65rem 1rem;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 700px;
+            transition: border 0.2s ease;
         }
+
+            .input-container:focus-within {
+                border-color: #00b3ff;
+            }
 
         input[type='text'] {
             flex: 1;
             background-color: transparent;
             border: none;
-            color: white;
-            font-size: 1rem;
+            color: #ffffff;
+            font-size: 1.1rem;
+            font-weight: 500;
             outline: none;
-            padding: 0.5rem;
+            text-align: center;
+            padding: 0.75rem 1rem;
         }
 
         input::placeholder {
-            color: #999;
+            color: #c2c2c2;
+            font-weight: 300;
         }
 
         button {
-            background-color: #40414f;
-            border: 1px solid #666;
-            color: #ddd;
-            font-size: 1.2rem;
-            padding: 0.5rem 0.75rem;
+            background-color: #00b3ff;
+            border: none;
+            color: #152125;
+            padding: 0.6rem 0.75rem;
             border-radius: 50%;
             cursor: pointer;
-            transition: background-color 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-left: 0.5rem;
+            margin-left: 0.75rem;
+            box-shadow: 0 0 10px rgba(0, 179, 255, 0.5);
+            transition: all 0.3s ease;
         }
 
             button:hover {
-                background-color: #555;
+                background-color: #00cfff;
+                box-shadow: 0 0 15px rgba(0, 200, 255, 0.7);
+                transform: scale(1.05);
+                color: #0a0a0a;
             }
 
         .spinner {
             width: 1rem;
             height: 1rem;
-            border: 2px solid white;
+            border: 2px solid #ffffff;
             border-top: 2px solid transparent;
             border-radius: 50%;
             animation: spin 1s linear infinite;
@@ -94,26 +120,38 @@
 
         .result {
             margin-top: 1rem;
-            text-align: center;
-            color: #f08080;
+            color: #ffaaaa;
+            font-size: 0.95rem;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Confirme sua identidade</h1>
+            <h2>Confirme sua identidade</h2>
         </div>
         <form method="post" onsubmit="handleSubmit(this)" autocomplete="off">
             <div class="input-container">
-                <input type="text" 
-                    name="TotpCode" 
-                    placeholder="Digite o código do Authenticator" 
-                    maxlength="6" 
-                    required
-                    autocomplete="off"/>
+                <input type="text"
+                       name="TotpCode"
+                       placeholder="Digite o código do Authenticator"
+                       maxlength="6"
+                       required
+                       autocomplete="off" />
                 <button type="submit" id="submitBtn">
-                    <span id="btnIcon">↑</span>
+                    <span id="btnIcon">
+                        <svg xmlns="http://www.w3.org/2000/svg"
+                             width="24" height="24"
+                             viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                             stroke-width="2"
+                             stroke-linecap="round"
+                             stroke-linejoin="round"
+                             class="lucide lucide-chevron-up">
+                            <path d="m18 15-6-6-6 6" />
+                        </svg>
+                    </span>
                 </button>
             </div>
         </form>
