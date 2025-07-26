@@ -10,7 +10,7 @@ namespace OneID.Api.Controllers
         {
         }
 
-        [HttpGet("active-users")]
+        [HttpGet("all")]
         public IActionResult GetActiveUsers()
         {
             var users = new List<ActiveUserResponse>
