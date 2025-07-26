@@ -1,4 +1,5 @@
 ﻿@inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
 @inject NavigationManager Navigation
 
 <div class="custom-header">
@@ -50,16 +51,38 @@
 <ServiceLauncher IsVisible="@showLauncher" Toggle="ToggleLauncher" />
 
 @code {
+
     private string Email = "desconhecido@oneid.com";
     private string AccountId = "N/A";
     private bool showLauncher = false;
+    private bool loaded = false;
 
-    protected override void OnInitialized()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var user = HttpContextAccessor.HttpContext?.User;
+        if (firstRender && !loaded)
+        {
+            var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
 
-        Email = user?.FindFirst("email")?.Value ?? "desconhecido@oneid.com";
-        AccountId = user?.FindFirst("account_id")?.Value ?? "N/A";
+                try
+                {
+                    var jwt = handler.ReadJwtToken(token);
+                    Email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? Email;
+                    AccountId = jwt.Claims.FirstOrDefault(c => c.Type == "account_id")?.Value ?? AccountId;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao ler token: {ex.Message}");
+                }
+            }
+
+            loaded = true;
+            StateHasChanged();
+
+            await Task.CompletedTask;
+        }
     }
 
     private void ToggleLauncher()
