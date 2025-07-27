@@ -1,16 +1,25 @@
 using OneID.WebApp.Components;
 using OneID.WebApp.Interfaces;
 using OneID.WebApp.Services.ActiveUsers;
+using OneID.WebApp.Services.AuthTokens;
 using OneID.WebApp.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Logging.SetMinimumLevel(LogLevel.Information);
+builder.Services.AddScoped<AccessTokenHandler>();
+builder.Services.AddScoped<RefreshTokenHandler>();
 
+builder.Services.AddHttpClient<IOneIdUserService, OneIdUserService>(client =>
+{
+    client.BaseAddress = new Uri("https://localhost:7200/");
+})
+.AddHttpMessageHandler<AccessTokenHandler>()
+.AddHttpMessageHandler<RefreshTokenHandler>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddScoped<AccessTokenHandler>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddAuthentication("Cookies")
@@ -18,7 +27,7 @@ builder.Services.AddAuthentication("Cookies")
     {
         options.Cookie.Name = "access_token";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.Cookie.SameSite = SameSiteMode.None;
         options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     });
 
@@ -29,8 +38,7 @@ builder.Services.AddHttpClient("AuthenticatedClient", client =>
 
 }).ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
 {
-    UseCookies = true,
-    UseDefaultCredentials = true
+    UseCookies = true
 
 }).AddHttpMessageHandler<RefreshTokenHandler>();
 

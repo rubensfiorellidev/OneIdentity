@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using OneID.Data.DataContexts;
@@ -11,9 +12,11 @@ using OneID.Data.DataContexts;
 namespace OneID.Data.Migrations
 {
     [DbContext(typeof(OneDbContext))]
-    partial class OneDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250727043055_Fix_RefreshToken_Fields_TimeZone")]
+    partial class Fix_RefreshToken_Fields_TimeZone
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -298,10 +301,6 @@ namespace OneID.Data.Migrations
                     b.Property<string>("UserUpn")
                         .IsRequired()
                         .HasMaxLength(300)
-                        .HasColumnType("VARCHAR");
-
-                    b.Property<string>("UserUpnHash")
-                        .IsRequired()
                         .HasColumnType("VARCHAR");
 
                     b.HasKey("Id");

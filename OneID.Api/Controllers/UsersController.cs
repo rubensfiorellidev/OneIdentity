@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Interfaces.CQRS;
 
 namespace OneID.Api.Controllers
@@ -11,6 +12,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpGet("all")]
+        [Authorize]
         public IActionResult GetActiveUsers()
         {
             var users = new List<ActiveUserResponse>

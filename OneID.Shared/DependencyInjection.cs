@@ -229,15 +229,15 @@ namespace OneID.Shared
                         context.Response.ContentType = "application/json";
                         return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                     },
-                    OnChallenge = context =>
+                    OnChallenge = async context =>
                     {
                         if (!context.Response.HasStarted)
-                        {
-                            context.Response.StatusCode = 401;
-                            context.Response.ContentType = "application/json";
-                            return context.Response.WriteAsync("{\"error\":\"Token ausente ou inválido\"}");
-                        }
-                        return Task.CompletedTask;
+                            return;
+
+                        context.HandleResponse();
+                        context.Response.StatusCode = 401;
+                        context.Response.ContentType = "application/json";
+                        await context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                     }
                 };
             });

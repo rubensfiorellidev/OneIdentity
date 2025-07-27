@@ -6,8 +6,10 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OneID.Application.Interfaces.SensitiveData;
+using OneID.Data.DataContexts;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
+using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
@@ -138,7 +140,12 @@ namespace OneID.Shared.Authentication
 
             var jws = handler.CreateToken(descriptor);
 
-            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(userId, jws);
+            var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(
+                user.LoginHash,
+                jti,
+                ipAddress,
+                userAgent
+            );
 
             return new AuthResult
             {
@@ -358,9 +365,9 @@ namespace OneID.Shared.Authentication
 
 
 
-        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken)
+        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpnHash, string refreshToken)
         {
-            if (!Guid.TryParse(userUpn, out var userGuid))
+            if (!Guid.TryParse(userUpnHash, out var userGuid))
                 return ("", "", false);
 
             await using var db = _contextFactory.CreateDbContext();
@@ -375,7 +382,7 @@ namespace OneID.Shared.Authentication
 
             var existing = await db.RefreshWebTokens
                 .Where(x =>
-                    x.UserUpn == userUpn &&
+                    x.UserUpnHash == userUpnHash &&
                     x.Token == refreshToken &&
                     !x.IsRevoked &&
                     !x.IsUsed &&
@@ -386,7 +393,7 @@ namespace OneID.Shared.Authentication
             if (existing == null)
                 return ("", "", false);
 
-            existing.IsUsed = true;
+            PatchUsed(db, existing);
 
             var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);
 
@@ -447,6 +454,13 @@ namespace OneID.Shared.Authentication
         public string GenerateBootstrapToken(string username, Guid correlationId, TimeSpan? lifetime = null)
         {
             return GenerateScopedJwt(username, correlationId, "bootstrap_token", lifetime ?? TimeSpan.FromMinutes(2));
+        }
+
+        private static void PatchUsed(OneDbContext db, RefreshWebToken token)
+        {
+            var entry = db.Entry(token);
+            entry.Property(x => x.IsUsed).CurrentValue = true;
+            entry.Property(x => x.IsUsed).IsModified = true;
         }
 
     }

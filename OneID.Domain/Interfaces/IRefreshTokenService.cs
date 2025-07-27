@@ -4,8 +4,8 @@ namespace OneID.Domain.Interfaces
 {
     public interface IRefreshTokenService
     {
-        Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpn, string jti);
-        Task<RefreshWebToken?> GetRefreshTokenAsync(string token);
+        Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpn, string jti, string? ip = null, string? userAgent = null);
+        Task<RefreshWebToken?> GetRefreshTokenAsync(string refreshToken);
         Task RevokeRefreshTokenAsync(string token);
         Task MarkRefreshTokenAsUsedAsync(string token);
 

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using OneID.Application;
 using OneID.Data;
 using OneID.Messaging;
@@ -17,11 +18,18 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
         ".aspnet", "https", "OneID.Api.pfx");
 
-    serverOptions.ConfigureHttpsDefaults(opt =>
+    serverOptions.ConfigureHttpsDefaults(httpsOptions =>
     {
-        opt.ServerCertificate = new X509Certificate2(certPath);
-        opt.SslProtocols = SslProtocols.Tls13;
+        httpsOptions.ServerCertificate = new X509Certificate2(certPath);
+        httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
     });
+
+    serverOptions.ListenAnyIP(7200, listenOptions =>
+    {
+        listenOptions.UseHttps();
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
+    });
+
 });
 
 builder.Configuration
@@ -75,6 +83,7 @@ builder.Services.AddHsts(options =>
     options.MaxAge = TimeSpan.FromDays(365);
     options.IncludeSubDomains = true;
 });
+
 
 
 var app = builder.Build();

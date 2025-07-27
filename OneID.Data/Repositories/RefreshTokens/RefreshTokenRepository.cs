@@ -1,49 +1,62 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.Extensions.DependencyInjection;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Data.Interfaces;
+using OneID.Data.DataContexts;
 using OneID.Domain.Entities.JwtWebTokens;
 
 namespace OneID.Data.Repositories.RefreshTokens
 {
     public sealed class RefreshTokenRepository : IRefreshTokenRepository
     {
-        private readonly IOneDbContextFactory _dbContextFactory;
-        public RefreshTokenRepository(IOneDbContextFactory dbContextFactory)
+        private readonly IServiceProvider _serviceProvider;
+
+        public RefreshTokenRepository(IServiceProvider serviceProvider)
         {
-            _dbContextFactory = dbContextFactory;
+            _serviceProvider = serviceProvider;
         }
+
+        private OneDbContext DbContext =>
+            _serviceProvider.GetRequiredService<OneDbContext>();
 
         public async Task AddAsync(RefreshWebToken token)
         {
-            await using var dbContext = _dbContextFactory.CreateDbContext();
 
-            await dbContext.RefreshWebTokens.AddAsync(token);
+            await DbContext.RefreshWebTokens.AddAsync(token);
+            await DbContext.SaveChangesAsync()
+                .ConfigureAwait(false);
 
         }
 
-        public async Task<RefreshWebToken?> GetActiveTokenAsync(string userUpn)
+        public async Task<RefreshWebToken?> GetActiveTokenAsync(string userUpnHash)
         {
-            await using var dbContext = _dbContextFactory.CreateDbContext();
-
-            return await dbContext.RefreshWebTokens
-                .FirstOrDefaultAsync(rt => rt.UserUpn == userUpn && !rt.IsUsed && !rt.IsRevoked);
+            return await DbContext.RefreshWebTokens
+                .FirstOrDefaultAsync(rt => rt.UserUpnHash == userUpnHash && !rt.IsUsed && !rt.IsRevoked);
         }
 
-        public async Task<RefreshWebToken?> GetByTokenAsync(string token)
+        public Task SaveChangesAsync()
         {
-            await using var dbContext = _dbContextFactory.CreateDbContext();
-
-            return await dbContext.RefreshWebTokens
-                .FirstOrDefaultAsync(rt => rt.Token == token && !rt.IsUsed && !rt.IsRevoked);
-
+            return DbContext.SaveChangesAsync();
         }
 
-        public async Task SaveChangesAsync()
+        public Task ApplyPatchAsync(string tokenId, Action<EntityEntry<RefreshWebToken>> patch)
         {
-            await using var dbContext = _dbContextFactory.CreateDbContext();
-
-            await dbContext.SaveChangesAsync();
-
+            var token = new RefreshWebToken(tokenId);
+            DbContext.Attach(token);
+            var entry = DbContext.Entry(token);
+            patch(entry);
+            return Task.CompletedTask;
         }
+
+        public async Task<List<RefreshWebToken>> GetAllValidTokensAsync()
+        {
+            return await DbContext.RefreshWebTokens
+                .Where(rt =>
+                    !rt.IsUsed &&
+                    !rt.IsRevoked &&
+                    rt.ExpiresAt > DateTimeOffset.UtcNow)
+                .ToListAsync();
+        }
+
     }
 }

@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.JsonWebTokens;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Interceptor;
@@ -10,9 +9,12 @@ using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.TotpServices;
+using OneID.Application.Queries.Auth;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
+using OneID.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -30,6 +32,8 @@ namespace OneID.Api.Controllers
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
         private readonly ICurrentUserService _currentUser;
         private readonly ITotpService _totpService;
+        private readonly IQueryExecutor _queryExecutor;
+        private readonly IRefreshTokenService _refreshTokenService;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         public AuthController(ISender send,
@@ -40,7 +44,9 @@ namespace OneID.Api.Controllers
                               IHashService hashService,
                               ISensitiveDataDecryptionServiceUserAccount decryptionService,
                               ICurrentUserService currentUser,
-                              ITotpService totpService) : base(send)
+                              ITotpService totpService,
+                              IQueryExecutor queryExecutor,
+                              IRefreshTokenService refreshTokenService) : base(send)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
@@ -50,6 +56,18 @@ namespace OneID.Api.Controllers
             _decryptionService = decryptionService;
             _currentUser = currentUser;
             _totpService = totpService;
+            _queryExecutor = queryExecutor;
+            _refreshTokenService = refreshTokenService;
+        }
+
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> Me(CancellationToken cancellationToken)
+        {
+            var result = await _queryExecutor.SendQueryAsync<GetCurrentUserQuery, UserInfoResponse>(
+                new GetCurrentUserQuery(), cancellationToken);
+
+            return Ok(result);
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -155,7 +173,7 @@ namespace OneID.Api.Controllers
             {
                 HttpOnly = true,                     // protege contra JS malicioso
                 Secure = true,                       // só HTTPS
-                SameSite = SameSiteMode.Strict,      // bloqueia CSRF cruzado
+                SameSite = SameSiteMode.None,      // bloqueia CSRF cruzado
                 Expires = DateTimeOffset.UtcNow.AddHours(1)  // tempo do token
             });
 
@@ -163,7 +181,7 @@ namespace OneID.Api.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 
@@ -180,6 +198,21 @@ namespace OneID.Api.Controllers
         {
             var refreshToken = Request.Cookies["refresh_token"];
 
+            if (!string.IsNullOrWhiteSpace(refreshToken))
+            {
+                refreshToken = WebUtility.UrlDecode(refreshToken);
+            }
+            else
+            {
+                // 2. Tentativa via Header Authorization: Bearer
+                var authHeader = Request.Headers.Authorization.ToString();
+                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                {
+                    var encodedToken = authHeader["Bearer ".Length..].Trim();
+                    refreshToken = WebUtility.UrlDecode(encodedToken);
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 var authHeader = Request.Headers.Authorization.ToString();
@@ -189,25 +222,34 @@ namespace OneID.Api.Controllers
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(refreshToken) || !refreshToken.Contains('.'))
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
-                _logger.LogWarning("Refresh token malformado ou ausente: {Token}", refreshToken);
+                _logger.LogWarning("Refresh token ausente.");
                 return Unauthorized("Refresh token inválido.");
             }
 
-            var handler = new JsonWebTokenHandler();
-            var token = handler.ReadJsonWebToken(refreshToken);
-            var userUpn = token?.Subject;
+            var refreshInfo = await _refreshTokenService.GetRefreshTokenAsync(refreshToken);
+            if (refreshInfo is null)
+            {
+                _logger.LogWarning("Refresh token não encontrado.");
+                return Unauthorized("Refresh token inválido.");
+            }
 
-            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpn, refreshToken);
+            var userUpnHash = refreshInfo.UserUpnHash;
+
+            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpnHash, refreshToken);
+
             if (!success)
+            {
+                _logger.LogWarning("Falha no refresh. Token inválido ou expirado.");
                 return Unauthorized("Refresh token inválido ou expirado.");
+            }
 
             Response.Cookies.Append("access_token", newJwt, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddMinutes(5)
             });
 
@@ -215,7 +257,7 @@ namespace OneID.Api.Controllers
             {
                 HttpOnly = true,
                 Secure = true,
-                SameSite = SameSiteMode.Strict,
+                SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(7)
             });
 

@@ -14,7 +14,10 @@ namespace OneID.WebApp.Services.ActiveUsers
         public async Task<List<ActiveUserViewModel>> GetActiveUsersAsync()
         {
             var response = await _httpClient.GetAsync("v1/users/all");
-            response.EnsureSuccessStatusCode();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("Erro ao buscar usuários.");
+
             var content = await response.Content.ReadFromJsonAsync<List<ActiveUserViewModel>>();
             return content ?? [];
         }

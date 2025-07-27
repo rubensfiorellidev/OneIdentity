@@ -1,17 +1,22 @@
 ﻿using OneID.Application.Interfaces.Repositories;
+using OneID.Application.Interfaces.Services;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Interfaces;
 using System.Security.Cryptography;
 
+#nullable disable
 namespace OneID.Application.Services.RefreshTokens
 {
     public sealed class RefreshTokenService : IRefreshTokenService
     {
         private readonly IRefreshTokenRepository _repository;
+        private readonly IHashService _hash;
 
-        public RefreshTokenService(IRefreshTokenRepository repository)
+        public RefreshTokenService(IRefreshTokenRepository repository,
+                                   IHashService hash)
         {
             _repository = repository;
+            _hash = hash;
         }
 
         private string GenerateRefreshTokenString()
@@ -24,52 +29,84 @@ namespace OneID.Application.Services.RefreshTokens
             return Convert.ToBase64String(randomNumber);
         }
 
-        public async Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpn, string jti)
+        public async Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpnHash,
+                                                                     string jti,
+                                                                     string ip = null,
+                                                                     string userAgent = null)
         {
-            var current = await _repository.GetActiveTokenAsync(userUpn);
-            if (current != null)
-            {
-                current.IsUsed = true;
-            }
 
-            var refreshToken = new RefreshWebToken
-            {
-                UserUpn = userUpn,
-                Jti = jti,
-                Token = GenerateRefreshTokenString(),
-                CreatedAt = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                IsUsed = false,
-                IsRevoked = false
-            };
+            var rawToken = GenerateRefreshTokenString();
+
+            var saltBytes = RandomNumberGenerator.GetBytes(16);
+            var saltBase64 = Convert.ToBase64String(saltBytes);
+
+            var tokenHash = await _hash.ComputeSha3HashAsync(rawToken + saltBase64);
+
+
+            var current = await _repository.GetActiveTokenAsync(userUpnHash);
+            if (current != null)
+                current = current with { IsUsed = true };
+
+            var refreshToken = new RefreshWebToken(
+                userUpnHash,
+                jti,
+                tokenHash,
+                saltBase64,
+                DateTimeOffset.UtcNow,
+                DateTimeOffset.UtcNow.AddDays(7),
+                false,
+                false,
+                userAgent,
+                ipAddress: ip
+            );
 
             await _repository.AddAsync(refreshToken);
             await _repository.SaveChangesAsync();
 
-            return refreshToken;
+            return refreshToken with { Token = rawToken };
         }
 
-        public async Task<RefreshWebToken?> GetRefreshTokenAsync(string token)
+        public async Task<RefreshWebToken> GetRefreshTokenAsync(string rawToken)
         {
-            return await _repository.GetByTokenAsync(token);
-        }
+            var candidates = await _repository.GetAllValidTokensAsync();
 
-        public async Task MarkRefreshTokenAsUsedAsync(string token)
-        {
-            var refreshToken = await _repository.GetByTokenAsync(token);
-            if (refreshToken != null)
+            foreach (var token in candidates)
             {
-                refreshToken.IsUsed = true;
+                var hash = await _hash.ComputeSha3HashAsync(rawToken + token.TokenSalt);
+                if (hash == token.Token)
+                    return token;
+            }
+
+            return null;
+        }
+
+
+        public async Task MarkRefreshTokenAsUsedAsync(string refreshToken)
+        {
+            var token = await GetRefreshTokenAsync(refreshToken);
+            if (token != null)
+            {
+                await _repository.ApplyPatchAsync(token.Id, entry =>
+                {
+                    entry.Property(x => x.IsUsed).CurrentValue = true;
+                    entry.Property(x => x.IsUsed).IsModified = true;
+                });
+
                 await _repository.SaveChangesAsync();
             }
         }
 
-        public async Task RevokeRefreshTokenAsync(string token)
+        public async Task RevokeRefreshTokenAsync(string refreshToken)
         {
-            var refreshToken = await _repository.GetByTokenAsync(token);
-            if (refreshToken != null)
+            var token = await GetRefreshTokenAsync(refreshToken);
+            if (token != null)
             {
-                refreshToken.IsRevoked = true;
+                await _repository.ApplyPatchAsync(token.Id, entry =>
+                {
+                    entry.Property(x => x.IsRevoked).CurrentValue = true;
+                    entry.Property(x => x.IsRevoked).IsModified = true;
+                });
+
                 await _repository.SaveChangesAsync();
             }
         }
