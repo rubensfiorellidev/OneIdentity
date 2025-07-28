@@ -373,7 +373,6 @@ namespace OneID.Shared.Authentication
         {
             await using var db = _contextFactory.CreateDbContext();
 
-            // 1. Busca candidatos válidos pro hash do usuário
             var tokenCandidates = await db.RefreshWebTokens
                 .Where(x =>
                     x.UserUpnHash == userUpnHash &&
@@ -383,7 +382,6 @@ namespace OneID.Shared.Authentication
                 .OrderByDescending(x => x.CreatedAt)
                 .ToListAsync();
 
-            // 2. Compara o hash do token recebido com os candidatos
             RefreshWebToken existing = null;
             foreach (var candidate in tokenCandidates)
             {
@@ -398,7 +396,6 @@ namespace OneID.Shared.Authentication
             if (existing == null)
                 return ("", "", false);
 
-            // 3. Busca o usuário usando o hash do login
             var user = await db.UserAccounts
                 .Where(u => u.LoginHash == userUpnHash)
                 .OrderByDescending(u => u.ProvisioningAt)
@@ -407,13 +404,8 @@ namespace OneID.Shared.Authentication
             if (user == null)
                 return ("", "", false);
 
-            // 4. Marca o token como usado
             PatchUsed(db, existing);
 
-            //// 5. Descriptografa dados sensíveis
-            //var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);//remover
-
-            // 6. Gera novos tokens
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 user.Login,

@@ -177,7 +177,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [AllowAnonymous]
+        [Authorize]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             _logger.LogInformation("Token de refresh solicitado às {Now}", DateTimeOffset.Now);
