@@ -1,5 +1,6 @@
 ﻿using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.Tokens;
 using OneID.Domain.Entities.JwtWebTokens;
 using OneID.Domain.Interfaces;
 using System.Security.Cryptography;
@@ -11,22 +12,15 @@ namespace OneID.Application.Services.RefreshTokens
     {
         private readonly IRefreshTokenRepository _repository;
         private readonly IHashService _hash;
+        private readonly IRefreshTokenGenerator _tokenGenerator;
 
         public RefreshTokenService(IRefreshTokenRepository repository,
-                                   IHashService hash)
+                                   IHashService hash,
+                                   IRefreshTokenGenerator tokenGenerator)
         {
             _repository = repository;
             _hash = hash;
-        }
-
-        private string GenerateRefreshTokenString()
-        {
-            var randomNumber = new byte[64];
-            using (var numberGenerator = RandomNumberGenerator.Create())
-            {
-                numberGenerator.GetBytes(randomNumber);
-            }
-            return Convert.ToBase64String(randomNumber);
+            _tokenGenerator = tokenGenerator;
         }
 
         public async Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpnHash,
@@ -35,7 +29,7 @@ namespace OneID.Application.Services.RefreshTokens
                                                                      string userAgent = null)
         {
 
-            var rawToken = GenerateRefreshTokenString();
+            var rawToken = _tokenGenerator.Generate();
 
             var saltBytes = RandomNumberGenerator.GetBytes(16);
             var saltBase64 = Convert.ToBase64String(saltBytes);

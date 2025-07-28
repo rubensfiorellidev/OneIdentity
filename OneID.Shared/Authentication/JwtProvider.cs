@@ -137,7 +137,7 @@ namespace OneID.Shared.Authentication
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.Add(_jwtOptions.AccessTokenExpires),
+                Expires = DateTime.UtcNow.AddMinutes(5),
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = signingCredentials
             };

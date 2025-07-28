@@ -10,6 +10,7 @@ using OneID.Application.Interfaces.Graph;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Interfaces.Tokens;
 using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Services;
 using OneID.Application.Services.AesCryptoServices;
@@ -71,6 +72,8 @@ namespace OneID.Application
             services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();
             services.AddHttpContextAccessor();
             services.AddScoped<ILoggedUserAccessor, LoggedUserAccessor>();
+            services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+
 
 
             services.AddSingleton<ITotpService, TotpService>();

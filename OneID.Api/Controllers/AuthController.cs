@@ -14,7 +14,6 @@ using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
-using System.Net;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -177,7 +176,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             _logger.LogInformation("Token de refresh solicitado às {Now}", DateTimeOffset.Now);
@@ -188,19 +187,14 @@ namespace OneID.Api.Controllers
                 _logger.LogInformation("{Key} = {Value}", cookie.Key, cookie.Value);
             }
 
-
             var refreshToken = Request.Cookies["refresh_token"];
 
-            if (!string.IsNullOrWhiteSpace(refreshToken))
-            {
-                refreshToken = WebUtility.UrlDecode(refreshToken);
-            }
-            else
+            if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 var authHeader = Request.Headers.Authorization.ToString();
                 if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
-                    var encodedToken = authHeader["Bearer ".Length..].Trim();
+                    refreshToken = authHeader["Bearer ".Length..].Trim();
                 }
             }
 
