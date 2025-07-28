@@ -268,7 +268,6 @@ namespace OneID.Api.Controllers
                 Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenDays)
             });
 
-            _logger.LogInformation("Cookies definidos: access_token = {AccessToken}, refresh_token = {RefreshToken}", accessToken, refreshToken);
         }
 
     }
