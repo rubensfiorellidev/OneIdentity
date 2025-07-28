@@ -16,6 +16,8 @@ using OneID.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
+
+
 #nullable disable
 namespace OneID.Api.Controllers
 {
@@ -178,6 +180,15 @@ namespace OneID.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RefreshTokenAsync()
         {
+            _logger.LogInformation("Token de refresh solicitado às {Now}", DateTimeOffset.Now);
+
+            _logger.LogInformation("Cookies recebidos:");
+            foreach (var cookie in Request.Cookies)
+            {
+                _logger.LogInformation("{Key} = {Value}", cookie.Key, cookie.Value);
+            }
+
+
             var refreshToken = Request.Cookies["refresh_token"];
 
             if (!string.IsNullOrWhiteSpace(refreshToken))
@@ -186,7 +197,6 @@ namespace OneID.Api.Controllers
             }
             else
             {
-                // 2. Tentativa via Header Authorization: Bearer
                 var authHeader = Request.Headers.Authorization.ToString();
                 if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
@@ -257,6 +267,8 @@ namespace OneID.Api.Controllers
                 SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenDays)
             });
+
+            _logger.LogInformation("Cookies definidos: access_token = {AccessToken}, refresh_token = {RefreshToken}", accessToken, refreshToken);
         }
 
     }

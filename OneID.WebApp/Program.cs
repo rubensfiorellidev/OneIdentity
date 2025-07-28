@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Handlers que cuidam dos tokens
 builder.Services.AddScoped<AccessTokenHandler>();
-builder.Services.AddScoped<RefreshTokenHandler>();
+//builder.Services.AddScoped<RefreshTokenHandler>();
 
 // Circuito que renova o token periodicamente
 builder.Services.AddSingleton<CircuitHandler, TokenCircuitHandler>();
@@ -21,6 +21,12 @@ builder.Services.AddHttpClient<IOneIdUserService, OneIdUserService>(client =>
     client.BaseAddress = new Uri("https://localhost:7200/");
 })
 .AddHttpMessageHandler<AccessTokenHandler>();
+
+// HttpClient com o handler de renovação de token
+//builder.Services.AddHttpClient("RefreshClient", client =>
+//{
+//    client.BaseAddress = new Uri("https://localhost:7200/");
+//})
 //.AddHttpMessageHandler<RefreshTokenHandler>();
 
 builder.Services.AddAuthentication("Cookies")
