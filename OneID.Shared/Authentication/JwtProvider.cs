@@ -234,6 +234,7 @@ namespace OneID.Shared.Authentication
         {
             var keyBytes = rsaKey.Rsa.ExportSubjectPublicKeyInfo();
             var hash = SHA256.HashData(keyBytes);
+
             return Convert.ToBase64String(hash);
         }
 
