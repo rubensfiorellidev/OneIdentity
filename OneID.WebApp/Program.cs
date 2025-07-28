@@ -5,29 +5,28 @@ using OneID.WebApp.Services;
 using OneID.WebApp.Services.ActiveUsers;
 using OneID.WebApp.Services.AuthTokens;
 using OneID.WebApp.Tokens;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Handlers que cuidam dos tokens
 builder.Services.AddScoped<AccessTokenHandler>();
 //builder.Services.AddScoped<RefreshTokenHandler>();
 
-// Circuito que renova o token periodicamente
-builder.Services.AddSingleton<CircuitHandler, TokenCircuitHandler>();
-
-// HttpClient principal com handlers aplicados
 builder.Services.AddHttpClient<IOneIdUserService, OneIdUserService>(client =>
 {
     client.BaseAddress = new Uri("https://localhost:7200/");
 })
 .AddHttpMessageHandler<AccessTokenHandler>();
 
-// HttpClient com o handler de renovação de token
-//builder.Services.AddHttpClient("RefreshClient", client =>
-//{
-//    client.BaseAddress = new Uri("https://localhost:7200/");
-//})
-//.AddHttpMessageHandler<RefreshTokenHandler>();
+builder.Services
+    .AddSingleton<ITokenMemoryStore, TokenMemoryStore>()
+    .AddScoped<CircuitHandler, TokenCircuitHandler>()
+    .AddHttpClient("RefreshClient", client =>
+    {
+        client.BaseAddress = new Uri("https://localhost:7200");
+        client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+    });
+
 
 builder.Services.AddAuthentication("Cookies")
     .AddCookie("Cookies", options =>
@@ -41,6 +40,9 @@ builder.Services.AddAuthentication("Cookies")
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
+
+builder.Services.AddSingleton<ITokenMemoryStore, TokenMemoryStore>();
+
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
