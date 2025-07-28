@@ -369,9 +369,14 @@ namespace OneID.Shared.Authentication
 
 
 
-        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpnHash, string refreshToken)
+        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpnHash,
+                                                                                               string refreshToken)
         {
             await using var db = _contextFactory.CreateDbContext();
+
+            var httpContext = _httpContextAccessor.HttpContext;
+            var ipAddress = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "::1";
+            var userAgent = httpContext?.Request?.Headers.UserAgent.ToString() ?? "unknown";
 
             var tokenCandidates = await db.RefreshWebTokens
                 .Where(x =>
@@ -383,6 +388,7 @@ namespace OneID.Shared.Authentication
                 .ToListAsync();
 
             RefreshWebToken existing = null;
+
             foreach (var candidate in tokenCandidates)
             {
                 var hashed = await _hash.ComputeSha3HashAsync(refreshToken, candidate.TokenSalt);
@@ -406,6 +412,20 @@ namespace OneID.Shared.Authentication
 
             PatchUsed(db, existing);
 
+            var ativos = await db.RefreshWebTokens
+                .Where(t => t.UserUpnHash == userUpnHash && !t.IsUsed && !t.IsRevoked)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToListAsync();
+
+            var excess = await db.RefreshWebTokens
+                .Where(t => t.UserUpnHash == userUpnHash && !t.IsUsed && !t.IsRevoked)
+                .OrderByDescending(t => t.CreatedAt)
+                .Skip(4)
+                .ToListAsync();
+
+            foreach (var item in excess)
+                PatchRevoked(db, item);
+
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 user.Login,
@@ -417,6 +437,7 @@ namespace OneID.Shared.Authentication
 
             return (authResult.Jwtoken, authResult.RefreshToken, true);
         }
+
         private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)
         {
             var claims = new Dictionary<string, object>
@@ -466,6 +487,13 @@ namespace OneID.Shared.Authentication
             var entry = db.Entry(token);
             entry.Property(x => x.IsUsed).CurrentValue = true;
             entry.Property(x => x.IsUsed).IsModified = true;
+        }
+
+        private static void PatchRevoked(OneDbContext db, RefreshWebToken token)
+        {
+            var entry = db.Entry(token);
+            entry.Property(x => x.IsRevoked).CurrentValue = true;
+            entry.Property(x => x.IsRevoked).IsModified = true;
         }
 
     }
