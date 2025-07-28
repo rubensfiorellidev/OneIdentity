@@ -7,12 +7,10 @@ namespace OneID.Api.Controllers
     [Route("v1/users")]
     public class UsersController : MainController
     {
-        public UsersController(ISender send) : base(send)
-        {
-        }
+        public UsersController(ISender send) : base(send) { }
 
-        [HttpGet("all")]
         [Authorize]
+        [HttpGet("all")]
         public IActionResult GetActiveUsers()
         {
             var users = new List<ActiveUserResponse>

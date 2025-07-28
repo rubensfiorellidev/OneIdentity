@@ -21,7 +21,7 @@ namespace OneID.Data.Mappings
                 .HasMaxLength(500)
                 .IsRequired();
 
-            builder.Property(x => x.Token)
+            builder.Property(x => x.TokenHash)
                 .HasColumnType("VARCHAR")
                 .HasMaxLength(500)
                 .IsRequired();

@@ -215,12 +215,13 @@ namespace OneID.Shared
                     OnTokenValidated = context =>
                     {
                         var scope = context.Principal.FindFirst("access_scope")?.Value;
-                        if (scope != "bootstrap_token" && scope != "token_request_only")
+                        if (scope is not ("bootstrap_token" or "token_request_only" or "user_access"))
                         {
-                            context.Fail("Token não autorizado para login.");
+                            context.Fail("Token não autorizado.");
                         }
 
                         return Task.CompletedTask;
+
                     },
                     OnAuthenticationFailed = context =>
                     {

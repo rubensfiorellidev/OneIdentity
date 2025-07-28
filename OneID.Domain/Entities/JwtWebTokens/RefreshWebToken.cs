@@ -12,7 +12,7 @@ namespace OneID.Domain.Entities.JwtWebTokens
         public RefreshWebToken(
             string userUpnHash,
             string jti,
-            string token,
+            string tokenHash,
             string tokenSalt,
             DateTimeOffset createdAt,
             DateTimeOffset expiresAt,
@@ -24,7 +24,7 @@ namespace OneID.Domain.Entities.JwtWebTokens
             Id = Ulid.NewUlid().ToString();
             UserUpnHash = userUpnHash;
             Jti = jti;
-            Token = token;
+            TokenHash = tokenHash;
             TokenSalt = tokenSalt;
             CreatedAt = createdAt;
             ExpiresAt = expiresAt;
@@ -37,7 +37,7 @@ namespace OneID.Domain.Entities.JwtWebTokens
         public string Id { get; init; }
         public string UserUpnHash { get; init; }
         public string Jti { get; init; }
-        public string Token { get; init; }
+        public string TokenHash { get; init; }
         public string TokenSalt { get; init; }
         public DateTimeOffset CreatedAt { get; init; }
         public DateTimeOffset ExpiresAt { get; init; }

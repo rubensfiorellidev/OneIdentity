@@ -5,39 +5,29 @@ namespace OneID.WebApp.Services.AuthTokens
     public class AccessTokenHandler : DelegatingHandler
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly ILogger<AccessTokenHandler> _logger;
 
-        public AccessTokenHandler(IHttpContextAccessor httpContextAccessor)
+        public AccessTokenHandler(IHttpContextAccessor httpContextAccessor, ILogger<AccessTokenHandler> logger)
         {
             _httpContextAccessor = httpContextAccessor;
+            _logger = logger;
         }
 
-        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
-            // 1. Prioridade: Cookie "access_token"
-            var token = _httpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+            var context = _httpContextAccessor.HttpContext;
 
-            // 2. Fallback: extrair do header (caso você já tenha usado JwtHandler como no dashboard)
-            if (string.IsNullOrWhiteSpace(token))
+            if (context != null && context.Request.Cookies.TryGetValue("access_token", out var accessToken) &&
+                !string.IsNullOrWhiteSpace(accessToken))
             {
-                var rawCookie = _httpContextAccessor.HttpContext?.Request.Headers["Cookie"].ToString();
-                if (!string.IsNullOrEmpty(rawCookie))
-                {
-                    var cookies = rawCookie.Split(';')
-                        .Select(c => c.Trim())
-                        .Where(c => c.StartsWith("access_token="))
-                        .Select(c => c["access_token=".Length..])
-                        .FirstOrDefault();
-
-                    token = cookies;
-                }
+                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            }
+            else
+            {
+                _logger.LogWarning("access_token não encontrado no cookie. A requisição seguirá sem Authorization header.");
             }
 
-            if (!string.IsNullOrWhiteSpace(token))
-            {
-                request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
-            }
-
-            return await base.SendAsync(request, cancellationToken);
+            return base.SendAsync(request, cancellationToken);
         }
     }
 

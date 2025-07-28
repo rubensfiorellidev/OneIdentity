@@ -2,7 +2,8 @@
 {
     public interface IHashService
     {
-        Task<string> ComputeSha3HashAsync(string input);
+        ValueTask<string> ComputeSha3HashAsync(string input);
+        ValueTask<string> ComputeSha3HashAsync(string input, string salt);
     }
 
 }

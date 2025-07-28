@@ -35,9 +35,10 @@ public class RefreshTokenHandler : DelegatingHandler
             var refreshClient = _httpClientFactory.CreateClient();
             refreshClient.BaseAddress = new Uri("https://localhost:7200");
 
-            refreshClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
+            var refreshRequest = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/refresh-token");
+            refreshRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
 
-            var refreshResponse = await refreshClient.PostAsync("/v1/auth/refresh-token", null, cancellationToken);
+            var refreshResponse = await refreshClient.SendAsync(refreshRequest, cancellationToken);
 
             if (refreshResponse.IsSuccessStatusCode)
             {
@@ -47,7 +48,7 @@ public class RefreshTokenHandler : DelegatingHandler
                 return await base.SendAsync(newRequest, cancellationToken);
             }
 
-            _logger.LogError("Refresh token falhou com status: {StatusCode}", refreshResponse.StatusCode);
+            _logger.LogWarning("Refresh token falhou com status {StatusCode}.", refreshResponse.StatusCode);
         }
 
         return response;
@@ -55,7 +56,10 @@ public class RefreshTokenHandler : DelegatingHandler
 
     private async Task<HttpRequestMessage> CloneRequestAsync(HttpRequestMessage request)
     {
-        var clone = new HttpRequestMessage(request.Method, request.RequestUri);
+        var clone = new HttpRequestMessage(request.Method, request.RequestUri)
+        {
+            Version = request.Version
+        };
 
         if (request.Content != null)
         {
@@ -63,7 +67,7 @@ public class RefreshTokenHandler : DelegatingHandler
             clone.Content = new ByteArrayContent(content);
 
             foreach (var header in request.Content.Headers)
-                clone.Content.Headers.Add(header.Key, header.Value);
+                clone.Content.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
         foreach (var header in request.Headers)

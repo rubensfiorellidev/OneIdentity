@@ -45,7 +45,7 @@ namespace OneID.Application.Services.RefreshTokens
 
             var current = await _repository.GetActiveTokenAsync(userUpnHash);
             if (current != null)
-                current = current with { IsUsed = true };
+                _ = current with { IsUsed = true };
 
             var refreshToken = new RefreshWebToken(
                 userUpnHash,
@@ -63,7 +63,7 @@ namespace OneID.Application.Services.RefreshTokens
             await _repository.AddAsync(refreshToken);
             await _repository.SaveChangesAsync();
 
-            return refreshToken with { Token = rawToken };
+            return refreshToken with { TokenHash = rawToken };
         }
 
         public async Task<RefreshWebToken> GetRefreshTokenAsync(string rawToken)
@@ -73,7 +73,7 @@ namespace OneID.Application.Services.RefreshTokens
             foreach (var token in candidates)
             {
                 var hash = await _hash.ComputeSha3HashAsync(rawToken + token.TokenSalt);
-                if (hash == token.Token)
+                if (hash == token.TokenHash)
                     return token;
             }
 

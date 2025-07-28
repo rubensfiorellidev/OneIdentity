@@ -16,8 +16,6 @@ using OneID.Domain.Interfaces;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
-
-
 #nullable disable
 namespace OneID.Api.Controllers
 {
@@ -112,7 +110,6 @@ namespace OneID.Api.Controllers
             var token = Request.Headers.Authorization.ToString();
             if (string.IsNullOrWhiteSpace(token) || !token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
-                // Fallback para cookie (útil em domínio unificado ou frontend Razor)
                 token = Request.Cookies["request_token"];
             }
             else
@@ -160,30 +157,15 @@ namespace OneID.Api.Controllers
             if (user is null)
                 return Unauthorized("Usuário autenticado, mas não registrado no sistema.");
 
-            var decryptedUser = await _decryptionService.DecryptSensitiveDataAsync(user);
-
             var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
-                decryptedUser.KeycloakUserId,
+                user.KeycloakUserId,
                 preferredUsername,
                 email,
                 name
             );
 
-            Response.Cookies.Append("access_token", authResult.Jwtoken, new CookieOptions
-            {
-                HttpOnly = true,                     // protege contra JS malicioso
-                Secure = true,                       // só HTTPS
-                SameSite = SameSiteMode.None,      // bloqueia CSRF cruzado
-                Expires = DateTimeOffset.UtcNow.AddHours(1)  // tempo do token
-            });
 
-            Response.Cookies.Append("refresh_token", authResult.RefreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            });
+            SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken);
 
             return Ok(new
             {
@@ -209,16 +191,6 @@ namespace OneID.Api.Controllers
                 if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                 {
                     var encodedToken = authHeader["Bearer ".Length..].Trim();
-                    refreshToken = WebUtility.UrlDecode(encodedToken);
-                }
-            }
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
-            {
-                var authHeader = Request.Headers.Authorization.ToString();
-                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    refreshToken = authHeader["Bearer ".Length..].Trim();
                 }
             }
 
@@ -245,21 +217,7 @@ namespace OneID.Api.Controllers
                 return Unauthorized("Refresh token inválido ou expirado.");
             }
 
-            Response.Cookies.Append("access_token", newJwt, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(5)
-            });
-
-            Response.Cookies.Append("refresh_token", newRefresh, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(7)
-            });
+            SetAuthCookies(newJwt, newRefresh);
 
             return Ok(new
             {
@@ -280,6 +238,25 @@ namespace OneID.Api.Controllers
             claims[JwtClaims.Sub] = serviceUserId;
 
             return claims;
+        }
+
+        private void SetAuthCookies(string accessToken, string refreshToken, int accessTokenMinutes = 10, int refreshTokenDays = 7)
+        {
+            Response.Cookies.Append("access_token", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddMinutes(accessTokenMinutes)
+            });
+
+            Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenDays)
+            });
         }
 
     }

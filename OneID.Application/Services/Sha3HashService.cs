@@ -7,33 +7,37 @@ namespace OneID.Application.Services
 {
     public sealed class Sha3HashService : IHashService
     {
-        public async Task<string> ComputeSha3HashAsync(string input)
+        public ValueTask<string> ComputeSha3HashAsync(string input)
         {
             if (string.IsNullOrEmpty(input))
-            {
-                return null;
-            }
+                return ValueTask.FromResult<string>(null);
 
-            await Task.Delay(1);
-
-            var shaDigest = new Sha3Digest(bitLength: 384);
-            byte[] inputBytes = Encoding.UTF8.GetBytes(input);
-
-            shaDigest.BlockUpdate(inputBytes, 0, inputBytes.Length);
-
-            byte[] result = new byte[shaDigest.GetDigestSize()];
-            shaDigest.DoFinal(result, 0);
-
-
-            StringBuilder hashString = new();
-
-            foreach (byte b in result)
-            {
-                hashString.Append(b.ToString("x2"));
-            }
-
-            return hashString.ToString();
+            return ValueTask.FromResult(ComputeInternal(input));
         }
 
+        public ValueTask<string> ComputeSha3HashAsync(string input, string salt)
+        {
+            if (string.IsNullOrEmpty(input) || string.IsNullOrEmpty(salt))
+                return ValueTask.FromResult<string>(null);
+
+            return ValueTask.FromResult(ComputeInternal(input + salt));
+        }
+
+        private static string ComputeInternal(string input)
+        {
+            var shaDigest = new Sha3Digest(384);
+            var bytes = Encoding.UTF8.GetBytes(input);
+
+            shaDigest.BlockUpdate(bytes, 0, bytes.Length);
+
+            var result = new byte[shaDigest.GetDigestSize()];
+            shaDigest.DoFinal(result, 0);
+
+            var sb = new StringBuilder(result.Length * 2);
+            foreach (var b in result)
+                sb.Append(b.ToString("x2"));
+
+            return sb.ToString();
+        }
     }
 }

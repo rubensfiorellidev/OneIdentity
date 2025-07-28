@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OneID.Application.Interfaces.SensitiveData;
+using OneID.Application.Interfaces.Services;
 using OneID.Data.DataContexts;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
@@ -34,13 +35,15 @@ namespace OneID.Shared.Authentication
         private readonly JwtSecurityTokenHandler _tokenHandler = new();
         private readonly IOneDbContextFactory _contextFactory;
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
+        private readonly IHashService _hash;
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
                            IHttpContextAccessor httpContextAccessor,
                            ILogger<JwtProvider> logger,
                            IOneDbContextFactory contextFactory,
-                           ISensitiveDataDecryptionServiceUserAccount decryptionService)
+                           ISensitiveDataDecryptionServiceUserAccount decryptionService,
+                           IHashService hash)
         {
             _jwtOptions = jwtOptions.Value;
             _refreshTokenService = refreshTokenService;
@@ -64,6 +67,7 @@ namespace OneID.Shared.Authentication
             _logger = logger;
             _contextFactory = contextFactory;
             _decryptionService = decryptionService;
+            _hash = hash;
         }
         public async Task<string> EnsureKeysAsync()
         {
@@ -150,7 +154,7 @@ namespace OneID.Shared.Authentication
             return new AuthResult
             {
                 Jwtoken = jws,
-                RefreshToken = refreshToken.Token,
+                RefreshToken = refreshToken.TokenHash,
                 Result = true
             };
         }
@@ -367,50 +371,59 @@ namespace OneID.Shared.Authentication
 
         public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpnHash, string refreshToken)
         {
-            if (!Guid.TryParse(userUpnHash, out var userGuid))
-                return ("", "", false);
-
             await using var db = _contextFactory.CreateDbContext();
 
+            // 1. Busca candidatos válidos pro hash do usuário
+            var tokenCandidates = await db.RefreshWebTokens
+                .Where(x =>
+                    x.UserUpnHash == userUpnHash &&
+                    !x.IsRevoked &&
+                    !x.IsUsed &&
+                    x.ExpiresAt > DateTimeOffset.UtcNow)
+                .OrderByDescending(x => x.CreatedAt)
+                .ToListAsync();
+
+            // 2. Compara o hash do token recebido com os candidatos
+            RefreshWebToken existing = null;
+            foreach (var candidate in tokenCandidates)
+            {
+                var hashed = await _hash.ComputeSha3HashAsync(refreshToken, candidate.TokenSalt);
+                if (hashed == candidate.TokenHash)
+                {
+                    existing = candidate;
+                    break;
+                }
+            }
+
+            if (existing == null)
+                return ("", "", false);
+
+            // 3. Busca o usuário usando o hash do login
             var user = await db.UserAccounts
-                .Where(u => u.KeycloakUserId == userGuid)
+                .Where(u => u.LoginHash == userUpnHash)
                 .OrderByDescending(u => u.ProvisioningAt)
                 .FirstOrDefaultAsync();
 
             if (user == null)
                 return ("", "", false);
 
-            var existing = await db.RefreshWebTokens
-                .Where(x =>
-                    x.UserUpnHash == userUpnHash &&
-                    x.Token == refreshToken &&
-                    !x.IsRevoked &&
-                    !x.IsUsed &&
-                    x.ExpiresAt > DateTimeOffset.UtcNow)
-                .OrderByDescending(x => x.CreatedAt)
-                .FirstOrDefaultAsync();
-
-            if (existing == null)
-                return ("", "", false);
-
+            // 4. Marca o token como usado
             PatchUsed(db, existing);
 
-            var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);
+            //// 5. Descriptografa dados sensíveis
+            //var decrypted = await _decryptionService.DecryptSensitiveDataAsync(user);//remover
 
+            // 6. Gera novos tokens
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
-                decrypted.KeycloakUserId,
-                decrypted.Login,
-                decrypted.CorporateEmail,
-                decrypted.FullName
+                user.KeycloakUserId,
+                user.Login,
+                user.CorporateEmail,
+                user.FullName
             );
-
-            var newJwt = authResult.Jwtoken;
-            var newRefreshToken = authResult.RefreshToken;
-
 
             await db.SaveChangesAsync();
 
-            return (newJwt, newRefreshToken, true);
+            return (authResult.Jwtoken, authResult.RefreshToken, true);
         }
         private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)
         {
