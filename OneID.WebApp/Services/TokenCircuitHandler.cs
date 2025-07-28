@@ -2,20 +2,18 @@
 {
     using Microsoft.AspNetCore.Components.Server.Circuits;
     using OneID.WebApp.Interfaces;
+    using System.Collections.Concurrent;
     using System.IdentityModel.Tokens.Jwt;
     using System.Net;
 
     public sealed class TokenCircuitHandler : CircuitHandler
     {
+        private static readonly ConcurrentDictionary<string, CancellationTokenSource> _scheduledRenewals = new();
         private static readonly HashSet<Circuit> _activeCircuits = [];
-        private static readonly PeriodicTimer _timer = new(TimeSpan.FromMinutes(4));
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<TokenCircuitHandler> _logger;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ITokenMemoryStore _tokenStore;
-
-        private static bool _refreshLoopStarted = false;
-        private static readonly object _lock = new();
 
         public TokenCircuitHandler(IHttpClientFactory httpClientFactory,
                                    ILogger<TokenCircuitHandler> logger,
@@ -24,16 +22,6 @@
         {
             _httpClientFactory = httpClientFactory;
             _logger = logger;
-
-            lock (_lock)
-            {
-                if (!_refreshLoopStarted)
-                {
-                    _refreshLoopStarted = true;
-                    _ = Task.Run(RefreshLoopAsync);
-                }
-            }
-
             _httpContextAccessor = httpContextAccessor;
             _tokenStore = tokenStore;
         }
@@ -61,6 +49,8 @@
 
                         _tokenStore.SetToken(circuit.Id, refreshToken, scheduledTime);
                         _logger.LogInformation("Token armazenado na memória para o circuito {CircuitId}, expira em {Expiration}", circuit.Id, exp);
+
+                        ScheduleTokenRefresh(circuit, refreshToken, scheduledTime);
                     }
                     else
                     {
@@ -69,7 +59,7 @@
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Erro ao decodificar access_token ou calcular expiração.");
+                    _logger.LogError(ex, "Erro ao decodificar o access_token ou calcular a expiração.");
                 }
             }
             else
@@ -84,51 +74,55 @@
         {
             _activeCircuits.Remove(circuit);
             _tokenStore.RemoveToken(circuit.Id);
-            _logger.LogInformation("Token removido da memória para o circuito {CircuitId}", circuit.Id);
 
+            if (_scheduledRenewals.TryRemove(circuit.Id, out var cts))
+            {
+                cts.Cancel();
+                cts.Dispose();
+            }
+
+            _logger.LogInformation("Circuito encerrado: {CircuitId}. Token removido da memória e agendamento cancelado.", circuit.Id);
             return Task.CompletedTask;
         }
 
-        private async Task RefreshLoopAsync()
+        private void ScheduleTokenRefresh(Circuit circuit, string refreshToken, DateTimeOffset scheduledTime)
         {
-            while (await _timer.WaitForNextTickAsync())
+            var delay = scheduledTime - DateTimeOffset.UtcNow;
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromSeconds(1); // fallback seguro
+
+            var cts = new CancellationTokenSource();
+            _scheduledRenewals[circuit.Id] = cts;
+
+            _ = Task.Delay(delay, cts.Token).ContinueWith(async task =>
             {
-                var now = DateTimeOffset.UtcNow;
+                if (task.IsCanceled || !_activeCircuits.Contains(circuit)) return;
 
-                foreach (var circuit in _activeCircuits.ToList())
+                var tokenData = _tokenStore.GetToken(circuit.Id);
+                if (tokenData is null || string.IsNullOrWhiteSpace(tokenData.RefreshToken)) return;
+
+                _logger.LogInformation("Iniciando renovação do token para o circuito {CircuitId}", circuit.Id);
+
+                try
                 {
-                    var tokenData = _tokenStore.GetToken(circuit.Id);
+                    var client = _httpClientFactory.CreateClient("RefreshClient");
+                    var request = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/refresh-token");
+                    request.Headers.Add("Cookie", $"refresh_token={WebUtility.UrlEncode(tokenData.RefreshToken)}");
 
-                    if (tokenData is null || string.IsNullOrWhiteSpace(tokenData.RefreshToken))
-                        continue;
-
-                    if (tokenData.ExpiresAt <= now)
+                    var response = await client.SendAsync(request, cts.Token);
+                    if (response.IsSuccessStatusCode)
                     {
-                        _logger.LogInformation("Iniciando renovação para circuito {CircuitId}", circuit.Id);
-
-                        try
-                        {
-                            var client = _httpClientFactory.CreateClient("RefreshClient");
-                            var request = new HttpRequestMessage(HttpMethod.Post, "/v1/auth/refresh-token");
-                            request.Headers.Add("Cookie", $"refresh_token={WebUtility.UrlEncode(tokenData.RefreshToken)}");
-
-                            var response = await client.SendAsync(request);
-                            if (response.IsSuccessStatusCode)
-                            {
-                                _logger.LogInformation("Token renovado com sucesso para circuito {CircuitId}", circuit.Id);
-                            }
-                            else
-                            {
-                                _logger.LogWarning("Falha ao renovar token para circuito {CircuitId}. Status: {StatusCode}", circuit.Id, response.StatusCode);
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            _logger.LogError(ex, "Erro ao renovar token para circuito {CircuitId}", circuit.Id);
-                        }
+                        _logger.LogInformation("Token renovado com sucesso para o circuito {CircuitId}", circuit.Id);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Falha ao renovar o token para o circuito {CircuitId}. Status: {StatusCode}", circuit.Id, response.StatusCode);
                     }
                 }
-            }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Erro ao tentar renovar o token para o circuito {CircuitId}", circuit.Id);
+                }
+            }, cts.Token);
         }
 
         public static bool IsCircuitActive(Circuit circuit)
