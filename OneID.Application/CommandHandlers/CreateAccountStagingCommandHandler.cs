@@ -10,7 +10,7 @@ using OneID.Domain.ValueObjects;
 
 namespace OneID.Application.CommandHandlers
 {
-    public class CreateAccountStagingCommandHandler : ICommandHandler<CreateAccountStagingCommand, IResult>
+    public class CreateAccountStagingCommandHandler : ICommandHandler<CreateAccountStagingCommand, IOperationResult>
     {
         private readonly IAddUserAccountStagingRepository _repository;
         private readonly ILogger<CreateAccountStagingCommandHandler> _logger;
@@ -32,7 +32,7 @@ namespace OneID.Application.CommandHandlers
             _deduplicationRepository = deduplicationRepository;
         }
 
-        public async Task<IResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)
+        public async Task<IOperationResult> Handle(CreateAccountStagingCommand command, CancellationToken cancellationToken)
         {
             var request = await _builder.BuildAsync(command.Request);
 

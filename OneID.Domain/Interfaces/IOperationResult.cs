@@ -1,6 +1,6 @@
 ﻿namespace OneID.Domain.Interfaces
 {
-    public interface IResult
+    public interface IOperationResult
     {
         int? HttpCode { get; }
         string Message { get; }
@@ -12,8 +12,8 @@
         object AdditionalData { get; }
 
         TResult Match<TResult>(
-            Func<IResult, TResult> onSuccess,
-            Func<IResult, TResult> onError);
+            Func<IOperationResult, TResult> onSuccess,
+            Func<IOperationResult, TResult> onError);
 
     }
 }

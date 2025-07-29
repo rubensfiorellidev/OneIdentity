@@ -21,7 +21,7 @@ namespace OneID.Data.Repositories.UsersContext
             _logger = logger;
         }
 
-        public async Task<IResult> AddAsync(UserAccount entity, CancellationToken cancellationToken)
+        public async Task<IOperationResult> AddAsync(UserAccount entity, CancellationToken cancellationToken)
         {
             await using var dbContext = _dbContextFactory.CreateDbContext();
 

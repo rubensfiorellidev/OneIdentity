@@ -13,10 +13,10 @@ namespace OneID.Application.Services
             _serviceProvider = serviceProvider;
         }
 
-        public Task<IResult> SendAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
-            where TCommand : ICommand<IResult>
+        public Task<IOperationResult> SendAsync<TCommand>(TCommand command, CancellationToken cancellationToken)
+            where TCommand : ICommand<IOperationResult>
         {
-            var handler = _serviceProvider.GetRequiredService<ICommandHandler<TCommand, IResult>>();
+            var handler = _serviceProvider.GetRequiredService<ICommandHandler<TCommand, IOperationResult>>();
             return handler.Handle(command, cancellationToken);
         }
     }

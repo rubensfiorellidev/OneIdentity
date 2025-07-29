@@ -3,6 +3,6 @@ using OneID.Domain.Interfaces;
 
 namespace OneID.Application.Commands
 {
-    public record CreateRoleCommand(string Name, string Description, string CreatedBy) : ICommand<IResult>;
+    public record CreateRoleCommand(string Name, string Description, string CreatedBy) : ICommand<IOperationResult>;
 
 }

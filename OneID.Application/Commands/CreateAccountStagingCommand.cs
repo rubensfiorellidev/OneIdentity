@@ -5,7 +5,7 @@ using OneID.Domain.Interfaces;
 #nullable disable
 namespace OneID.Application.Commands
 {
-    public sealed record CreateAccountStagingCommand : ICommand<IResult>
+    public sealed record CreateAccountStagingCommand : ICommand<IOperationResult>
     {
         public AccountRequest Request { get; }
         public string CreatedBy { get; }

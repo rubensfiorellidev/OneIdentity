@@ -20,10 +20,12 @@ using OneID.Application.Interfaces.SES;
 using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
+using OneID.Data.Redis;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
 using OneID.Shared.Services;
+using StackExchange.Redis;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
@@ -302,6 +304,38 @@ namespace OneID.Shared
         }
 
         #endregion
+
+        #region Redis
+        public static IServiceCollection AddRedis(this IServiceCollection services, IConfiguration configuration)
+        {
+            var redisOptions = new RedisOptions();
+            configuration.GetSection("Redis").Bind(redisOptions);
+
+            var configRedisOptions = new ConfigurationOptions
+            {
+                EndPoints = { { redisOptions.EndPoint, redisOptions.Port } },
+                User = redisOptions.User,
+                Password = redisOptions.Password,
+                Ssl = redisOptions.Ssl,
+                SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                ConnectRetry = redisOptions.ConnectRetry,
+                ReconnectRetryPolicy = new LinearRetry(redisOptions.ReconnectRetryDelay),
+                AbortOnConnectFail = false,
+                AllowAdmin = false,
+                ConnectTimeout = redisOptions.ConnectTimeout,
+                DefaultDatabase = 0,
+                SyncTimeout = redisOptions.SyncTimeout,
+                AsyncTimeout = redisOptions.AsyncTimeout,
+                KeepAlive = redisOptions.KeepAlive
+            };
+
+            var connectionMultiplexer = ConnectionMultiplexer.Connect(configRedisOptions);
+            services.AddSingleton<IConnectionMultiplexer>(connectionMultiplexer);
+
+            return services;
+        }
+        #endregion
+
 
     }
 }

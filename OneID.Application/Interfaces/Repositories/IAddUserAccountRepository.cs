@@ -5,7 +5,7 @@ namespace OneID.Application.Interfaces.Repositories
 {
     public interface IAddUserAccountRepository
     {
-        Task<IResult> AddAsync(UserAccount entity, CancellationToken cancellationToken);
+        Task<IOperationResult> AddAsync(UserAccount entity, CancellationToken cancellationToken);
 
     }
 }

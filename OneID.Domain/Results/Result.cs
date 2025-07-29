@@ -3,7 +3,7 @@ using OneID.Domain.Interfaces;
 
 namespace OneID.Domain.Results
 {
-    public class Result : IResult
+    public class Result : IOperationResult
     {
         public int? HttpCode { get; private set; }
         public string Message { get; private set; }
@@ -99,8 +99,8 @@ namespace OneID.Domain.Results
         }
 
         public TResult Match<TResult>(
-            Func<IResult, TResult> onSuccess,
-            Func<IResult, TResult> onError)
+            Func<IOperationResult, TResult> onSuccess,
+            Func<IOperationResult, TResult> onError)
         {
             return IsSuccess ? onSuccess(this) : onError(this);
         }

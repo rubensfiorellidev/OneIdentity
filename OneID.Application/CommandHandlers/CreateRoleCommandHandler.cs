@@ -7,7 +7,7 @@ using OneID.Domain.Results;
 
 namespace OneID.Application.CommandHandlers
 {
-    public class CreateRoleCommandHandler : ICommandHandler<CreateRoleCommand, IResult>
+    public class CreateRoleCommandHandler : ICommandHandler<CreateRoleCommand, IOperationResult>
     {
         private readonly IRoleWriterRepository _repository;
 
@@ -16,7 +16,7 @@ namespace OneID.Application.CommandHandlers
             _repository = repository;
         }
 
-        public async Task<IResult> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
+        public async Task<IOperationResult> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
         {
             var role = new Role(request.Name, request.Description);
 

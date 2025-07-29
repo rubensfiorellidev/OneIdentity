@@ -49,14 +49,17 @@ builder.Services.AddLogging(loggingBuilder =>
 });
 
 
-builder.Services.AddData(builder.Configuration, builder.Environment);
-builder.Services.AddInfrastructure(builder.Configuration, builder.Environment);
-builder.Services.AddApplication(builder.Configuration);
-builder.Services.AddMassTrasitConfig();
-builder.Services.AddRabbitSetup(builder.Configuration, builder.Environment);
-builder.Services.AddJwtAuthentication(builder.Configuration);
 builder.Services.AddAuthorizationBuilder().SetFallbackPolicy(null);
-builder.Services.AddApiPipelineConfiguration();
+
+builder.Services
+    .AddData(builder.Configuration, builder.Environment)
+    .AddInfrastructure(builder.Configuration, builder.Environment)
+    .AddApplication(builder.Configuration)
+    .AddMassTrasitConfig()
+    .AddRabbitSetup(builder.Configuration, builder.Environment)
+    .AddJwtAuthentication(builder.Configuration)
+    .AddApiPipelineConfiguration()
+    .AddRedis(builder.Configuration);
 
 
 builder.Services.AddControllers(options =>

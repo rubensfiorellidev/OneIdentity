@@ -25,7 +25,7 @@ namespace OneID.Application.Abstractions
 
             var response = await _inner.Handle(command, cancellationToken);
 
-            if (response is IResult result)
+            if (response is IOperationResult result)
             {
                 if (result.IsSuccess)
                     _logger.LogInformation("✅ Comando {CommandName} finalizado com sucesso", commandName);
