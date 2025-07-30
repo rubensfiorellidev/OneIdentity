@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.ActiveSessions;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Queries.ActiveSessions;
@@ -19,6 +20,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpGet]
+        [Authorize]
         public async Task<IActionResult> GetSessions(CancellationToken ct)
         {
             var query = new GetActiveSessionsQuery();

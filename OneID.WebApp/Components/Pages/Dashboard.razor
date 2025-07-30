@@ -4,6 +4,8 @@
 @inject IHttpContextAccessor HttpContextAccessor
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JS
+@inject HttpClient Http
+@implements IDisposable
 
 @using System.IdentityModel.Tokens.Jwt
 @using System.Net.Http.Headers
@@ -169,15 +171,22 @@
         </h2>
 
         <ul>
-            @foreach (var user in ActiveUsers.Take(5))
+            @if (ActiveUsers.Count == 0)
             {
-                <li style="margin-bottom: 0.8rem;">
-                    <div style="display: flex; flex-direction: column;">
-                        <strong>@user.FullName</strong>
-                        <span class="muted">@user.JobTitleName - @user.DepartmentName</span>
-                        <span class="muted" title="@user.Email">@user.Email</span>
-                    </div>
-                </li>
+                <li><span class="muted">Nenhum usuário ativo no momento</span></li>
+            }
+            else
+            {
+                @foreach (var user in ActiveUsers.Take(5))
+                {
+                    <li style="margin-bottom: 0.8rem;">
+                        <div style="display: flex; flex-direction: column;">
+                            <strong>@user.UpnOrName</strong>
+                            <span class="muted">@user.IpAddress</span>
+                            <span class="muted">Última atividade: @user.LastActivity.ToLocalTime():HH:mm:ss</span>
+                        </div>
+                    </li>
+                }
             }
         </ul>
 
@@ -357,12 +366,15 @@
     private string AccountId = "desconhecido";
     private string Email = "não informado";
     private List<PendingProcessDto> PendingProcesses = [];
+    private List<ActiveSessionInfo> ActiveUsers = new();
+    private List<RecentAdmissionDto> RecentAdmissions = [];
     private bool ExpandGrid = false;
     private string LastChecked = string.Empty;
-    private List<RecentAdmissionDto> RecentAdmissions = [];
     private bool showLauncher = false;
     private string searchTerm = string.Empty;
     private Timer? debounceTimer;
+    private Timer? sessionTimer;
+
 
     private readonly Dictionary<string, string> searchRoutes = new(StringComparer.OrdinalIgnoreCase)
 {
@@ -378,15 +390,6 @@
     { "processos", "/dashboard#pendentes" },
     { "status", "/dashboard#status" }
 };
-
-    private List<UserDto> ActiveUsers = new()
-    {
-        new UserDto { FullName = "Ana Ribeiro", JobTitleName = "Analista de Dados", DepartmentName = "Tecnologia", Email = "ana.ribeiro@oneidsecure.com" },
-        new UserDto { FullName = "Carlos Souza", JobTitleName = "Engenheiro DevOps", DepartmentName = "Infraestrutura", Email = "carlos.souza@oneidsecure.com" },
-        new UserDto { FullName = "Fernanda Lima", JobTitleName = "Gestora de RH", DepartmentName = "Recursos Humanos", Email = "fernanda.lima@oneidsecure.com" },
-        new UserDto { FullName = "João Mendes", JobTitleName = "Desenvolvedor Backend", DepartmentName = "TI", Email = "joao.mendes@oneidsecure.com" },
-        new UserDto { FullName = "Luciana Silva", JobTitleName = "Coordenadora", DepartmentName = "Jurídico", Email = "luciana.silva@oneidsecure.com" },
-    };
 
     private sealed class UserDto
     {
@@ -418,6 +421,32 @@
     public record IamLog(string Actor, string Action, string Target, DateTime Timestamp);
     public record SecurityAlert(string Title, string Level, DateTime Timestamp);
     public record AdmissionAudit(string FirstName, string LastName, string EventName, string Description, DateTime ProvisioningDate);
+
+    private async Task LoadActiveSessions()
+    {
+        try
+        {
+            var token = HttpContextAccessor.HttpContext?.Request.Cookies["access_token"];
+            if (string.IsNullOrWhiteSpace(token)) return;
+
+            var client = HttpClientFactory.CreateClient("AuthenticatedClient");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("https://localhost:7200/internal/sessions");
+            if (response.IsSuccessStatusCode)
+            {
+                var sessions = await response.Content.ReadFromJsonAsync<List<ActiveSessionInfo>>();
+                ActiveUsers = sessions ?? [];
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao buscar sessões ativas: {ex.Message}");
+        }
+    }
+
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -453,6 +482,14 @@
         }
 
         await LoadRecentAdmissions();
+
+        await LoadActiveSessions();
+
+        sessionTimer = new Timer(async _ =>
+        {
+            await InvokeAsync(LoadActiveSessions);
+        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+
 
         LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
 
@@ -612,6 +649,12 @@
         }
     }
 
+    public void Dispose()
+    {
+        sessionTimer?.Dispose();
+        debounceTimer?.Dispose();
+    }
+
     private static string NormalizeSearch(string input)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -628,6 +671,14 @@
 
         return sb.ToString();
     }
+
+    public record ActiveSessionInfo(
+    string CircuitId,
+    string IpAddress,
+    string UpnOrName,
+    DateTime LastActivity,
+    DateTime ExpiresAt
+    );
 
 
 }
