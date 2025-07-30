@@ -6,13 +6,13 @@ using OneID.Application.Queries.ActiveSessions;
 namespace OneID.Api.Controllers
 {
     [Route("internal/sessions")]
-    public class SessionTelemetryController : MainController
+    public class SessionsController : MainController
     {
         private readonly IQueryExecutor _queryExecutor;
-        private readonly ILogger<SessionTelemetryController> _logger;
-        public SessionTelemetryController(ISender send,
+        private readonly ILogger<SessionsController> _logger;
+        public SessionsController(ISender send,
                                           IQueryExecutor query,
-                                          ILogger<SessionTelemetryController> logger) : base(send)
+                                          ILogger<SessionsController> logger) : base(send)
         {
             _queryExecutor = query;
             _logger = logger;
@@ -23,7 +23,7 @@ namespace OneID.Api.Controllers
         {
             var query = new GetActiveSessionsQuery();
             var result = await _queryExecutor
-                        .SendQueryAsync<GetActiveSessionsQuery, List<SessionTelemetry>>(query, ct);
+                        .SendQueryAsync<GetActiveSessionsQuery, List<ActiveSessionInfo>>(query, ct);
 
             return Ok(result);
         }

@@ -1,6 +1,6 @@
 ﻿namespace OneID.Application.DTOs.ActiveSessions
 {
-    public record SessionTelemetry(
+    public record ActiveSessionInfo(
     string CircuitId,
     string IpAddress,
     string UpnOrName,

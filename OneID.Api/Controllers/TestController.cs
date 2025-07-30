@@ -50,7 +50,7 @@ namespace OneID.Api.Controllers
             var db = _redis.GetDatabase();
 
             var now = DateTime.UtcNow;
-            var sessions = new List<SessionTelemetry>
+            var sessions = new List<ActiveSessionInfo>
             {
                 new(Ulid.NewUlid().ToString(), "192.168.0.1", "rubens@oneid.cloud", now, now.AddMinutes(15)),
                 new(Ulid.NewUlid().ToString(), "192.168.0.2", "maria@oneid.cloud", now.AddMinutes(-2), now.AddMinutes(10)),

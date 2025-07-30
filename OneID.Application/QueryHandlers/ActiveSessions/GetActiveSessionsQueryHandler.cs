@@ -6,7 +6,7 @@ using StackExchange.Redis;
 
 namespace OneID.Application.QueryHandlers.ActiveSessions
 {
-    public class GetActiveSessionsQueryHandler : IQueryHandler<GetActiveSessionsQuery, List<SessionTelemetry>>
+    public class GetActiveSessionsQueryHandler : IQueryHandler<GetActiveSessionsQuery, List<ActiveSessionInfo>>
     {
         private readonly IConnectionMultiplexer _redis;
 
@@ -15,13 +15,13 @@ namespace OneID.Application.QueryHandlers.ActiveSessions
             _redis = redis;
         }
 
-        public async Task<List<SessionTelemetry>> Handle(GetActiveSessionsQuery query, CancellationToken cancellationToken)
+        public async Task<List<ActiveSessionInfo>> Handle(GetActiveSessionsQuery query, CancellationToken cancellationToken)
         {
             var db = _redis.GetDatabase();
             var server = _redis.GetServer(_redis.GetEndPoints().First());
             var keys = server.Keys(pattern: "session:*").ToArray();
 
-            var sessions = new List<SessionTelemetry>();
+            var sessions = new List<ActiveSessionInfo>();
 
             foreach (var key in keys)
             {
@@ -29,7 +29,7 @@ namespace OneID.Application.QueryHandlers.ActiveSessions
                 if (!json.HasValue)
                     continue;
 
-                var session = JsonConvert.DeserializeObject<SessionTelemetry>(json!);
+                var session = JsonConvert.DeserializeObject<ActiveSessionInfo>(json!);
                 if (session is not null)
                     sessions.Add(session);
             }
