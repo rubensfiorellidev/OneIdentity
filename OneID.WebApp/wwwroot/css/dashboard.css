@@ -110,7 +110,7 @@ body {
 
 .grid-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr 4fr;
+    grid-template-columns: 4fr 1fr 2fr;
     gap: 1rem 1.2rem;
     width: 100%;
     padding: 0 1rem;

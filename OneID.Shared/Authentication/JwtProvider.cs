@@ -87,7 +87,10 @@ namespace OneID.Shared.Authentication
         public async Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(Guid keycloakUserId,
                                                          string preferredUsername = null,
                                                          string email = null,
-                                                         string name = null)
+                                                         string name = null,
+                                                         string circuitId = null,
+                                                         string ipAddress = null,
+                                                         string userAgent = null)
         {
             var handler = new JsonWebTokenHandler();
             RsaSecurityKey key = GetRSAKey();
@@ -102,9 +105,9 @@ namespace OneID.Shared.Authentication
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             var httpContext = _httpContextAccessor.HttpContext;
-            var ipAddress = GetClientIpAddress(httpContext);
-            var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
-            var circuitId = httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
+            ipAddress ??= GetClientIpAddress(httpContext);
+            userAgent ??= httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
+            circuitId ??= httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
 
             await using var db = _contextFactory.CreateDbContext();
 
@@ -155,7 +158,8 @@ namespace OneID.Shared.Authentication
                 user.LoginHash,
                 jti,
                 ipAddress,
-                userAgent
+                userAgent,
+                circuitId
             );
 
             await _sender.Send(new RegisterSessionCommand
@@ -452,12 +456,18 @@ namespace OneID.Shared.Authentication
             foreach (var item in excess)
                 PatchRevoked(db, item);
 
+            var circuitId = existing.CircuitId ?? httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
+
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 user.Login,
                 user.CorporateEmail,
-                user.FullName
+                user.FullName,
+                circuitId,
+                ipAddress,
+                userAgent
             );
+
 
             await db.SaveChangesAsync();
 
