@@ -13,6 +13,8 @@ using OneID.Application.Queries.Auth;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
+using OneID.Domain.OpenTelemetryEntity;
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
@@ -73,17 +75,27 @@ namespace OneID.Api.Controllers
         [HttpPost("bootstrap-token")]
         public IActionResult GenerateBootstrapToken(Guid correlationId)
         {
+            using var activity = Telemetry.Source.StartActivity(
+                "Geração de token bootstrap",
+                ActivityKind.Server);
+
+            activity?.SetTag("rota", "v1/auth/bootstrap-token");
+            activity?.SetTag("method", "POST");
+            activity?.SetTag("correlation_id", correlationId.ToString());
+            activity?.SetTag("bootstrap.iniciado_em", DateTimeOffset.UtcNow);
+
             if (correlationId == Guid.Empty)
+            {
+                activity?.SetTag("erro", "correlation_id_invalido");
                 return BadRequest("correlationId inválido.");
+            }
 
-            var username = User.Identity?.Name
-                        ?? User.FindFirst("preferred_username")?.Value
-                        ?? User.FindFirst(JwtClaims.Sub)?.Value
-                        ?? "unknown";
+            var token = _jwtProvider.GenerateBootstrapToken("bootstrap_user", correlationId);
 
-            var token = _jwtProvider.GenerateBootstrapToken(username, correlationId);
+            _logger.LogInformation("Bootstrap token gerado com correlationId {CorrelationId}", correlationId);
 
-            _logger.LogInformation("Bootstrap token gerado para {Username} com correlationId {CorrelationId}", username, correlationId);
+            activity?.SetTag("bootstrap.sucesso", true);
+            activity?.SetTag("bootstrap.finalizado_em", DateTimeOffset.UtcNow);
 
             return Ok(new { token });
         }
@@ -92,6 +104,10 @@ namespace OneID.Api.Controllers
         [HttpPost("request-token")]
         public async Task<IActionResult> RequestTokenAsync([FromBody] AuthRequest request)
         {
+            using var activity = Telemetry.Source.StartActivity(
+                "TOTP request para acessar o login",
+                ActivityKind.Server);
+
             if (!_totpService.ValidateCode(request.TotpCode))
             {
                 _logger.LogWarning("TOTP inválido");
@@ -108,6 +124,14 @@ namespace OneID.Api.Controllers
         [Authorize(AuthenticationSchemes = "RequestToken")]
         public async Task<IActionResult> LoginAsync(LoginRequest request)
         {
+            using var activity = Telemetry.Source.StartActivity(
+                "Login do usuário via token de requisição",
+                ActivityKind.Server);
+
+            activity?.SetTag("rota", "v1/auth/login");
+            activity?.SetTag("method", "POST");
+            activity?.SetTag("login.iniciado_em", DateTimeOffset.UtcNow);
+
             var token = Request.Headers.Authorization.ToString();
             if (string.IsNullOrWhiteSpace(token) || !token.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
@@ -119,18 +143,32 @@ namespace OneID.Api.Controllers
             }
 
             if (string.IsNullOrWhiteSpace(token))
+            {
+                activity?.SetTag("erro", "token_ausente");
                 return Unauthorized("Token ausente. Tente novamente após confirmar o TOTP.");
+            }
 
             if (!_jwtProvider.ValidateTokenForLogin(token, "bootstrap_token", "token_request_only"))
+            {
+                activity?.SetTag("erro", "token_invalido_ou_expirado");
                 return Unauthorized("Token de requisição inválido ou expirado.");
+            }
 
             var accessScope = _currentUser.GetClaim("access_scope");
+            activity?.SetTag("access_scope", accessScope);
+
             if (accessScope is not ("token_request_only" or "bootstrap_token"))
+            {
+                activity?.SetTag("erro", "token_nao_autorizado");
                 return Forbid("Token não autorizado para login.");
+            }
 
             var keycloakToken = await _authService.AuthenticateAsync(request.Login, request.Password);
             if (keycloakToken == null)
+            {
+                activity?.SetTag("erro", "keycloak_falhou");
                 return Unauthorized("Login ou senha inválidos.");
+            }
 
             var handler = new JwtSecurityTokenHandler();
             var jwt = handler.ReadJwtToken(keycloakToken.AccessToken);
@@ -140,15 +178,30 @@ namespace OneID.Api.Controllers
             var email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value;
             var name = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value;
 
-            if (string.IsNullOrWhiteSpace(keycloakUserId))
+            if (!string.IsNullOrWhiteSpace(preferredUsername))
+                activity?.SetTag("usuario.username", preferredUsername);
+
+            if (!string.IsNullOrWhiteSpace(email))
+                activity?.SetTag("usuario.email", email);
+
+            if (!string.IsNullOrWhiteSpace(keycloakUserId))
+                activity?.SetTag("usuario.keycloak_user_id", keycloakUserId);
+            else
+            {
+                activity?.SetTag("erro", "sub_nao_encontrado");
                 return Unauthorized("Token inválido. Sub não encontrado.");
+            }
 
             var loginHash = await _hashService.ComputeSha3HashAsync(request.Login);
+            activity?.SetTag("usuario.login_hash", loginHash);
 
             await using var db = _contextFactory.CreateDbContext();
 
             if (!Guid.TryParse(keycloakUserId, out var parsedId))
+            {
+                activity?.SetTag("erro", "keycloak_id_invalido");
                 throw new InvalidOperationException("KeycloakUserId inválido.");
+            }
 
             var user = await db.UserAccounts
                 .Where(u => u.KeycloakUserId == parsedId)
@@ -156,7 +209,10 @@ namespace OneID.Api.Controllers
                 .FirstOrDefaultAsync();
 
             if (user is null)
+            {
+                activity?.SetTag("erro", "usuario_nao_registrado");
                 return Unauthorized("Usuário autenticado, mas não registrado no sistema.");
+            }
 
             var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
@@ -165,8 +221,10 @@ namespace OneID.Api.Controllers
                 name
             );
 
-
             SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken);
+
+            activity?.SetTag("login.sucesso", true);
+            activity?.SetTag("login.finalizado_em", DateTimeOffset.UtcNow);
 
             return Ok(new
             {
@@ -179,12 +237,19 @@ namespace OneID.Api.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RefreshTokenAsync()
         {
+            using var activity = Telemetry.Source.StartActivity(
+                "Refresh do token de acesso",
+                ActivityKind.Server);
+
+            activity?.SetTag("rota", "v1/auth/refresh-token");
+            activity?.SetTag("method", "POST");
+            activity?.SetTag("refresh.iniciado_em", DateTimeOffset.UtcNow);
+
             _logger.LogInformation("Token de refresh solicitado às {Now}", DateTimeOffset.Now);
 
-            _logger.LogInformation("Cookies recebidos:");
             foreach (var cookie in Request.Cookies)
             {
-                _logger.LogInformation("{Key} = {Value}", cookie.Key, cookie.Value);
+                _logger.LogInformation("Cookie recebido: {Key} = {Value}", cookie.Key, cookie.Value);
             }
 
             var refreshToken = Request.Cookies["refresh_token"];
@@ -200,28 +265,36 @@ namespace OneID.Api.Controllers
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
+                activity?.SetTag("erro", "refresh_token_ausente");
                 _logger.LogWarning("Refresh token ausente.");
                 return Unauthorized("Refresh token inválido.");
             }
 
+            activity?.SetTag("refresh_token.recebido", true);
+
             var refreshInfo = await _refreshTokenService.GetRefreshTokenAsync(refreshToken);
             if (refreshInfo is null)
             {
+                activity?.SetTag("erro", "refresh_token_nao_encontrado");
                 _logger.LogWarning("Refresh token não encontrado.");
                 return Unauthorized("Refresh token inválido.");
             }
 
-            var userUpnHash = refreshInfo.UserUpnHash;
+            activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
 
-            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(userUpnHash, refreshToken);
+            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken);
 
             if (!success)
             {
+                activity?.SetTag("erro", "refresh_token_expirado_ou_invalido");
                 _logger.LogWarning("Falha no refresh. Token inválido ou expirado.");
                 return Unauthorized("Refresh token inválido ou expirado.");
             }
 
             SetAuthCookies(newJwt, newRefresh);
+
+            activity?.SetTag("refresh.sucesso", true);
+            activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
 
             return Ok(new
             {

@@ -25,6 +25,11 @@ using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Interfaces;
 using OneID.Shared.Authentication;
 using OneID.Shared.Services;
+using OpenTelemetry;
+using OpenTelemetry.Exporter;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -80,7 +85,8 @@ namespace OneID.Shared
         public static IServiceCollection AddApiPipelineConfiguration(this IServiceCollection services)
         {
             services.AddMemoryCache();
-
+            services.AddHttpClient();
+            services.AddControllers();
             services.AddHttpContextAccessor();
 
             services
@@ -336,6 +342,39 @@ namespace OneID.Shared
         }
         #endregion
 
+        #region OpenTelemetry
+        public static IServiceCollection AddOpenTelemetry(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+        {
+            var serviceName = configuration["OpenTelemetry:ServiceName"] ?? environment.ApplicationName ?? "oneid-api";
+            var environmentName = configuration["OpenTelemetry:Environment"] ?? environment.EnvironmentName ?? "development";
+
+            services.AddOpenTelemetry()
+                .ConfigureResource(resource => resource
+                    .AddService(serviceName)
+                    .AddAttributes([
+                        new KeyValuePair<string, object>("deployment.environment", environmentName),
+                        new KeyValuePair<string, object>("service.namespace", configuration["OpenTelemetry:ServiceNamespace"])
+                    ]))
+                .WithTracing(tracer => tracer
+                    .SetSampler(new AlwaysOnSampler())
+                    .AddSource("oneid-auth")
+                    .AddSource("oneid-auto")
+                    .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddOtlpExporter(opt =>
+                    {
+                        opt.Endpoint = new Uri(configuration["OpenTelemetry:Endpoint"]);
+                        opt.Headers = configuration["OpenTelemetry:Headers"];
+                        opt.Protocol = OtlpExportProtocol.HttpProtobuf;
+                        opt.ExportProcessorType = ExportProcessorType.Simple;
+                    })
+                );
+
+            return services;
+        }
+        #endregion
+
 
     }
+
 }

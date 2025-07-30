@@ -1,6 +1,7 @@
-using Microsoft.AspNetCore.Server.Kestrel.Core;
+﻿using Microsoft.AspNetCore.Server.Kestrel.Core;
 using OneID.Application;
 using OneID.Data;
+using OneID.Domain.Abstractions.MiddlewareTracings;
 using OneID.Messaging;
 using OneID.Shared;
 using OneID.Shared.Tools;
@@ -11,6 +12,13 @@ using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 var environment = builder.Environment.EnvironmentName;
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.With<ActivityEnricher>()
+    .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level:u3}] [TraceId:{TraceId} SpanId:{SpanId}] {Message:lj}{NewLine}{Exception}")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
@@ -59,7 +67,8 @@ builder.Services
     .AddRabbitSetup(builder.Configuration, builder.Environment)
     .AddJwtAuthentication(builder.Configuration)
     .AddApiPipelineConfiguration()
-    .AddRedis(builder.Configuration);
+    .AddRedis(builder.Configuration)
+    .AddOpenTelemetry(builder.Configuration, builder.Environment);
 
 
 builder.Services.AddControllers(options =>
@@ -87,7 +96,12 @@ builder.Services.AddHsts(options =>
     options.IncludeSubDomains = true;
 });
 
-
+builder.Logging.AddOpenTelemetry(options =>
+{
+    options.IncludeScopes = true;
+    options.ParseStateValues = true;
+    options.IncludeFormattedMessage = true;
+});
 
 var app = builder.Build();
 
@@ -152,7 +166,9 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+app.UseMiddleware<TracingMiddleware>();
 app.MapControllers();
+
 
 app.Run();
 Log.CloseAndFlush();
