@@ -51,6 +51,11 @@ namespace OneID.Data.Mappings
             builder.Property(x => x.UserAgent)
                 .HasColumnType("VARCHAR")
                 .HasMaxLength(1000);
+
+            builder.Property(x => x.CircuitId)
+                .HasColumnType("VARCHAR")
+                .HasMaxLength(50);
+
         }
     }
 }

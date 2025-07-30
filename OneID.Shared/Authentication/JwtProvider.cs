@@ -104,6 +104,7 @@ namespace OneID.Shared.Authentication
             var httpContext = _httpContextAccessor.HttpContext;
             var ipAddress = GetClientIpAddress(httpContext);
             var userAgent = httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
+            var circuitId = httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
 
             await using var db = _contextFactory.CreateDbContext();
 
@@ -121,7 +122,8 @@ namespace OneID.Shared.Authentication
                 new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
                 new("ip", ipAddress),
                 new("user_agent", userAgent),
-                new("account_id", $"ONE-{userId.ToUpper()}")
+                new("account_id", $"ONE-{userId.ToUpper()}"),
+                new("circuit_id", user.Id.ToString())
 
             };
 
@@ -158,7 +160,7 @@ namespace OneID.Shared.Authentication
 
             await _sender.Send(new RegisterSessionCommand
             {
-                CircuitId = user.Id.ToString(),
+                CircuitId = circuitId,
                 IpAddress = ipAddress,
                 UpnOrName = name ?? email ?? preferredUsername ?? user.Id,
                 UserAgent = userAgent,
@@ -258,14 +260,21 @@ namespace OneID.Shared.Authentication
             if (httpContext.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
             {
                 var ipAddresses = forwardedFor.ToString().Split(',');
-                if (ipAddresses.Length > 0)
+                if (ipAddresses.Length > 0 && !string.IsNullOrWhiteSpace(ipAddresses[0]))
                 {
-                    return ipAddresses[0];
+                    return ipAddresses[0].Trim();
                 }
             }
 
-            return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+            var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+
+            return remoteIp switch
+            {
+                "::1" or null => "127.0.0.1",
+                _ => remoteIp
+            };
         }
+
         public string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor)
         {
             var handler = new JsonWebTokenHandler();
@@ -394,6 +403,7 @@ namespace OneID.Shared.Authentication
             var ipAddress = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "::1";
             var userAgent = httpContext?.Request?.Headers.UserAgent.ToString() ?? "unknown";
 
+
             var tokenCandidates = await db.RefreshWebTokens
                 .Where(x =>
                     x.UserUpnHash == userUpnHash &&
@@ -511,6 +521,7 @@ namespace OneID.Shared.Authentication
             entry.Property(x => x.IsRevoked).CurrentValue = true;
             entry.Property(x => x.IsRevoked).IsModified = true;
         }
+
 
     }
 

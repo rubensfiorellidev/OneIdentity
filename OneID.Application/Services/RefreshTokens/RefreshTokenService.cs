@@ -26,7 +26,8 @@ namespace OneID.Application.Services.RefreshTokens
         public async Task<RefreshWebToken> GenerateRefreshTokenAsync(string userUpnHash,
                                                                      string jti,
                                                                      string ip = null,
-                                                                     string userAgent = null)
+                                                                     string userAgent = null,
+                                                                     string circuitId = null)
         {
 
             var rawToken = _tokenGenerator.Generate();
@@ -51,7 +52,8 @@ namespace OneID.Application.Services.RefreshTokens
                 false,
                 false,
                 userAgent,
-                ipAddress: ip
+                ipAddress: ip,
+                circuitId: circuitId
             );
 
             await _repository.AddAsync(refreshToken);

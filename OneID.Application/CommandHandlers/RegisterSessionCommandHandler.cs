@@ -34,7 +34,7 @@ namespace OneID.Application.CommandHandlers
             );
 
             var key = $"session:{command.CircuitId}";
-            var ttl = session.ExpiresAt - session.LastActivity;
+            var ttl = TimeSpan.FromHours(18);
 
             await _redis.SetAsync(key, session, ttl);
 

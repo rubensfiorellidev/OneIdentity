@@ -25,14 +25,15 @@ public class LoginModel : PageModel
 
         using var handler = new HttpClientHandler
         {
-            UseCookies = true, // permite receber e armazenar cookies
+            UseCookies = true,
             CookieContainer = new CookieContainer()
         };
 
         using var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", requestToken);
-
         var payload = new { login = Username, password = Password };
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", requestToken);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(Request.Headers.UserAgent.ToString());
+
         var response = await client.PostAsJsonAsync("https://localhost:7200/v1/auth/login", payload);
 
         if (!response.IsSuccessStatusCode)

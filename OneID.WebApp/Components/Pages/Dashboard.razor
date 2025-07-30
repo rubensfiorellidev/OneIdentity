@@ -181,9 +181,36 @@
                 {
                     <li style="margin-bottom: 0.8rem;">
                         <div style="display: flex; flex-direction: column;">
-                            <strong>@user.UpnOrName</strong>
-                            <span class="muted">@user.IpAddress</span>
-                            <span class="muted">Última atividade: @user.LastActivity.ToLocalTime():HH:mm:ss</span>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="
+                                    display: inline-block;
+                                    width: 10px;
+                                    height: 10px;
+                                    border-radius: 50%;
+                                    background-color: #00c853;
+                                    box-shadow: 0 0 4px #00c853;
+                                "></span>
+                                <strong>@user.UpnOrName</strong>
+                                @if (user.IsExpiringSoon)
+                                {
+                                    <span style="
+                                        background-color: #ff4d4f;
+                                        color: white;
+                                        padding: 0.1rem 0.5rem;
+                                        border-radius: 1rem;
+                                        font-size: 0.7rem;
+                                        font-weight: 500;
+                                    ">
+                                        Expirando
+                                    </span>
+                                }
+                            </div>
+                            <span class="muted">Endereço IP: @user.IpAddress</span>
+                            <span class="muted">
+                                Última atividade: @user.LastActivity.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
+                            </span>
+                            <span class="muted">Token expira em: @FormatRemainingTime(user.TimeToExpire)</span>
+                            <span class="muted"> @ParseUserAgent(user.UserAgent)</span>
                         </div>
                     </li>
                 }
@@ -446,8 +473,6 @@
         }
     }
 
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -672,13 +697,62 @@
         return sb.ToString();
     }
 
+    private string FormatTimeSmart(DateTime timestamp)
+    {
+        var localTime = timestamp.ToLocalTime();
+        var diff = DateTime.Now - localTime;
+
+        if (diff.TotalSeconds < 60)
+            return $"há {diff.Seconds} segundos";
+        if (diff.TotalMinutes < 60)
+            return $"há {diff.Minutes} minutos";
+        if (diff.TotalHours < 12)
+            return $"há {diff.Hours} horas";
+
+        return localTime.ToString("dd/MM/yyyy 'às' HH:mm");
+    }
+
+    private static string ParseUserAgent(string userAgent)
+    {
+        if (string.IsNullOrWhiteSpace(userAgent)) return "Navegador desconhecido";
+
+        if (userAgent.Contains("Firefox", StringComparison.OrdinalIgnoreCase))
+            return "Firefox";
+        if (userAgent.Contains("Chrome", StringComparison.OrdinalIgnoreCase))
+            return "Chrome";
+        if (userAgent.Contains("Safari", StringComparison.OrdinalIgnoreCase) && !userAgent.Contains("Chrome"))
+            return "Safari";
+        if (userAgent.Contains("Edg", StringComparison.OrdinalIgnoreCase))
+            return "Edge";
+        if (userAgent.Contains("Windows", StringComparison.OrdinalIgnoreCase))
+            return "Windows";
+        if (userAgent.Contains("Linux", StringComparison.OrdinalIgnoreCase))
+            return "Linux";
+        if (userAgent.Contains("Macintosh", StringComparison.OrdinalIgnoreCase))
+            return "macOS";
+
+        return "Navegador desconhecido";
+    }
+
+    private string FormatRemainingTime(TimeSpan timeLeft)
+    {
+        if (timeLeft.TotalSeconds <= 0)
+            return "expirado";
+
+        return $"{(int)timeLeft.TotalMinutes}min {timeLeft.Seconds}s";
+    }
+
     public record ActiveSessionInfo(
     string CircuitId,
     string IpAddress,
     string UpnOrName,
+    string UserAgent,
     DateTime LastActivity,
     DateTime ExpiresAt
-    );
-
+    )
+    {
+        public TimeSpan TimeToExpire => ExpiresAt - DateTime.Now;
+        public bool IsExpiringSoon => TimeToExpire < TimeSpan.FromMinutes(1);
+    }
 
 }

@@ -8,6 +8,7 @@
         public string UserAgent { get; }
         public DateTimeOffset LastActivity { get; }
         public DateTimeOffset ExpiresAt { get; }
+        public TimeSpan TimeToExpire => ExpiresAt - DateTimeOffset.UtcNow;
 
         public ActiveSessionInfo(
             string circuitId,
@@ -24,6 +25,8 @@
             LastActivity = lastActivity;
             ExpiresAt = expiresAt;
         }
+
+
     }
 
 

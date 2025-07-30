@@ -19,7 +19,8 @@ namespace OneID.Domain.Entities.JwtWebTokens
             bool isRevoked,
             bool isUsed,
             string userAgent,
-            string ipAddress)
+            string ipAddress,
+            string circuitId)
         {
             Id = Ulid.NewUlid().ToString();
             UserUpnHash = userUpnHash;
@@ -32,6 +33,7 @@ namespace OneID.Domain.Entities.JwtWebTokens
             IsUsed = isUsed;
             UserAgent = userAgent;
             IpAddress = ipAddress;
+            CircuitId = circuitId;
         }
 
         public string Id { get; init; }
@@ -45,5 +47,6 @@ namespace OneID.Domain.Entities.JwtWebTokens
         public bool IsUsed { get; init; }
         public string UserAgent { get; init; }
         public string IpAddress { get; init; }
+        public string CircuitId { get; init; }
     }
 }
