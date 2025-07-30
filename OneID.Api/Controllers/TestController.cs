@@ -1,7 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
-using OneID.Application.DTOs.ActiveSessions;
-using OneID.Application.Interfaces.CQRS;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Interfaces.SES;
 using StackExchange.Redis;
 
@@ -15,7 +13,7 @@ namespace OneID.Api.Controllers
         private readonly ISesEmailSender _emailSender;
         private readonly IConnectionMultiplexer _redis;
 
-        public TestController(ISender dispatcher, ISesEmailSender emailSender, IConnectionMultiplexer redis) : base(dispatcher)
+        public TestController(ISender sender, ISesEmailSender emailSender, IConnectionMultiplexer redis) : base(sender)
         {
             _emailSender = emailSender;
             _redis = redis;
@@ -44,28 +42,28 @@ namespace OneID.Api.Controllers
             return Ok($"Redis respondeu em {pong.TotalMilliseconds}ms");
         }
 
-        [HttpPost("seed-session")]
-        public async Task<IActionResult> SeedSession()
-        {
-            var db = _redis.GetDatabase();
+        //[HttpPost("seed-session")]
+        //public async Task<IActionResult> SeedSession()
+        //{
+        //    var db = _redis.GetDatabase();
 
-            var now = DateTime.UtcNow;
-            var sessions = new List<ActiveSessionInfo>
-            {
-                new(Ulid.NewUlid().ToString(), "192.168.0.1", "rubens@oneid.cloud", now, now.AddMinutes(15)),
-                new(Ulid.NewUlid().ToString(), "192.168.0.2", "maria@oneid.cloud", now.AddMinutes(-2), now.AddMinutes(10)),
-                new(Ulid.NewUlid().ToString(), "192.168.0.3", "carlos@oneid.cloud", now.AddMinutes(-5), now.AddMinutes(5))
-            };
+        //    var now = DateTime.UtcNow;
+        //    var sessions = new List<ActiveSessionInfo>
+        //    {
+        //        new(Ulid.NewUlid().ToString(), "192.168.0.1", "rubens@oneid.cloud", now, now.AddMinutes(15)),
+        //        new(Ulid.NewUlid().ToString(), "192.168.0.2", "maria@oneid.cloud", now.AddMinutes(-2), now.AddMinutes(10)),
+        //        new(Ulid.NewUlid().ToString(), "192.168.0.3", "carlos@oneid.cloud", now.AddMinutes(-5), now.AddMinutes(5))
+        //    };
 
-            foreach (var session in sessions)
-            {
-                var key = $"session:{session.CircuitId}";
-                var value = JsonConvert.SerializeObject(session);
-                await db.StringSetAsync(key, value, TimeSpan.FromMinutes(20));
-            }
+        //    foreach (var session in sessions)
+        //    {
+        //        var key = $"session:{session.CircuitId}";
+        //        var value = JsonConvert.SerializeObject(session);
+        //        await db.StringSetAsync(key, value, TimeSpan.FromMinutes(20));
+        //    }
 
-            return Ok("3 mock sessions criadas com sucesso.");
-        }
+        //    return Ok("3 mock sessions criadas com sucesso.");
+        //}
 
 
     }

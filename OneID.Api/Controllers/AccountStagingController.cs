@@ -1,6 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OneID.Application.DTOs.Admission;
-using OneID.Application.Interfaces.CQRS;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Queries.AdmissionQueries;
 
 namespace OneID.Api.Controllers
@@ -8,11 +7,9 @@ namespace OneID.Api.Controllers
     [Route("v1/pendings")]
     public class AccountStagingController : MainController
     {
-        private readonly IQueryExecutor _queryExecutor;
         private readonly ILogger<AccountStagingController> _logger;
-        public AccountStagingController(ISender send, IQueryExecutor queryDispatcher, ILogger<AccountStagingController> logger) : base(send)
+        public AccountStagingController(ISender sender, ILogger<AccountStagingController> logger) : base(sender)
         {
-            _queryExecutor = queryDispatcher;
             _logger = logger;
         }
 
@@ -20,8 +17,7 @@ namespace OneID.Api.Controllers
         public async Task<IActionResult> GetPendingsAsync(CancellationToken cancellationToken)
         {
             var query = new GetPendingStagingQuery();
-            var result = await _queryExecutor
-                .SendQueryAsync<GetPendingStagingQuery, List<PendingProcessDto>>(query, cancellationToken);
+            var result = await Sender.Send(query, cancellationToken);
 
             _logger.LogInformation("Query retornou {Count} processos pendentes", result?.Count ?? 0);
 

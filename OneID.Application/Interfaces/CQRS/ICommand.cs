@@ -1,10 +1,10 @@
-﻿using OneID.Domain.Interfaces;
+﻿using MediatR;
+using OneID.Domain.Interfaces;
 
 namespace OneID.Application.Interfaces.CQRS
 {
-    public interface ICommand : ICommand<IOperationResult> { }
+    public interface ICommand : IRequest<IOperationResult> { }
 
-    public interface ICommand<TResponse> { }
 
 
 }

@@ -1,13 +1,13 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using OneID.Application.Interfaces.CQRS;
 
 namespace OneID.Api.Controllers
 {
     [Route("v1/users")]
     public class UsersController : MainController
     {
-        public UsersController(ISender send) : base(send) { }
+        public UsersController(ISender sender) : base(sender) { }
 
         [Authorize]
         [HttpGet("all")]

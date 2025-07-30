@@ -1,9 +1,9 @@
 ﻿using MassTransit;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Commands;
 using OneID.Application.DTOs.Admission;
-using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
@@ -28,7 +28,6 @@ namespace OneID.Api.Controllers
         private readonly ITotpService _otpService;
         private readonly ICurrentUserService _currentUser;
         private readonly IJwtProvider _jwtProvider;
-        private readonly IQueryExecutor _queryExecutor;
 
 
         public AccountUserStagingController(
@@ -41,8 +40,7 @@ namespace OneID.Api.Controllers
             IBus bus,
             ITotpService otpService,
             ICurrentUserService currentUser,
-            IJwtProvider jwtProvider,
-            IQueryExecutor queryExecutor) : base(send)
+            IJwtProvider jwtProvider) : base(send)
         {
             _logger = logger;
             _hashService = hashService;
@@ -53,7 +51,6 @@ namespace OneID.Api.Controllers
             _otpService = otpService;
             _currentUser = currentUser;
             _jwtProvider = jwtProvider;
-            _queryExecutor = queryExecutor;
         }
 
         [HttpPost("start")]
@@ -90,7 +87,7 @@ namespace OneID.Api.Controllers
             var loggedUser = _currentUser.GetUsername();
 
             var stagingCommand = new CreateAccountStagingCommand(request with { CorrelationId = correlationId }, loggedUser);
-            var stagingResult = await Send.SendAsync(stagingCommand, cancellationToken);
+            var stagingResult = await Sender.Send(stagingCommand, cancellationToken);
 
             if (!stagingResult.IsSuccess)
                 return Problem(detail: stagingResult.Message, statusCode: stagingResult.HttpCode ?? 500);
@@ -200,8 +197,7 @@ namespace OneID.Api.Controllers
         public async Task<IActionResult> GetRecentAdmissionsAsync([FromQuery] int limit = 10, CancellationToken cancellationToken = default)
         {
             var query = new GetRecentAdmissionsQuery(limit);
-            var result = await _queryExecutor
-                .SendQueryAsync<GetRecentAdmissionsQuery, List<RecentAdmissionDto>>(query, cancellationToken);
+            var result = await Sender.Send(query, cancellationToken);
 
             _logger.LogInformation("Query retornou {Count} admissões recentes", result?.Count ?? 0);
 

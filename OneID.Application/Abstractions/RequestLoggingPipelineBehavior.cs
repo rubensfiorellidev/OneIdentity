@@ -1,40 +1,41 @@
-﻿using Microsoft.Extensions.Logging;
-using OneID.Application.Interfaces.CQRS;
+﻿using MediatR;
+using Microsoft.Extensions.Logging;
 using OneID.Domain.Interfaces;
+using Serilog.Context;
 
 namespace OneID.Application.Abstractions
 {
-    public class LoggingCommandHandlerDecorator<TCommand, TResponse> : ICommandHandler<TCommand, TResponse>
-        where TCommand : ICommand<TResponse>
+    public class RequestLoggingPipelineBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>
+        where TRequest : class where TResponse : IOperationResult
     {
-        private readonly ICommandHandler<TCommand, TResponse> _inner;
-        private readonly ILogger<LoggingCommandHandlerDecorator<TCommand, TResponse>> _logger;
-
-        public LoggingCommandHandlerDecorator(
-            ICommandHandler<TCommand, TResponse> inner,
-            ILogger<LoggingCommandHandlerDecorator<TCommand, TResponse>> logger)
+        private readonly ILogger<RequestLoggingPipelineBehavior<TRequest, TResponse>> _logger;
+        public RequestLoggingPipelineBehavior(ILogger<RequestLoggingPipelineBehavior<TRequest, TResponse>> logger)
         {
-            _inner = inner;
             _logger = logger;
         }
 
-        public async Task<TResponse> Handle(TCommand command, CancellationToken cancellationToken)
+        public async Task<TResponse> Handle(
+            TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
-            var commandName = typeof(TCommand).Name;
-            _logger.LogInformation("🔍 Executando comando: {CommandName}", commandName);
+            string requestName = typeof(TRequest).Name;
 
-            var response = await _inner.Handle(command, cancellationToken);
+            _logger.LogInformation("Processing request {RequestName}", requestName);
 
-            if (response is IOperationResult result)
+            TResponse response = await next();
+
+            if (response.IsSuccess)
             {
-                if (result.IsSuccess)
-                    _logger.LogInformation("✅ Comando {CommandName} finalizado com sucesso", commandName);
-                else
-                    _logger.LogWarning("⚠️ Comando {CommandName} falhou: {Message}", commandName, result.Message);
+                _logger.LogInformation("Completed request {RequestName}", requestName);
+            }
+            else
+            {
+                using (LogContext.PushProperty("Error", response.Message, true))
+                {
+                    _logger.LogError("Incompleted request {RequestName} with error", requestName);
+                }
             }
 
             return response;
         }
     }
-
 }

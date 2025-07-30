@@ -9,6 +9,7 @@ using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
 using OneID.Data.Interfaces;
+using OneID.Data.Redis;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.DeduplicationSagaContext;
 using OneID.Data.Repositories.RefreshTokens;
@@ -45,6 +46,8 @@ namespace OneID.Data
             services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
             services.AddScoped<IUserRoleWriterRepository, UserRoleWriterRepository>();
             services.AddScoped<IRoleWriterRepository, RoleWriterRepository>();
+            services.AddScoped<IRedisRepository, RedisRepository>();
+
 
 
 

@@ -1,9 +1,9 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OneID.Application.DTOs.Auth;
-using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
@@ -33,11 +33,10 @@ namespace OneID.Api.Controllers
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
         private readonly ICurrentUserService _currentUser;
         private readonly ITotpService _totpService;
-        private readonly IQueryExecutor _queryExecutor;
         private readonly IRefreshTokenService _refreshTokenService;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
-        public AuthController(ISender send,
+        public AuthController(ISender sender,
                               IJwtProvider jwtProvider,
                               ILogger<AuthController> logger,
                               IOneDbContextFactory contextFactory,
@@ -46,8 +45,7 @@ namespace OneID.Api.Controllers
                               ISensitiveDataDecryptionServiceUserAccount decryptionService,
                               ICurrentUserService currentUser,
                               ITotpService totpService,
-                              IQueryExecutor queryExecutor,
-                              IRefreshTokenService refreshTokenService) : base(send)
+                              IRefreshTokenService refreshTokenService) : base(sender)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
@@ -57,7 +55,6 @@ namespace OneID.Api.Controllers
             _decryptionService = decryptionService;
             _currentUser = currentUser;
             _totpService = totpService;
-            _queryExecutor = queryExecutor;
             _refreshTokenService = refreshTokenService;
         }
 
@@ -65,8 +62,8 @@ namespace OneID.Api.Controllers
         [Authorize]
         public async Task<IActionResult> Me(CancellationToken cancellationToken)
         {
-            var result = await _queryExecutor.SendQueryAsync<GetCurrentUserQuery, UserInfoResponse>(
-                new GetCurrentUserQuery(), cancellationToken);
+            var query = new GetCurrentUserQuery();
+            var result = await Sender.Send(query, cancellationToken);
 
             return Ok(result);
         }

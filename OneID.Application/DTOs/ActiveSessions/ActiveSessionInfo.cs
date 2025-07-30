@@ -1,11 +1,30 @@
 ﻿namespace OneID.Application.DTOs.ActiveSessions
 {
-    public record ActiveSessionInfo(
-    string CircuitId,
-    string IpAddress,
-    string UpnOrName,
-    DateTime LastActivity,
-    DateTime ExpiresAt
-    );
+    public record ActiveSessionInfo
+    {
+        public string CircuitId { get; }
+        public string IpAddress { get; }
+        public string UpnOrName { get; }
+        public string UserAgent { get; }
+        public DateTimeOffset LastActivity { get; }
+        public DateTimeOffset ExpiresAt { get; }
+
+        public ActiveSessionInfo(
+            string circuitId,
+            string ipAddress,
+            string upnOrName,
+            string userAgent,
+            DateTimeOffset lastActivity,
+            DateTimeOffset expiresAt)
+        {
+            CircuitId = circuitId;
+            IpAddress = ipAddress;
+            UpnOrName = upnOrName;
+            UserAgent = userAgent;
+            LastActivity = lastActivity;
+            ExpiresAt = expiresAt;
+        }
+    }
+
 
 }

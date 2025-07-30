@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using OneID.Application.Interfaces.CQRS;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 
 #nullable disable
 namespace OneID.Api.Controllers
@@ -7,8 +7,8 @@ namespace OneID.Api.Controllers
     [ApiController]
     public abstract class MainController : ControllerBase
     {
-        protected readonly ISender Send;
-        protected MainController(ISender send) => Send = send;
+        protected readonly ISender Sender;
+        protected MainController(ISender sender) => Sender = sender;
 
         protected IActionResult CreateResponse(int httpCode, string message, bool success, object result = null)
         {

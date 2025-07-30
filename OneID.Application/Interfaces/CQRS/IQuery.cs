@@ -1,4 +1,9 @@
-﻿namespace OneID.Application.Interfaces.CQRS
+﻿using MediatR;
+
+namespace OneID.Application.Interfaces.CQRS
 {
-    public interface IQuery<TResponse> { }
+    public interface IQuery<IOperationResult> : IRequest<IOperationResult>
+    {
+
+    }
 }

@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Commands;
 using OneID.Application.DTOs.Admission;
-using OneID.Application.Interfaces.CQRS;
 
 namespace OneID.Api.Controllers
 {
     [Route("v1/roles")]
     public class RolesController : MainController
     {
-        public RolesController(ISender send) : base(send) { }
+        public RolesController(ISender sender) : base(sender) { }
 
         [HttpPost]
         [Route("", Name = nameof(CreateRoleAsync))]
@@ -22,7 +22,7 @@ namespace OneID.Api.Controllers
                 CreatedBy: User.Identity?.Name ?? "unknown"
             );
 
-            var result = await Send.SendAsync(command, cancellationToken);
+            var result = await Sender.Send(command, cancellationToken);
 
             if (result.IsSuccess)
             {

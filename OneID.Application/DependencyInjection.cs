@@ -2,10 +2,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using OneID.Application.Abstractions;
 using OneID.Application.Builders;
 using OneID.Application.Interfaces.AesCryptoService;
 using OneID.Application.Interfaces.Builders;
-using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Graph;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.SensitiveData;
@@ -53,6 +53,12 @@ namespace OneID.Application
                 client.BaseAddress = new Uri($"{keycloak.BaseUrl.TrimEnd('/')}/");
             });
 
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssemblies(AppDomain.CurrentDomain.GetAssemblies());
+                cfg.AddOpenBehavior(typeof(RequestLoggingPipelineBehavior<,>));
+            });
+
 
             services.AddScoped<IUserLoginGenerator, UserLoginGenerator>();
             services.AddScoped<IKeycloakUserCreator, KeycloakUserCreator>();
@@ -66,7 +72,6 @@ namespace OneID.Application
             services.AddScoped<IUserAccountStagingBuilder, UserAccountStagingBuilder>();
             services.AddScoped<IAlertNotifier, AlertNotifier>();
             services.AddScoped<IAccessPackageClaimService, AccessPackageClaimService>();
-            services.AddScoped<ISender, Sender>();
             services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
             services.AddScoped<IAzureGraphUserSyncService, AzureGraphUserSyncService>();
             services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();

@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using MediatR;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using OneID.Application.Commands;
 using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
 using OneID.Data.DataContexts;
@@ -36,6 +38,7 @@ namespace OneID.Shared.Authentication
         private readonly IOneDbContextFactory _contextFactory;
         private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
         private readonly IHashService _hash;
+        private readonly ISender _sender;
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
@@ -43,7 +46,8 @@ namespace OneID.Shared.Authentication
                            ILogger<JwtProvider> logger,
                            IOneDbContextFactory contextFactory,
                            ISensitiveDataDecryptionServiceUserAccount decryptionService,
-                           IHashService hash)
+                           IHashService hash,
+                           ISender sender)
         {
             _jwtOptions = jwtOptions.Value;
             _refreshTokenService = refreshTokenService;
@@ -68,6 +72,7 @@ namespace OneID.Shared.Authentication
             _contextFactory = contextFactory;
             _decryptionService = decryptionService;
             _hash = hash;
+            _sender = sender;
         }
         public async Task<string> EnsureKeysAsync()
         {
@@ -150,6 +155,16 @@ namespace OneID.Shared.Authentication
                 ipAddress,
                 userAgent
             );
+
+            await _sender.Send(new RegisterSessionCommand
+            {
+                CircuitId = user.Id.ToString(),
+                IpAddress = ipAddress,
+                UpnOrName = name ?? email ?? preferredUsername ?? user.Id,
+                UserAgent = userAgent,
+                LastActivity = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
+            }, CancellationToken.None);
 
             return new AuthResult
             {

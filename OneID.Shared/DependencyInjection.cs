@@ -13,11 +13,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
-using OneID.Application.Abstractions;
-using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.SES;
-using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.SES;
 using OneID.Data.Redis;
@@ -34,6 +31,7 @@ using StackExchange.Redis;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Threading.RateLimiting;
+
 
 #nullable disable
 namespace OneID.Shared
@@ -57,25 +55,6 @@ namespace OneID.Shared
             services.Configure<SesSettings>(configuration.GetSection("SesSettings"));
             services.AddSingleton<ISesEmailSender, SesEmailSender>();
             services.AddScoped<ICurrentUserService, CurrentUserService>();
-
-            // Command handlers
-            services.Scan(scan => scan
-                .FromApplicationDependencies()
-                .AddClasses(classes => classes.AssignableTo(typeof(ICommandHandler<,>)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            // Query handlers
-            services.Scan(scan => scan
-                .FromApplicationDependencies()
-                .AddClasses(classes => classes.AssignableTo(typeof(IQueryHandler<,>)))
-                .AsImplementedInterfaces()
-                .WithScopedLifetime());
-
-            // Decorators e dispatchers
-            services.Decorate(typeof(ICommandHandler<,>), typeof(LoggingCommandHandlerDecorator<,>));
-            services.AddScoped<ISender, Sender>();
-            services.AddScoped<IQueryExecutor, QueryDispatcher>();
 
             return services;
         }
