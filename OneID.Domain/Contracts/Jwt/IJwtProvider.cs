@@ -19,7 +19,10 @@ namespace OneID.Domain.Contracts.Jwt
         public RsaSecurityKey GetPublicKey();
         IDictionary<string, object> DecodeToken(string token);
         bool ValidateTokenForLogin(string token, params string[] validScopes);
-        Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpn, string refreshToken);
+        Task<(string NewJwt, string NewRefresh, bool Success)> RefreshTokenAsync(
+            string userUpn,
+            string refreshToken,
+            string circuitId);
         string GenerateInitialRequestTokenAsync(string username, Guid correlationId);
         string GenerateUserAccessTokenAsync(string username, Guid correlationId);
         string GenerateBootstrapTokenAsync();

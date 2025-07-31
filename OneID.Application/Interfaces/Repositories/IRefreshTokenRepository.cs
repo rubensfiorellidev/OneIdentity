@@ -10,6 +10,7 @@ namespace OneID.Application.Interfaces.Repositories
         Task SaveChangesAsync();
         Task ApplyPatchAsync(string tokenId, Action<EntityEntry<RefreshWebToken>> patch);
         Task<List<RefreshWebToken>> GetAllValidTokensAsync();
+        Task PatchCircuitIdIfMissingAsync(string tokenId, string circuitId);
     }
 
 }

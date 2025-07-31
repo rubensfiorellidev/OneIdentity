@@ -92,6 +92,11 @@ namespace OneID.Application.Services.RefreshTokens
             }
         }
 
+        public async Task PatchCircuitIdIfMissingAsync(string tokenId, string circuitId)
+        {
+            await _repository.PatchCircuitIdIfMissingAsync(tokenId, circuitId);
+        }
+
         public async Task RevokeRefreshTokenAsync(string refreshToken)
         {
             var token = await GetRefreshTokenAsync(refreshToken);

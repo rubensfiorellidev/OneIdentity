@@ -8,6 +8,8 @@ namespace OneID.Domain.Interfaces
         Task<RefreshWebToken?> GetRefreshTokenAsync(string refreshToken);
         Task RevokeRefreshTokenAsync(string token);
         Task MarkRefreshTokenAsUsedAsync(string token);
+        Task PatchCircuitIdIfMissingAsync(string tokenId, string circuitId);
+
 
     }
 }

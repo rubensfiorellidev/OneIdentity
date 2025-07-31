@@ -401,7 +401,8 @@
     private string searchTerm = string.Empty;
     private Timer? debounceTimer;
     private Timer? sessionTimer;
-
+    private PeriodicTimer? _sessionTimer;
+    private CancellationTokenSource _sessionCts = new();
 
     private readonly Dictionary<string, string> searchRoutes = new(StringComparer.OrdinalIgnoreCase)
 {
@@ -448,6 +449,28 @@
     public record IamLog(string Actor, string Action, string Target, DateTime Timestamp);
     public record SecurityAlert(string Title, string Level, DateTime Timestamp);
     public record AdmissionAudit(string FirstName, string LastName, string EventName, string Description, DateTime ProvisioningDate);
+
+    protected override async Task OnInitializedAsync()
+    {
+        _sessionTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+
+        _ = Task.Run(async () =>
+        {
+            while (await _sessionTimer.WaitForNextTickAsync(_sessionCts.Token))
+            {
+                try
+                {
+                    await InvokeAsync(LoadActiveSessions);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Erro ao buscar sessões ativas: {ex.Message}");
+                }
+            }
+        });
+
+        await LoadActiveSessions(); 
+    }
 
     private async Task LoadActiveSessions()
     {
@@ -689,6 +712,9 @@
     {
         sessionTimer?.Dispose();
         debounceTimer?.Dispose();
+        _sessionCts.Cancel();
+        _sessionTimer?.Dispose();
+        _sessionCts.Dispose();
     }
 
     private static string NormalizeSearch(string input)

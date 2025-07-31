@@ -93,6 +93,11 @@ namespace OneID.Shared.Authentication
                                                          string ipAddress = null,
                                                          string userAgent = null)
         {
+
+            circuitId ??= _httpContextAccessor.HttpContext?.Request.Cookies["circuit_id"]
+                ?? _httpContextAccessor.HttpContext?.TraceIdentifier
+                ?? Ulid.NewUlid().ToString();
+
             var handler = new JsonWebTokenHandler();
             RsaSecurityKey key = GetRSAKey();
 
@@ -384,17 +389,16 @@ namespace OneID.Shared.Authentication
 
 
 
-        public async Task<(string Token, string RefreshToken, bool Success)> RefreshTokenAsync(string userUpnHash,
-                                                                                               string refreshToken)
+        public async Task<(string NewJwt, string NewRefresh, bool Success)> RefreshTokenAsync(
+            string userUpnHash,
+            string refreshToken,
+            string circuitId)
         {
             await using var db = _contextFactory.CreateDbContext();
 
             var httpContext = _httpContextAccessor.HttpContext;
             var ipAddress = GetClientIpAddress(httpContext);
-            var userAgent = httpContext?.Request?.Headers.UserAgent.FirstOrDefault();
-            if (string.IsNullOrWhiteSpace(userAgent))
-                userAgent = "unknown-client";
-
+            var userAgent = httpContext?.Request?.Headers.UserAgent.FirstOrDefault() ?? "unknown-client";
 
             var tokenCandidates = await db.RefreshWebTokens
                 .Where(x =>
@@ -430,11 +434,6 @@ namespace OneID.Shared.Authentication
 
             PatchUsed(db, existing);
 
-            var ativos = await db.RefreshWebTokens
-                .Where(t => t.UserUpnHash == userUpnHash && !t.IsUsed && !t.IsRevoked)
-                .OrderByDescending(t => t.CreatedAt)
-                .ToListAsync();
-
             var excess = await db.RefreshWebTokens
                 .Where(t => t.UserUpnHash == userUpnHash && !t.IsUsed && !t.IsRevoked)
                 .OrderByDescending(t => t.CreatedAt)
@@ -444,33 +443,32 @@ namespace OneID.Shared.Authentication
             foreach (var item in excess)
                 PatchRevoked(db, item);
 
-            var circuitId = existing.CircuitId ?? httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
+            var resolvedCircuitId = existing.CircuitId ?? circuitId ?? httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
+            await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, circuitId);
 
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 user.Login,
                 user.CorporateEmail,
                 user.FullName,
-                circuitId,
+                resolvedCircuitId,
                 ipAddress,
                 userAgent
             );
-
 
             await db.SaveChangesAsync();
 
             await _sender.Send(new RegisterSessionCommand
             {
-                CircuitId = existing.CircuitId ?? circuitId,
+                CircuitId = resolvedCircuitId,
                 IpAddress = ipAddress,
                 UpnOrName = user.FullName ?? user.CorporateEmail ?? user.Login,
                 UserAgent = userAgent,
-                LastActivity = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.Add(_jwtOptions.AccessTokenExpires)
+                LastActivity = DateTimeOffset.UtcNow,
+                ExpiresAt = DateTimeOffset.UtcNow.Add(_jwtOptions.AccessTokenExpires)
             });
 
-
-            return (authResult.Jwtoken, authResult.RefreshToken, true);
+            return (NewJwt: authResult.Jwtoken, NewRefresh: authResult.RefreshToken, Success: true);
         }
 
         private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)

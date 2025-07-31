@@ -247,6 +247,7 @@ namespace OneID.Api.Controllers
             });
 
             SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken,
+                           circuitId,
                            JwtDefaults.AccessTokenLifetime,
                            JwtDefaults.RefreshTokenLifetime);
 
@@ -309,7 +310,10 @@ namespace OneID.Api.Controllers
 
             activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
 
-            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken);
+            var circuitId = HttpContext.TraceIdentifier;
+
+            var (newJwt, newRefresh, success) =
+                await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken, circuitId);
 
             if (!success)
             {
@@ -319,6 +323,7 @@ namespace OneID.Api.Controllers
             }
 
             SetAuthCookies(newJwt, newRefresh,
+                           circuitId,
                            JwtDefaults.AccessTokenLifetime,
                            JwtDefaults.RefreshTokenLifetime);
 
@@ -346,7 +351,7 @@ namespace OneID.Api.Controllers
             return claims;
         }
 
-        private void SetAuthCookies(string accessToken, string refreshToken, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
+        private void SetAuthCookies(string accessToken, string refreshToken, string circuitId, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
         {
             Response.Cookies.Append("access_token", accessToken, new CookieOptions
             {
@@ -363,6 +368,15 @@ namespace OneID.Api.Controllers
                 SameSite = SameSiteMode.None,
                 Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
             });
+
+            Response.Cookies.Append("circuit_id", circuitId, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                MaxAge = TimeSpan.FromDays(7)
+            });
+
         }
 
     }

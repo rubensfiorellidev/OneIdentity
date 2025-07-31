@@ -10,7 +10,6 @@ namespace OneID.Data.Repositories.RefreshTokens
     public sealed class RefreshTokenRepository : IRefreshTokenRepository
     {
         private readonly IServiceProvider _serviceProvider;
-
         public RefreshTokenRepository(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -56,6 +55,25 @@ namespace OneID.Data.Repositories.RefreshTokens
                     !rt.IsRevoked &&
                     rt.ExpiresAt > DateTimeOffset.UtcNow)
                 .ToListAsync();
+        }
+
+        public async Task PatchCircuitIdIfMissingAsync(string tokenId, string circuitId)
+        {
+            var token = new RefreshWebToken(tokenId);
+            DbContext.Attach(token);
+
+            var entry = DbContext.Entry(token);
+
+            var current = await DbContext.RefreshWebTokens
+                .Where(t => t.Id == tokenId)
+                .Select(t => t.CircuitId)
+                .FirstOrDefaultAsync();
+
+            if (!string.IsNullOrWhiteSpace(current))
+                return;
+
+            entry.Property(x => x.CircuitId).CurrentValue = circuitId;
+            await DbContext.SaveChangesAsync();
         }
 
     }
