@@ -1,5 +1,4 @@
 ﻿using MediatR;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.Queries.ActiveSessions;
 
@@ -16,7 +15,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        //[Authorize]
         public async Task<IActionResult> GetSessions(CancellationToken ct)
         {
             var querySessions = new GetActiveSessionsQuery();

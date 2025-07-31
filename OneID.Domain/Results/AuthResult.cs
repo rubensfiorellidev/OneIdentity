@@ -4,6 +4,7 @@
     {
         public string? Jwtoken { get; set; }
         public string? RefreshToken { get; set; }
+        public string? CircuitId { get; set; }
         public bool Result { get; set; }
 
     }

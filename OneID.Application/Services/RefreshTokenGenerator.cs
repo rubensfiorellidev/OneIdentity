@@ -14,7 +14,6 @@ namespace OneID.Application.Services
 
             return ToBase64Url(randomBytes);
 
-            //return Base64UrlEncoder.Encode(randomBytes);
         }
 
         private static string ToBase64Url(byte[] bytes)

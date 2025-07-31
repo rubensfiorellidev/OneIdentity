@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OneID.Application.Commands;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
@@ -12,6 +13,7 @@ using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Queries.Auth;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
+using OneID.Domain.Helpers;
 using OneID.Domain.Interfaces;
 using OneID.Domain.OpenTelemetryEntity;
 using System.Diagnostics;
@@ -211,14 +213,42 @@ namespace OneID.Api.Controllers
                 return Unauthorized("Usuário autenticado, mas não registrado no sistema.");
             }
 
+            var httpContext = HttpContext;
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+            var circuitId = httpContext.TraceIdentifier ?? Ulid.NewUlid().ToString();
+
+
+            if (string.IsNullOrWhiteSpace(circuitId))
+            {
+                circuitId = httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
+            }
+
+
             var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 preferredUsername,
                 email,
-                name
+                name,
+                circuitId,
+                ip,
+                userAgent
             );
 
-            SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken);
+            await Sender.Send(new RegisterSessionCommand
+            {
+                CircuitId = circuitId,
+                IpAddress = ip,
+                UpnOrName = name ?? email ?? preferredUsername ?? user.Id,
+                UserAgent = userAgent,
+                LastActivity = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime)
+
+            });
+
+            SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken,
+                           JwtDefaults.AccessTokenLifetime,
+                           JwtDefaults.RefreshTokenLifetime);
 
             activity?.SetTag("login.sucesso", true);
             activity?.SetTag("login.finalizado_em", DateTimeOffset.UtcNow);
@@ -288,7 +318,9 @@ namespace OneID.Api.Controllers
                 return Unauthorized("Refresh token inválido ou expirado.");
             }
 
-            SetAuthCookies(newJwt, newRefresh);
+            SetAuthCookies(newJwt, newRefresh,
+                           JwtDefaults.AccessTokenLifetime,
+                           JwtDefaults.RefreshTokenLifetime);
 
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
@@ -314,14 +346,14 @@ namespace OneID.Api.Controllers
             return claims;
         }
 
-        private void SetAuthCookies(string accessToken, string refreshToken, int accessTokenMinutes = 10, int refreshTokenDays = 7)
+        private void SetAuthCookies(string accessToken, string refreshToken, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
         {
             Response.Cookies.Append("access_token", accessToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddMinutes(accessTokenMinutes)
+                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
             });
 
             Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
@@ -329,9 +361,8 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenDays)
+                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
             });
-
         }
 
     }

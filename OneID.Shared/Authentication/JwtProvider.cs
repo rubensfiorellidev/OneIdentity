@@ -13,6 +13,7 @@ using OneID.Data.DataContexts;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Entities.JwtWebTokens;
+using OneID.Domain.Helpers;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
@@ -104,11 +105,6 @@ namespace OneID.Shared.Authentication
 
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
-            var httpContext = _httpContextAccessor.HttpContext;
-            ipAddress ??= GetClientIpAddress(httpContext);
-            userAgent ??= httpContext?.Request.Headers.UserAgent.ToString() ?? "unknown";
-            circuitId ??= httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
-
             await using var db = _contextFactory.CreateDbContext();
 
             var user = await db.UserAccounts
@@ -126,7 +122,7 @@ namespace OneID.Shared.Authentication
                 new("ip", ipAddress),
                 new("user_agent", userAgent),
                 new("account_id", $"ONE-{userId.ToUpper()}"),
-                new("circuit_id", user.Id.ToString())
+                new("circuit_id", circuitId)
 
             };
 
@@ -147,7 +143,7 @@ namespace OneID.Shared.Authentication
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.AddMinutes(5),
+                Expires = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime),
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = signingCredentials
             };
@@ -161,16 +157,6 @@ namespace OneID.Shared.Authentication
                 userAgent,
                 circuitId
             );
-
-            await _sender.Send(new RegisterSessionCommand
-            {
-                CircuitId = circuitId,
-                IpAddress = ipAddress,
-                UpnOrName = name ?? email ?? preferredUsername ?? user.Id,
-                UserAgent = userAgent,
-                LastActivity = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(5)
-            }, CancellationToken.None);
 
             return new AuthResult
             {
@@ -404,8 +390,10 @@ namespace OneID.Shared.Authentication
             await using var db = _contextFactory.CreateDbContext();
 
             var httpContext = _httpContextAccessor.HttpContext;
-            var ipAddress = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "::1";
-            var userAgent = httpContext?.Request?.Headers.UserAgent.ToString() ?? "unknown";
+            var ipAddress = GetClientIpAddress(httpContext);
+            var userAgent = httpContext?.Request?.Headers.UserAgent.FirstOrDefault();
+            if (string.IsNullOrWhiteSpace(userAgent))
+                userAgent = "unknown-client";
 
 
             var tokenCandidates = await db.RefreshWebTokens
@@ -471,6 +459,17 @@ namespace OneID.Shared.Authentication
 
             await db.SaveChangesAsync();
 
+            await _sender.Send(new RegisterSessionCommand
+            {
+                CircuitId = existing.CircuitId ?? circuitId,
+                IpAddress = ipAddress,
+                UpnOrName = user.FullName ?? user.CorporateEmail ?? user.Login,
+                UserAgent = userAgent,
+                LastActivity = DateTime.UtcNow,
+                ExpiresAt = DateTime.UtcNow.Add(_jwtOptions.AccessTokenExpires)
+            });
+
+
             return (authResult.Jwtoken, authResult.RefreshToken, true);
         }
 
@@ -498,8 +497,10 @@ namespace OneID.Shared.Authentication
         {
             var httpContext = _httpContextAccessor.HttpContext;
 
-            var ip = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
-            var userAgent = httpContext?.Request?.Headers.UserAgent.ToString() ?? "unknown";
+            var ip = GetClientIpAddress(httpContext);
+            var userAgent = httpContext?.Request?.Headers.TryGetValue("User-Agent", out var ua) == true
+                ? ua.ToString()
+                : "unknown";
 
             var claims = new Dictionary<string, object>
             {

@@ -463,6 +463,16 @@
             if (response.IsSuccessStatusCode)
             {
                 var sessions = await response.Content.ReadFromJsonAsync<List<ActiveSessionInfo>>();
+
+                Console.WriteLine($"Sessões retornadas do backend: {sessions?.Count ?? 0}");
+                if (sessions is not null)
+                {
+                    foreach (var s in sessions)
+                    {
+                        Console.WriteLine($"→ Sessão: {s.CircuitId}, IP: {s.IpAddress}, UPN: {s.UpnOrName}");
+                    }
+                }
+
                 ActiveUsers = sessions ?? [];
                 StateHasChanged();
             }
@@ -486,6 +496,7 @@
         var handler = new JwtSecurityTokenHandler();
         try
         {
+
             var jwt = handler.ReadJwtToken(token);
             OperatorName = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "usuário";
             Email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? "não informado";

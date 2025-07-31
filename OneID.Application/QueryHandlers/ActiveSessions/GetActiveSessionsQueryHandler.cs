@@ -34,8 +34,10 @@ namespace OneID.Application.QueryHandlers.ActiveSessions
                     sessions.Add(session);
             }
 
+            var now = DateTimeOffset.UtcNow.AddSeconds(-5);
+
             var ordered = sessions
-                .Where(s => s.ExpiresAt > DateTime.UtcNow)
+                .Where(s => s.ExpiresAt > DateTimeOffset.UtcNow)
                 .OrderByDescending(s => s.LastActivity)
                 .ToList();
 
