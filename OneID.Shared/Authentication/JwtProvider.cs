@@ -19,6 +19,7 @@ using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -95,8 +96,8 @@ namespace OneID.Shared.Authentication
         {
 
             circuitId ??= _httpContextAccessor.HttpContext?.Request.Cookies["circuit_id"]
-                ?? _httpContextAccessor.HttpContext?.TraceIdentifier
-                ?? Ulid.NewUlid().ToString();
+                ?? GenerateCircuitId(preferredUsername ?? email ?? name ?? "anonymous");
+
 
             var handler = new JsonWebTokenHandler();
             RsaSecurityKey key = GetRSAKey();
@@ -529,6 +530,16 @@ namespace OneID.Shared.Authentication
             var entry = db.Entry(token);
             entry.Property(x => x.IsRevoked).CurrentValue = true;
             entry.Property(x => x.IsRevoked).IsModified = true;
+        }
+
+        private static string GenerateCircuitId(string userIdentifier)
+        {
+            var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss");
+            var raw = $"{userIdentifier}_{timestamp}";
+            using var sha = SHA256.Create();
+            var bytes = Encoding.UTF8.GetBytes(raw);
+            var hash = sha.ComputeHash(bytes);
+            return Convert.ToHexString(hash)[..16];
         }
 
 

@@ -351,7 +351,11 @@ namespace OneID.Api.Controllers
             return claims;
         }
 
-        private void SetAuthCookies(string accessToken, string refreshToken, string circuitId, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
+        private void SetAuthCookies(string accessToken,
+                                    string refreshToken,
+                                    string circuitId,
+                                    TimeSpan accessTokenLifetime,
+                                    TimeSpan refreshTokenLifetime)
         {
             Response.Cookies.Append("access_token", accessToken, new CookieOptions
             {

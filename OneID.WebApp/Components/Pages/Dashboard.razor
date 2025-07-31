@@ -191,25 +191,11 @@
                                     box-shadow: 0 0 4px #00c853;
                                 "></span>
                                 <strong>@user.UpnOrName</strong>
-                                @if (user.IsExpiringSoon)
-                                {
-                                    <span style="
-                                        background-color: #ff4d4f;
-                                        color: white;
-                                        padding: 0.1rem 0.5rem;
-                                        border-radius: 1rem;
-                                        font-size: 0.7rem;
-                                        font-weight: 500;
-                                    ">
-                                        Expirando
-                                    </span>
-                                }
                             </div>
                             <span class="muted">Endereço IP: @user.IpAddress</span>
                             <span class="muted">
                                 Última atividade: @user.LastActivity.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")
                             </span>
-                            <span class="muted">Token expira em: @FormatRemainingTime(user.TimeToExpire)</span>
                             <span class="muted"> @ParseUserAgent(user.UserAgent)</span>
                         </div>
                     </li>
@@ -452,22 +438,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _sessionTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
-
-        _ = Task.Run(async () =>
-        {
-            while (await _sessionTimer.WaitForNextTickAsync(_sessionCts.Token))
-            {
-                try
-                {
-                    await InvokeAsync(LoadActiveSessions);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Erro ao buscar sessões ativas: {ex.Message}");
-                }
-            }
-        });
 
         await LoadActiveSessions(); 
     }
@@ -543,12 +513,6 @@
         await LoadRecentAdmissions();
 
         await LoadActiveSessions();
-
-        sessionTimer = new Timer(async _ =>
-        {
-            await InvokeAsync(LoadActiveSessions);
-        }, null, TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
-
 
         LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
 
@@ -710,11 +674,7 @@
 
     public void Dispose()
     {
-        sessionTimer?.Dispose();
         debounceTimer?.Dispose();
-        _sessionCts.Cancel();
-        _sessionTimer?.Dispose();
-        _sessionCts.Dispose();
     }
 
     private static string NormalizeSearch(string input)
@@ -786,10 +746,6 @@
     string UserAgent,
     DateTime LastActivity,
     DateTime ExpiresAt
-    )
-    {
-        public TimeSpan TimeToExpire => ExpiresAt - DateTime.Now;
-        public bool IsExpiringSoon => TimeToExpire < TimeSpan.FromMinutes(1);
-    }
+    );
 
 }
