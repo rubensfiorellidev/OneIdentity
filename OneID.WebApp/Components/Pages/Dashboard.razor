@@ -386,9 +386,8 @@
     private bool showLauncher = false;
     private string searchTerm = string.Empty;
     private Timer? debounceTimer;
-    private Timer? sessionTimer;
-    private PeriodicTimer? _sessionTimer;
-    private CancellationTokenSource _sessionCts = new();
+    private bool _alreadyRanJsInterop;
+
 
     private readonly Dictionary<string, string> searchRoutes = new(StringComparer.OrdinalIgnoreCase)
 {
@@ -476,53 +475,56 @@
         }
     }
 
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender) return;
+        if (!firstRender || _alreadyRanJsInterop) return;
 
-        ExpandGrid = await JS.InvokeAsync<bool>("dashboardState.getExpandState");
+        _alreadyRanJsInterop = true;
 
-        var request = HttpContextAccessor.HttpContext?.Request;
-        var token = request?.Cookies["access_token"];
-        if (string.IsNullOrWhiteSpace(token)) return;
-
-        var handler = new JwtSecurityTokenHandler();
         try
         {
+            ExpandGrid = await JS.InvokeAsync<bool>("dashboardState.getExpandState");
 
+            var request = HttpContextAccessor.HttpContext?.Request;
+            var token = request?.Cookies["access_token"];
+            if (string.IsNullOrWhiteSpace(token)) return;
+
+            var handler = new JwtSecurityTokenHandler();
             var jwt = handler.ReadJwtToken(token);
             OperatorName = jwt.Claims.FirstOrDefault(c => c.Type == "name")?.Value ?? "usuário";
             Email = jwt.Claims.FirstOrDefault(c => c.Type == "email")?.Value ?? "não informado";
             AccountId = jwt.Claims.FirstOrDefault(c => c.Type == "account_id")?.Value ?? "desconhecido";
+
+            var client = HttpClientFactory.CreateClient("AuthenticatedClient");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.GetAsync("https://localhost:7200/v1/pendings");
+            if (response.IsSuccessStatusCode)
+            {
+                var list = await response.Content.ReadFromJsonAsync<List<PendingProcessDto>>();
+                PendingProcesses = list ?? [];
+            }
+
+            await LoadRecentAdmissions();
+            await LoadActiveSessions();
+
+            LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
+
+            await JS.InvokeVoidAsync("enableResize", "widget-pendentes");
+            await JS.InvokeVoidAsync("enableResize", "widget-status");
+            await JS.InvokeVoidAsync("enableResize", "widget-admissoes");
+
+            StateHasChanged();
         }
-        catch
+        catch (JSDisconnectedException jsEx)
         {
-            OperatorName = "erro ao ler token";
+            Console.WriteLine("Circuito desconectado antes do JS interop. Ignorado.");
         }
-
-        var client = HttpClientFactory.CreateClient("AuthenticatedClient");
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-        var response = await client.GetAsync("https://localhost:7200/v1/pendings");
-        if (response.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            var list = await response.Content.ReadFromJsonAsync<List<PendingProcessDto>>();
-            PendingProcesses = list ?? [];
+            Console.WriteLine($"Erro inesperado no OnAfterRender: {ex.Message}");
         }
-
-        await LoadRecentAdmissions();
-
-        await LoadActiveSessions();
-
-        LastChecked = DateTime.UtcNow.ToLocalTime().ToString("HH:mm:ss");
-
-        await JS.InvokeVoidAsync("enableResize", "widget-pendentes");
-        await JS.InvokeVoidAsync("enableResize", "widget-status");
-        await JS.InvokeVoidAsync("enableResize", "widget-admissoes");
-
-        StateHasChanged();
-
-
     }
 
     private void VerTodosUsuarios()

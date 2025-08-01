@@ -267,7 +267,8 @@ namespace OneID.Api.Controllers
         {
             using var activity = Telemetry.Source.StartActivity(
                 "Refresh do token de acesso",
-                ActivityKind.Server);
+                ActivityKind.Server
+            );
 
             activity?.SetTag("rota", "v1/auth/refresh-token");
             activity?.SetTag("method", "POST");

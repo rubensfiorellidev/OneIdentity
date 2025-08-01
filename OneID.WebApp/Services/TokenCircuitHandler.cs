@@ -47,6 +47,12 @@
                         var exp = DateTimeOffset.FromUnixTimeSeconds(expUnix);
                         var scheduledTime = exp.AddMinutes(-4);
 
+                        if (scheduledTime <= DateTimeOffset.UtcNow)
+                        {
+                            _logger.LogInformation("Token expira em {Exp}, mas o tempo de agendamento ({Scheduled}) já passou. Nenhum agendamento será feito.", exp, scheduledTime);
+                            return;
+                        }
+
                         _tokenStore.SetToken(circuit.Id, refreshToken, scheduledTime);
                         _logger.LogInformation("Token armazenado na memória para o circuito {CircuitId}, expira em {Expiration}", circuit.Id, exp);
 
