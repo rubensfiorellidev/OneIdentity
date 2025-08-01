@@ -95,8 +95,12 @@ namespace OneID.Shared.Authentication
                                                          string userAgent = null)
         {
 
-            circuitId ??= _httpContextAccessor.HttpContext?.Request.Cookies["circuit_id"]
-                ?? GenerateCircuitId(preferredUsername ?? email ?? name ?? "anonymous");
+            circuitId ??= GenerateCircuitId(preferredUsername ?? email ?? name ?? "anonymous");
+
+            ipAddress = NormalizeIp(ipAddress);
+
+            userAgent ??= _httpContextAccessor.HttpContext?.Request?.Headers.UserAgent.FirstOrDefault()
+                ?? "unknown-client";
 
 
             var handler = new JsonWebTokenHandler();
@@ -262,13 +266,11 @@ namespace OneID.Shared.Authentication
                 }
             }
 
-            var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString();
+            var remoteIp = httpContext.Connection.RemoteIpAddress?.ToString()?.Trim();
 
-            return remoteIp switch
-            {
-                "::1" or null => "127.0.0.1",
-                _ => remoteIp
-            };
+            return remoteIp is null || remoteIp == "::1"
+                ? "127.0.0.1"
+                : remoteIp;
         }
 
         public string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor)
@@ -462,7 +464,7 @@ namespace OneID.Shared.Authentication
             await _sender.Send(new RegisterSessionCommand
             {
                 CircuitId = resolvedCircuitId,
-                IpAddress = ipAddress,
+                IpAddress = GetClientIpAddress(_httpContextAccessor.HttpContext),
                 UpnOrName = user.FullName ?? user.CorporateEmail ?? user.Login,
                 UserAgent = userAgent,
                 LastActivity = DateTimeOffset.UtcNow,
@@ -536,12 +538,20 @@ namespace OneID.Shared.Authentication
         {
             var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss");
             var raw = $"{userIdentifier}_{timestamp}";
-            using var sha = SHA256.Create();
             var bytes = Encoding.UTF8.GetBytes(raw);
-            var hash = sha.ComputeHash(bytes);
+            var hash = SHA256.HashData(bytes);
             return Convert.ToHexString(hash)[..16];
         }
 
+        private string NormalizeIp(string ip)
+        {
+            if (string.IsNullOrWhiteSpace(ip) || ip == "::1")
+            {
+                return GetClientIpAddress(_httpContextAccessor.HttpContext);
+            }
+
+            return ip;
+        }
 
     }
 

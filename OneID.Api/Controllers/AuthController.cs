@@ -214,16 +214,9 @@ namespace OneID.Api.Controllers
             }
 
             var httpContext = HttpContext;
-            var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "::1";
+            var ip = GetClientIpAddress(httpContext);
             var userAgent = httpContext.Request.Headers.UserAgent.ToString();
             var circuitId = httpContext.TraceIdentifier ?? Ulid.NewUlid().ToString();
-
-
-            if (string.IsNullOrWhiteSpace(circuitId))
-            {
-                circuitId = httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
-            }
-
 
             var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
@@ -249,7 +242,8 @@ namespace OneID.Api.Controllers
             SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken,
                            circuitId,
                            JwtDefaults.AccessTokenLifetime,
-                           JwtDefaults.RefreshTokenLifetime);
+                           JwtDefaults.RefreshTokenLifetime
+            );
 
             activity?.SetTag("login.sucesso", true);
             activity?.SetTag("login.finalizado_em", DateTimeOffset.UtcNow);
@@ -262,7 +256,7 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [AllowAnonymous]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             using var activity = Telemetry.Source.StartActivity(
@@ -384,10 +378,31 @@ namespace OneID.Api.Controllers
 
         }
 
+        private static string GetClientIpAddress(HttpContext context)
+        {
+            if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
+            {
+                var ipList = forwardedFor.ToString().Split(',');
+                if (ipList.Length > 0 && !string.IsNullOrWhiteSpace(ipList[0]))
+                    return ipList[0].Trim();
+            }
+
+            var remoteIp = context.Connection.RemoteIpAddress?.ToString();
+
+            return remoteIp switch
+            {
+                "::1" or null => "127.0.0.1",
+                _ => remoteIp
+            };
+        }
+
+
     }
     public class AuthRequest
     {
         public string TotpCode { get; set; }
 
     }
+
+
 }
