@@ -256,7 +256,6 @@ namespace OneID.Api.Controllers
         }
 
         [HttpPost("refresh-token")]
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> RefreshTokenAsync()
         {
             using var activity = Telemetry.Source.StartActivity(
@@ -320,7 +319,8 @@ namespace OneID.Api.Controllers
             SetAuthCookies(newJwt, newRefresh,
                            circuitId,
                            JwtDefaults.AccessTokenLifetime,
-                           JwtDefaults.RefreshTokenLifetime);
+                           JwtDefaults.RefreshTokenLifetime
+            );
 
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);

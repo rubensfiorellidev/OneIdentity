@@ -59,20 +59,22 @@ namespace OneID.Data.Repositories.RefreshTokens
 
         public async Task PatchCircuitIdIfMissingAsync(string tokenId, string circuitId)
         {
-            var token = new RefreshWebToken(tokenId);
-            DbContext.Attach(token);
-
-            var entry = DbContext.Entry(token);
-
-            var current = await DbContext.RefreshWebTokens
+            var currentCircuitId = await DbContext.RefreshWebTokens
+                .AsNoTracking()
                 .Where(t => t.Id == tokenId)
                 .Select(t => t.CircuitId)
                 .FirstOrDefaultAsync();
 
-            if (!string.IsNullOrWhiteSpace(current))
+            if (!string.IsNullOrWhiteSpace(currentCircuitId))
                 return;
 
+            var token = new RefreshWebToken(tokenId);
+            DbContext.Attach(token);
+
+            var entry = DbContext.Entry(token);
             entry.Property(x => x.CircuitId).CurrentValue = circuitId;
+            entry.Property(x => x.CircuitId).IsModified = true;
+
             await DbContext.SaveChangesAsync();
         }
 

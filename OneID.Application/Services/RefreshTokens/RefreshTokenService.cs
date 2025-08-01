@@ -40,7 +40,9 @@ namespace OneID.Application.Services.RefreshTokens
 
             var current = await _repository.GetActiveTokenAsync(userUpnHash);
             if (current != null)
-                _ = current with { IsUsed = true };
+            {
+                await MarkRefreshTokenAsUsedAsync(current.TokenHash);
+            }
 
             var refreshToken = new RefreshWebToken(
                 userUpnHash,

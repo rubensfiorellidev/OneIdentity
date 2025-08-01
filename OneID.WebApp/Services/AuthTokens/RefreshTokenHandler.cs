@@ -41,18 +41,5 @@ public class RefreshTokenHandler : DelegatingHandler
         return base.SendAsync(request, cancellationToken);
 
 
-        //var context = _httpContextAccessor.HttpContext;
-
-        //if (context != null && context.Request.Cookies.TryGetValue("refresh_token", out var refreshToken) &&
-        //    !string.IsNullOrWhiteSpace(refreshToken))
-        //{
-        //    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", refreshToken);
-        //}
-        //else
-        //{
-        //    _logger.LogWarning("refresh_token não encontrado no cookie. A requisição seguirá sem Authorization header.");
-        //}
-
-        //return base.SendAsync(request, cancellationToken);
     }
 }
