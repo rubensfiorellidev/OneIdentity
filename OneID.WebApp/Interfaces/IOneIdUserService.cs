@@ -1,10 +1,11 @@
-﻿using static OneID.WebApp.Components.Pages.ActiveUsers;
+﻿using OneID.WebApp.ViewModels;
 
 namespace OneID.WebApp.Interfaces
 {
     public interface IOneIdUserService
     {
-        Task<List<ActiveUserViewModel>> GetActiveUsersAsync();
+        Task<PaginatedUsersViewModel> GetUsersAsync(int page, int pageSize, string? searchTerm, string? sortBy, bool descending, CancellationToken cancellationToken = default);
     }
+
 
 }

@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.Users;
 using OneID.Application.Queries.Users;
@@ -15,7 +16,7 @@ namespace OneID.Api.Controllers
             _logger = logger;
         }
 
-        //[Authorize]
+        [Authorize]
         [HttpGet]
         [Route("", Name = nameof(GetUsersAsync))]
         public async Task<IActionResult> GetUsersAsync([FromQuery] int page = 0,

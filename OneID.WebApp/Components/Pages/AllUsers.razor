@@ -1,0 +1,243 @@
+﻿@page "/all-users"
+@rendermode InteractiveServer
+@using OneID.WebApp.Components.Shared
+<OneIDHeader />
+
+@using System.Text
+@using System.Globalization
+@using System.Timers
+@using OneID.WebApp.Interfaces
+@using OneID.WebApp.ViewModels
+
+@inject IOneIdUserService UserService
+@inject NavigationManager Navigation
+
+<PageTitle>Global - Usuários no OneID</PageTitle>
+
+<div class="user-container">
+    <div class="user-header">
+        <div class="search-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" class="search-icon" width="16" height="16"
+                 fill="none" stroke="var(--highlight-color)" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+
+            <input type="text"
+                   placeholder="Pesquisar no IAM"
+                   class="search-input"
+                   @bind="SearchTerm"
+                   @bind:event="oninput" />
+        </div>
+
+        <button class="create-user-button" @onclick="@(() => Navigation.NavigateTo("/create-user"))">
+            Criar usuário
+        </button>
+    </div>
+    <table class="aws-style-table">
+        <thead>
+            <tr>
+                <th class="checkbox-header">
+                    <input type="checkbox" @onchange="ToggleSelectAll" class="header-checkbox" />
+                </th>
+                <th @onclick="() => SortBy(nameof(AllUserViewModel.FullName))">
+                    Nome do usuário
+                    @SortIcon(nameof(AllUserViewModel.FullName))
+                    <span class="pipe-divider">|</span>
+                </th>
+                <th @onclick="() => SortBy(nameof(AllUserViewModel.JobTitleName))">Cargo @SortIcon(nameof(AllUserViewModel.JobTitleName)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(AllUserViewModel.Company))">Empresa @SortIcon(nameof(AllUserViewModel.Company)) <span class="pipe-divider">|</span></th>
+                <th @onclick="() => SortBy(nameof(AllUserViewModel.TypeUserAccount))">Tipo @SortIcon(nameof(AllUserViewModel.TypeUserAccount)) <span class="pipe-divider">|</span></th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in FilteredUsers)
+            {
+                <tr>
+                    <td class="checkbox-cell">
+                        <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
+                    </td>
+                    <td>
+                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link">
+                            @user.FullName
+                        </a>
+                    </td>
+                    <td>@user.JobTitleName</td>
+                    <td>@user.Company</td>
+                    <td>@user.TypeUserAccount</td>
+                    <td>
+                        <span class="status-indicator @(user.StatusUserAccount == "ACTIVE" ? "green" : "red")"></span>
+                        @user.StatusUserAccount
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    @if (TotalCount > PageSize)
+    {
+        <div class="pagination-container">
+            <button @onclick="PreviousPage" disabled="@IsFirstPage">Anterior</button>
+            <span>Página @(CurrentPage + 1) de @TotalPages</span>
+            <button @onclick="NextPage" disabled="@IsLastPage">Próxima</button>
+        </div>
+    }
+
+</div>
+
+@code {
+    private List<AllUserViewModel> ListAllUsers = [];
+    private List<AllUserViewModel> FilteredUsers = [];
+
+    private string _searchTerm = string.Empty;
+    private Timer? _debounceTimer;
+    private string? CurrentSort;
+    private bool IsDescending = false;
+    private int CurrentPage = 0;
+    private int PageSize = 25;
+    private int TotalCount = 0;
+
+    public string SearchTerm
+    {
+        get => _searchTerm;
+        set
+        {
+            _searchTerm = value;
+            _debounceTimer?.Stop();
+            _debounceTimer = new Timer(300);
+            _debounceTimer.Elapsed += (_, _) =>
+            {
+                _debounceTimer.Dispose();
+                _debounceTimer = null;
+                InvokeAsync(ApplySearch);
+            };
+            _debounceTimer.Start();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPageAsync();
+    }
+
+    private async Task LoadPageAsync()
+    {
+        var response = await UserService.GetUsersAsync(CurrentPage, PageSize, SearchTerm, CurrentSort, IsDescending);
+        FilteredUsers = response.Users.ToList();
+        TotalCount = response.TotalCount;
+    }
+
+    private void ToggleSelectAll(ChangeEventArgs e)
+    {
+        bool isChecked = (bool)e.Value!;
+        foreach (var user in FilteredUsers)
+            user.IsSelected = isChecked;
+    }
+
+    private async void ApplySearch()
+    {
+        CurrentPage = 0;
+        await LoadPageAsync();
+        StateHasChanged();
+    }
+
+
+    private async void SortBy(string column)
+    {
+        if (CurrentSort == column)
+            IsDescending = !IsDescending;
+        else
+        {
+            CurrentSort = column;
+            IsDescending = false;
+        }
+
+        await LoadPageAsync();
+    }
+
+    private void ApplySorting()
+    {
+        var comparer = StringComparer.Create(new CultureInfo("pt-BR"), ignoreCase: true);
+
+        FilteredUsers = CurrentSort switch
+        {
+            nameof(AllUserViewModel.FullName) => SortList(FilteredUsers, u => u.FullName, comparer),
+            nameof(AllUserViewModel.JobTitleName) => SortList(FilteredUsers, u => u.JobTitleName, comparer),
+            nameof(AllUserViewModel.Company) => SortList(FilteredUsers, u => u.Company, comparer),
+            nameof(AllUserViewModel.TypeUserAccount) => SortList(FilteredUsers, u => u.TypeUserAccount, comparer),
+            _ => FilteredUsers
+        };
+    }
+
+    private List<AllUserViewModel> SortList(
+        List<AllUserViewModel> source,
+        Func<AllUserViewModel, string> keySelector,
+        StringComparer comparer)
+    {
+        return IsDescending
+            ? source.OrderByDescending(keySelector, comparer).ToList()
+            : source.OrderBy(keySelector, comparer).ToList();
+    }
+
+    private static string Normalize(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+        var normalized = input.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in normalized)
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        return sb.ToString().ToLowerInvariant();
+    }
+
+    private RenderFragment SortIcon(string column) => __builder =>
+    {
+        var sortClass = GetSortDirectionClass(column);
+        __builder.OpenElement(0, "svg");
+        __builder.AddAttribute(1, "class", $"sort-indicator {sortClass}");
+        __builder.AddAttribute(2, "xmlns", "http://www.w3.org/2000/svg");
+        __builder.AddAttribute(3, "width", "14");
+        __builder.AddAttribute(4, "height", "14");
+        __builder.AddAttribute(5, "viewBox", "0 0 24 24");
+        __builder.AddAttribute(6, "fill", "none");
+        __builder.AddAttribute(7, "stroke", "currentColor");
+        __builder.AddAttribute(8, "stroke-width", "2");
+        __builder.AddAttribute(9, "stroke-linecap", "round");
+        __builder.AddAttribute(10, "stroke-linejoin", "round");
+        __builder.OpenElement(11, "polyline");
+        __builder.AddAttribute(12, "points", "6 9 12 15 18 9");
+        __builder.CloseElement();
+        __builder.CloseElement();
+    };
+
+    private string GetSortDirectionClass(string column)
+    {
+        if (CurrentSort != column) return "unsorted";
+        return IsDescending ? "desc" : "asc";
+    }
+
+    private int TotalPages => (int)Math.Ceiling((double)TotalCount / PageSize);
+
+    private bool IsFirstPage => CurrentPage == 0;
+    private bool IsLastPage => CurrentPage >= TotalPages - 1;
+
+    private async Task PreviousPage()
+    {
+        if (!IsFirstPage)
+        {
+            CurrentPage--;
+            await LoadPageAsync();
+        }
+    }
+
+    private async Task NextPage()
+    {
+        if (!IsLastPage)
+        {
+            CurrentPage++;
+            await LoadPageAsync();
+        }
+    }
+
+}
