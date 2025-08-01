@@ -47,6 +47,8 @@ namespace OneID.Data
             services.AddScoped<IUserRoleWriterRepository, UserRoleWriterRepository>();
             services.AddScoped<IRoleWriterRepository, RoleWriterRepository>();
             services.AddScoped<IRedisRepository, RedisRepository>();
+            services.AddScoped<IQueryUserRepository, QueryUserRepository>();
+
 
 
 

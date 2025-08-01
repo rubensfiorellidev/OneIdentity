@@ -162,6 +162,7 @@ namespace OneID.Data.Mappings
             builder.HasIndex(u => u.Cpf).HasDatabaseName("idx_user_account_cpf");
             builder.HasIndex(u => u.Login).HasDatabaseName("idx_user_account_login");
             builder.HasIndex(u => u.CorporateEmail).HasDatabaseName("idx_user_account_corporate_email");
+            builder.HasIndex(u => u.LastName).HasDatabaseName("idx_user_account_lastname");
 
         }
     }
