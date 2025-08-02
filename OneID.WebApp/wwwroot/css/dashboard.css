@@ -110,7 +110,7 @@ body {
 
 .grid-layout {
     display: grid;
-    grid-template-columns: 4fr 1fr 2fr;
+    grid-template-columns: 5fr 1fr 3fr;
     gap: 1rem 1.2rem;
     width: 100%;
     padding: 0 1rem;
@@ -617,4 +617,28 @@ h2 svg {
 *, *::before, *::after {
     font-family: var(--font-main);
     font-weight: 700;
+}
+
+.resume-hover {
+    padding: 0.35rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease-in-out;
+}
+
+    .resume-hover:hover {
+        background-color: rgba(0, 179, 255, 0.1); /* highlight leve no hover */
+    }
+
+.resume-icon {
+    transition: transform 0.25s ease-in-out;
+}
+
+.resume-hover:hover .resume-icon {
+    transform: rotate(90deg);
 }

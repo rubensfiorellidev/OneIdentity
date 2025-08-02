@@ -35,6 +35,15 @@
             Criar usuário
         </button>
     </div>
+    @if (TotalCount > 0)
+    {
+        <div class="toolbar-header">
+            <div class="table-summary">
+                Mostrando @FilteredUsers.Count de @TotalCount resultado@(TotalCount != 1 ? "s" : "")
+            </div>
+        </div>
+
+    }
     <table class="aws-style-table">
         <thead>
             <tr>
@@ -60,9 +69,14 @@
                         <input type="checkbox" @bind="user.IsSelected" class="user-checkbox" />
                     </td>
                     <td>
-                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link">
+                        <a href="/user-details/@user.Id" class="aws-user-link user-name-link" title="Ver detalhes de @user.FullName">
                             @user.FullName
+                            <svg xmlns="http://www.w3.org/2000/svg" class="external-icon" viewBox="0 0 24 24" width="14" height="14">
+                                <path fill="currentColor" d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42L17.59 5H14V3z" />
+                                <path fill="currentColor" d="M5 5h7V3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-7h-2v7H5V5z" />
+                            </svg>
                         </a>
+
                     </td>
                     <td>@user.JobTitleName</td>
                     <td>@user.Company</td>
@@ -238,6 +252,11 @@
             CurrentPage++;
             await LoadPageAsync();
         }
+    }
+
+    private void NavigateToCreate()
+    {
+        Navigation.NavigateTo("/create-user");
     }
 
 }

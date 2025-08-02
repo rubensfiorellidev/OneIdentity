@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components.Server.Circuits;
+using MudBlazor.Services;
 using OneID.WebApp.Components;
 using OneID.WebApp.Interfaces;
 using OneID.WebApp.Services;
@@ -45,6 +46,8 @@ builder.Services.AddScoped<AccessTokenHandler>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddMudServices();
 
 var app = builder.Build();
 

@@ -86,8 +86,7 @@ body {
 }
 
     .aws-style-table thead {
-        background-color: #212121;
-        color: var(--text-muted);
+        background-color: transparent !important;
         border-bottom: 1px solid var(--border-color);
     }
 
@@ -206,10 +205,12 @@ input[type="checkbox"],
 
     .status-indicator.green {
         background-color: #16c60c;
+        box-shadow: 0 0 6px #16c60c88, 0 0 12px #16c60c55;
     }
 
     .status-indicator.red {
         background-color: #dc2626;
+        box-shadow: 0 0 6px #dc262688, 0 0 12px #dc262655;
     }
 
 /* ======= Sort indicator ======= */
@@ -256,3 +257,8 @@ input[type="checkbox"],
     padding-left: 2.4rem; /* espaço pro ícone não colidir com texto */
 }
 
+.toolbar-header {
+    background-color: transparent !important;
+    border: none;
+    box-shadow: none;
+}
