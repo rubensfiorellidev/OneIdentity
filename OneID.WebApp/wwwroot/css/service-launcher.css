@@ -3,7 +3,7 @@
 .launcher-container {
     display: flex;
     flex-direction: column;
-    background-color: #1f1f1f;
+    background-color: #0b1616;
     border: 1px solid #333;
     border-radius: 8px;
     box-shadow: 0 0 12px rgba(0, 0, 0, 0.3);
