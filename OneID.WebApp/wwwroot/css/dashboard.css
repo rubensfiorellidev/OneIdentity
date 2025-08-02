@@ -619,26 +619,35 @@ h2 svg {
     font-weight: 700;
 }
 
-.resume-hover {
-    padding: 0.35rem;
-    border: none;
-    background: transparent;
+.resume-button-custom {
+    background-color: transparent;
+    border: 1px solid silver;
+    border-radius: 6px;
+    padding: 0.2rem 0.35rem; /* 👈 MENOR agora */
     cursor: pointer;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: background-color 0.2s ease-in-out;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 0 0 transparent;
+    height: 28px; /* 👈 Tamanho fixo compacto */
+    width: 28px;
 }
 
-    .resume-hover:hover {
-        background-color: rgba(0, 179, 255, 0.1); /* highlight leve no hover */
+    .resume-button-custom svg {
+        stroke: silver;
+        stroke-width: 2.1;
+        transition: stroke 0.2s ease, transform 0.2s ease;
     }
 
-.resume-icon {
-    transition: transform 0.25s ease-in-out;
-}
+    .resume-button-custom:hover {
+        background-color: rgba(255, 255, 255, 0.04);
+        border-color: var(--highlight-color, #00b3ff);
+        box-shadow: 0 0 6px var(--highlight-color, #00b3ff);
+    }
 
-.resume-hover:hover .resume-icon {
-    transform: rotate(90deg);
-}
+        .resume-button-custom:hover svg {
+            stroke: var(--highlight-color, #00b3ff);
+            transform: scale(1.05) rotate(5deg);
+        }
+
