@@ -1,7 +1,7 @@
 ﻿@page "/confirm-code"
 @model ConfirmModel
 @{
-    Layout = "_Layout"; 
+    Layout = null; 
 }
 
 <!DOCTYPE html>
@@ -14,7 +14,7 @@
     body {
         margin: 0;
         padding: 0;
-        background-color: #343541;
+        background-color: #0b1616;
         color: white;
         font-family: 'Inter', sans-serif;
         display: flex;
@@ -56,8 +56,6 @@
         width: 800px;
         box-shadow: 0 0 3px #00000055;
     }
-
-
 
     input[type='text'] {
         flex: 1;
@@ -118,7 +116,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Que bom te ver, @Model.OperatorName.</h1>
+            <h1>@Model.OperatorName.</h1>
             <p>Digite o código de autorização do seu Authenticator</p>
         </div>
        <form method="post" onsubmit="handleSubmit(this)" autocomplete="off">
@@ -135,9 +133,6 @@
     </button>
   </div>
 </form>
-
-
-
         @if (Model.ResultMessage is not null)
         {
             <div class="result">@Model.ResultMessage</div>

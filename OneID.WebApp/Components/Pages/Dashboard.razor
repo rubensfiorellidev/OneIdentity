@@ -14,6 +14,7 @@
 @using System.Globalization
 @using OneID.WebApp.ViewModels
 
+
 <div class="custom-header">
     <div class="header-left-fixed" style="display: flex; align-items: center; gap: 0.8rem;">
 
@@ -409,13 +410,6 @@
         { "status", "/dashboard#status" }
     };
 
-    private sealed class UserDto
-    {
-        public string FullName { get; set; }
-        public string JobTitleName { get; set; }
-        public string DepartmentName { get; set; }
-        public string Email { get; set; }
-    }
 
     private List<IamLog> RecentIamLogs = new()
     {
@@ -522,7 +516,7 @@
 
             StateHasChanged();
         }
-        catch (JSDisconnectedException jsEx)
+        catch (JSDisconnectedException)
         {
             Console.WriteLine("Circuito desconectado antes do JS interop. Ignorado.");
         }

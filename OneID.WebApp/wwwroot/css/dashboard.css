@@ -636,7 +636,7 @@ h2 svg {
 
     .resume-button-custom svg {
         stroke: silver;
-        stroke-width: 2.1;
+        stroke-width: 2;
         transition: stroke 0.2s ease, transform 0.2s ease;
     }
 
