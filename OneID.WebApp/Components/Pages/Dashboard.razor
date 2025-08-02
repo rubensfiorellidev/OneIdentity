@@ -390,19 +390,19 @@
 
 
     private readonly Dictionary<string, string> searchRoutes = new(StringComparer.OrdinalIgnoreCase)
-{
-    { "usuario", "/all" },
-    { "usuarios", "/all" },
-    { "usuário", "/all" },
-    { "usuários", "/all" },
-    { "auditoria", "/dashboard#auditoria" },
-    { "logs", "/dashboard#iam-logs" },
-    { "seguranca", "/dashboard#security-alerts" },
-    { "alertas", "/dashboard#security-alerts" },
-    { "admissoes", "/dashboard#admissoes" },
-    { "processos", "/dashboard#pendentes" },
-    { "status", "/dashboard#status" }
-};
+    {
+        { "usuario", "/all-users" },
+        { "usuarios", "/all-users" },
+        { "usuário", "/all-users" },
+        { "usuários", "/all-users" },
+        { "auditoria", "/dashboard#auditoria" },
+        { "logs", "/dashboard#iam-logs" },
+        { "seguranca", "/dashboard#security-alerts" },
+        { "alertas", "/dashboard#security-alerts" },
+        { "admissoes", "/dashboard#admissoes" },
+        { "processos", "/dashboard#pendentes" },
+        { "status", "/dashboard#status" }
+    };
 
     private sealed class UserDto
     {

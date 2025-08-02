@@ -9,8 +9,6 @@ using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddScoped<AccessTokenHandler>();
-//builder.Services.AddScoped<RefreshTokenHandler>();
 
 builder.Services.AddHttpClient<IOneIdUserService, OneIdUserService>(client =>
 {
@@ -40,8 +38,9 @@ builder.Services.AddAuthentication("Cookies")
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ITotpTokenGenerator, TotpTokenGenerator>();
-
 builder.Services.AddSingleton<ITokenMemoryStore, TokenMemoryStore>();
+builder.Services.AddScoped<AccessTokenHandler>();
+
 
 
 builder.Services.AddRazorComponents()

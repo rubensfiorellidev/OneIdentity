@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.WebUtilities;
 using OneID.WebApp.Interfaces;
 using OneID.WebApp.ViewModels;
+using OneID.WebApp.Wrappers;
 using System.Text.Json;
 
 #nullable disable
@@ -11,9 +12,9 @@ namespace OneID.WebApp.Services.ActiveUsers
         private readonly HttpClient _httpClient;
         private readonly JsonSerializerOptions _jsonOptions;
 
-        public OneIdUserService(IHttpClientFactory factory)
+        public OneIdUserService(HttpClient httpClient)
         {
-            _httpClient = factory.CreateClient("OneID");
+            _httpClient = httpClient;
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
@@ -42,8 +43,8 @@ namespace OneID.WebApp.Services.ActiveUsers
         public async Task<PaginatedUsersViewModel> GetUsersAsync(
             int page,
             int pageSize,
-            string? search,
-            string? sortBy,
+            string search,
+            string sortBy,
             bool descending,
             CancellationToken cancellationToken)
         {
@@ -63,11 +64,14 @@ namespace OneID.WebApp.Services.ActiveUsers
 
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
 
-            var result = await JsonSerializer.DeserializeAsync<PaginatedUsersViewModel>(
+            var wrapper = await JsonSerializer.DeserializeAsync<ApiResponse<List<AllUserViewModel>>>(
                 stream, _jsonOptions, cancellationToken);
 
-            return result ?? new PaginatedUsersViewModel([], 0);
+            var users = wrapper?.Data ?? [];
+
+            return new PaginatedUsersViewModel(users, users.Count);
         }
+
 
     }
 

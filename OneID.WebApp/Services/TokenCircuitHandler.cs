@@ -94,7 +94,7 @@
         private void ScheduleTokenRefresh(Circuit circuit, string refreshToken, DateTimeOffset scheduledTime)
         {
             var delay = scheduledTime - DateTimeOffset.UtcNow;
-            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromSeconds(1); // fallback seguro
+            if (delay <= TimeSpan.Zero) delay = TimeSpan.FromSeconds(1);
 
             var cts = new CancellationTokenSource();
             _scheduledRenewals[circuit.Id] = cts;

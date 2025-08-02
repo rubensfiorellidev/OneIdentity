@@ -55,6 +55,7 @@ namespace OneID.Api.Controllers
                     count, page, pageSize);
 
                 return ResponseOk($"Total de usuários retornados: {count}", result);
+
             }
             catch (OperationCanceledException)
             {
