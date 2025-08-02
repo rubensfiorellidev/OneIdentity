@@ -651,3 +651,43 @@ h2 svg {
             transform: scale(1.05) rotate(5deg);
         }
 
+
+
+
+.neon-repeat-button {
+    background-color: transparent;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #c0c0c0; /* prata */
+    font-weight: 700; /* bold */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 4px rgba(192, 192, 192, 0.2); /* leve glow prata */
+    transition: all 0.2s ease-in-out;
+}
+
+    .neon-repeat-button:hover {
+        color: #ffffff;
+        box-shadow: 0 0 10px #00b3ff, 0 0 20px #00b3ff;
+        background-color: rgba(0, 179, 255, 0.05);
+        transform: scale(1.08);
+    }
+
+    .neon-repeat-button svg {
+        transition: transform 0.2s ease-in-out;
+        stroke-width: 2;
+    }
+
+    .neon-repeat-button:hover svg {
+        transform: rotate(10deg);
+    }
+
+.neon-repeat-button {
+    padding: 3px;
+    border-radius: 12px;
+}
+
+
