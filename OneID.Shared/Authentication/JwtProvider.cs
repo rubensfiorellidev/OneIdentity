@@ -148,12 +148,14 @@ namespace OneID.Shared.Authentication
 
             claims.AddRange(customClaims);
 
+            var expiresAt = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime);
+
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime),
+                Expires = expiresAt,
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = signingCredentials
             };
@@ -172,7 +174,8 @@ namespace OneID.Shared.Authentication
             {
                 Jwtoken = jws,
                 RefreshToken = refreshToken.TokenHash,
-                Result = true
+                Result = true,
+                ExpiresAt = expiresAt
             };
         }
 
@@ -468,7 +471,7 @@ namespace OneID.Shared.Authentication
                 UpnOrName = user.FullName ?? user.CorporateEmail ?? user.Login,
                 UserAgent = userAgent,
                 LastActivity = DateTimeOffset.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.Add(_jwtOptions.AccessTokenExpires)
+                ExpiresAt = authResult.ExpiresAt
             });
 
             return (NewJwt: authResult.Jwtoken, NewRefresh: authResult.RefreshToken, Success: true);
