@@ -278,7 +278,7 @@ namespace OneID.Shared
         }
         private static string ExtractToken(HttpRequest request)
         {
-            var authHeader = request.Headers["Authorization"].ToString();
+            var authHeader = request.Headers.Authorization.ToString();
             if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {
                 return authHeader["Bearer ".Length..].Trim();
