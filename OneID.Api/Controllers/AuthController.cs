@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OneID.Application.Commands;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
@@ -223,24 +222,13 @@ namespace OneID.Api.Controllers
                 preferredUsername,
                 email,
                 name,
-                circuitId,
                 ip,
                 userAgent
             );
 
-            await Sender.Send(new RegisterSessionCommand
-            {
-                CircuitId = circuitId,
-                IpAddress = ip,
-                UpnOrName = name ?? email ?? preferredUsername ?? user.Id,
-                UserAgent = userAgent,
-                LastActivity = DateTime.UtcNow,
-                ExpiresAt = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime)
 
-            });
-
-            SetAuthCookies(authResult.Jwtoken, authResult.RefreshToken,
-                           circuitId,
+            SetAuthCookies(authResult.Jwtoken,
+                           authResult.RefreshToken,
                            JwtDefaults.AccessTokenLifetime,
                            JwtDefaults.RefreshTokenLifetime
             );
@@ -258,6 +246,8 @@ namespace OneID.Api.Controllers
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshTokenAsync()
         {
+            Response.Headers.CacheControl = "no-store";
+
             using var activity = Telemetry.Source.StartActivity(
                 "Refresh do token de acesso",
                 ActivityKind.Server
@@ -304,10 +294,9 @@ namespace OneID.Api.Controllers
 
             activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
 
-            var circuitId = HttpContext.TraceIdentifier;
 
             var (newJwt, newRefresh, success) =
-                await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken, circuitId);
+                await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken, null);
 
             if (!success)
             {
@@ -316,14 +305,14 @@ namespace OneID.Api.Controllers
                 return Unauthorized("Refresh token inválido ou expirado.");
             }
 
-            SetAuthCookies(newJwt, newRefresh,
-                           circuitId,
+            activity?.SetTag("refresh.sucesso", true);
+            activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
+
+            SetAuthCookies(newJwt,
+                           newRefresh,
                            JwtDefaults.AccessTokenLifetime,
                            JwtDefaults.RefreshTokenLifetime
             );
-
-            activity?.SetTag("refresh.sucesso", true);
-            activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
 
             return Ok(new
             {
@@ -348,7 +337,6 @@ namespace OneID.Api.Controllers
 
         private void SetAuthCookies(string accessToken,
                                     string refreshToken,
-                                    string circuitId,
                                     TimeSpan accessTokenLifetime,
                                     TimeSpan refreshTokenLifetime)
         {
@@ -357,7 +345,9 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
+                Path = "/",
                 Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
+
             });
 
             Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
@@ -365,17 +355,10 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
+                Path = "/",
                 Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
-            });
 
-            Response.Cookies.Append("circuit_id", circuitId, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                MaxAge = TimeSpan.FromDays(7)
             });
-
         }
 
         private static string GetClientIpAddress(HttpContext context)

@@ -439,6 +439,7 @@ namespace OneID.Shared.Authentication
                 return ("", "", false);
 
             PatchUsed(db, existing);
+            await db.SaveChangesAsync();
 
             var excess = await db.RefreshWebTokens
                 .Where(t => t.UserUpnHash == userUpnHash && !t.IsUsed && !t.IsRevoked)
