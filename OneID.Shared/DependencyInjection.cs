@@ -213,19 +213,34 @@ namespace OneID.Shared
                     OnAuthenticationFailed = context =>
                     {
                         context.NoResult();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+
+                        if (!context.Response.HasStarted)
+                        {
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+                        }
+
+                        context.HttpContext.RequestServices
+                            .GetRequiredService<ILogger<JwtBearerEvents>>()
+                            .LogWarning("Falha de autenticação: resposta já iniciada. Token inválido ou expirado.");
+
+                        return Task.CompletedTask;
                     },
                     OnChallenge = async context =>
                     {
                         if (!context.Response.HasStarted)
-                            return;
-
-                        context.HandleResponse();
-                        context.Response.StatusCode = 401;
-                        context.Response.ContentType = "application/json";
-                        await context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+                        {
+                            context.HandleResponse();
+                            context.Response.StatusCode = 401;
+                            context.Response.ContentType = "application/json";
+                            await context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+                        }
+                        else
+                        {
+                            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                            logger.LogWarning("Desafio de autenticação ignorado: resposta já iniciada.");
+                        }
                     }
                 };
             });
@@ -250,19 +265,34 @@ namespace OneID.Shared
                         OnAuthenticationFailed = context =>
                         {
                             context.NoResult();
-                            context.Response.StatusCode = 401;
-                            context.Response.ContentType = "application/json";
-                            return context.Response.WriteAsync("{\"error\":\"Token de requisição inválido ou malformado\"}");
-                        },
-                        OnChallenge = context =>
-                        {
+
                             if (!context.Response.HasStarted)
                             {
                                 context.Response.StatusCode = 401;
                                 context.Response.ContentType = "application/json";
-                                return context.Response.WriteAsync("{\"error\":\"Token de requisição ausente ou inválido\"}");
+                                return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                             }
+
+                            context.HttpContext.RequestServices
+                                .GetRequiredService<ILogger<JwtBearerEvents>>()
+                                .LogWarning("Falha de autenticação: resposta já iniciada. Token inválido ou expirado.");
+
                             return Task.CompletedTask;
+                        },
+                        OnChallenge = async context =>
+                        {
+                            if (!context.Response.HasStarted)
+                            {
+                                context.HandleResponse();
+                                context.Response.StatusCode = 401;
+                                context.Response.ContentType = "application/json";
+                                await context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
+                            }
+                            else
+                            {
+                                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<JwtBearerEvents>>();
+                                logger.LogWarning("Desafio de autenticação ignorado: resposta já iniciada.");
+                            }
                         }
                     };
                 });

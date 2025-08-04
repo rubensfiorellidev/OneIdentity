@@ -243,6 +243,7 @@ namespace OneID.Api.Controllers
             });
         }
 
+        [AllowAnonymous]
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshTokenAsync()
         {
@@ -308,11 +309,6 @@ namespace OneID.Api.Controllers
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
 
-            SetAuthCookies(newJwt,
-                           newRefresh,
-                           JwtDefaults.AccessTokenLifetime,
-                           JwtDefaults.RefreshTokenLifetime
-            );
 
             return Ok(new
             {
