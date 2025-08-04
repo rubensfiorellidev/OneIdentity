@@ -19,7 +19,6 @@ using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
-using System.Text;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -86,21 +85,22 @@ namespace OneID.Shared.Authentication
             return await File.ReadAllTextAsync(_publicKeyPath);
         }
 
-        public async Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(Guid keycloakUserId,
+        public async Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(
+                                                         Guid keycloakUserId,
                                                          string preferredUsername = null,
                                                          string email = null,
                                                          string name = null,
-                                                         string circuitId = null,
                                                          string ipAddress = null,
                                                          string userAgent = null)
         {
 
-            circuitId = Guid.NewGuid().ToString();
+            var circuitId = _httpContextAccessor.HttpContext?.Items["circuit_id"]?.ToString()
+                            ?? Guid.NewGuid().ToString();
 
             ipAddress = NormalizeIp(ipAddress);
 
             userAgent ??= _httpContextAccessor.HttpContext?.Request?.Headers.UserAgent.FirstOrDefault()
-                ?? "unknown-client";
+                        ?? "unknown-client";
 
 
             var handler = new JsonWebTokenHandler();
@@ -170,13 +170,24 @@ namespace OneID.Shared.Authentication
                 circuitId
             );
 
+            await _sender.Send(new RegisterSessionCommand
+            {
+                CircuitId = circuitId,
+                IpAddress = ipAddress,
+                UserAgent = userAgent,
+                LastActivity = DateTime.UtcNow,
+                ExpiresAt = expiresAt,
+                UpnOrName = user.FullName ?? preferredUsername ?? user.Login,
+
+            });
 
             return new AuthResult
             {
                 Jwtoken = jws,
                 RefreshToken = refreshToken.TokenHash,
                 Result = true,
-                ExpiresAt = expiresAt
+                ExpiresAt = expiresAt,
+                CircuitId = circuitId
             };
         }
 
@@ -451,24 +462,46 @@ namespace OneID.Shared.Authentication
             foreach (var item in excess)
                 PatchRevoked(db, item);
 
-            var resolvedCircuitId = Guid.NewGuid().ToString();
+            var resolvedCircuitId =
+                _httpContextAccessor.HttpContext?.Items["circuit_id"]?.ToString()
+                ?? existing.CircuitId
+                ?? Guid.NewGuid().ToString();
+
+            _httpContextAccessor.HttpContext?.Items.TryAdd("circuit_id", resolvedCircuitId);
+
+            if (string.IsNullOrWhiteSpace(resolvedCircuitId))
+            {
+                if (!string.IsNullOrWhiteSpace(circuitId))
+                {
+                    resolvedCircuitId = circuitId;
+                    await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, resolvedCircuitId);
+                }
+                else
+                {
+                    _logger.LogError("CircuitId ausente no RefreshToken e também não foi fornecido pelo frontend.");
+                    throw new InvalidOperationException("CircuitId não pode ser nulo durante o refresh.");
+                }
+            }
+
             await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, resolvedCircuitId);
+
+            _httpContextAccessor.HttpContext.Items["circuit_id"] = resolvedCircuitId;
 
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
                 user.Login,
                 user.CorporateEmail,
                 user.FullName,
-                resolvedCircuitId,
                 ipAddress,
                 userAgent
+
             );
 
             await db.SaveChangesAsync();
 
             await _sender.Send(new RegisterSessionCommand
             {
-                CircuitId = resolvedCircuitId,
+                CircuitId = authResult.CircuitId,
                 IpAddress = GetClientIpAddress(_httpContextAccessor.HttpContext),
                 UpnOrName = user.FullName ?? user.CorporateEmail ?? user.Login,
                 UserAgent = userAgent,
@@ -537,15 +570,6 @@ namespace OneID.Shared.Authentication
             var entry = db.Entry(token);
             entry.Property(x => x.IsRevoked).CurrentValue = true;
             entry.Property(x => x.IsRevoked).IsModified = true;
-        }
-
-        private static string GenerateCircuitId(string userIdentifier)
-        {
-            var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss");
-            var raw = $"{userIdentifier}_{timestamp}";
-            var bytes = Encoding.UTF8.GetBytes(raw);
-            var hash = SHA256.HashData(bytes);
-            return Convert.ToHexString(hash)[..16];
         }
 
         private string NormalizeIp(string ip)

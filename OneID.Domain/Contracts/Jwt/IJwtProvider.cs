@@ -11,7 +11,6 @@ namespace OneID.Domain.Contracts.Jwt
                                                                string preferredUsername = null,
                                                                string email = null,
                                                                string name = null,
-                                                               string circuitId = null,
                                                                string ipAddress = null,
                                                                string userAgent = null);
         Task<string> EnsureKeysAsync();

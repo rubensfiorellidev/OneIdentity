@@ -6,7 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using OneID.Application.DTOs.Auth;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
-using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.TotpServices;
 using OneID.Application.Queries.Auth;
@@ -31,7 +30,6 @@ namespace OneID.Api.Controllers
         private readonly IOneDbContextFactory _contextFactory;
         private readonly IKeycloakAuthService _authService;
         private readonly IHashService _hashService;
-        private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
         private readonly ICurrentUserService _currentUser;
         private readonly ITotpService _totpService;
         private readonly IRefreshTokenService _refreshTokenService;
@@ -43,7 +41,6 @@ namespace OneID.Api.Controllers
                               IOneDbContextFactory contextFactory,
                               IKeycloakAuthService authService,
                               IHashService hashService,
-                              ISensitiveDataDecryptionServiceUserAccount decryptionService,
                               ICurrentUserService currentUser,
                               ITotpService totpService,
                               IRefreshTokenService refreshTokenService) : base(sender)
@@ -53,7 +50,6 @@ namespace OneID.Api.Controllers
             _contextFactory = contextFactory;
             _authService = authService;
             _hashService = hashService;
-            _decryptionService = decryptionService;
             _currentUser = currentUser;
             _totpService = totpService;
             _refreshTokenService = refreshTokenService;
@@ -215,7 +211,7 @@ namespace OneID.Api.Controllers
             var httpContext = HttpContext;
             var ip = GetClientIpAddress(httpContext);
             var userAgent = httpContext.Request.Headers.UserAgent.ToString();
-            var circuitId = httpContext.TraceIdentifier ?? Ulid.NewUlid().ToString();
+
 
             var authResult = await _jwtProvider.GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,
@@ -284,9 +280,12 @@ namespace OneID.Api.Controllers
 
             activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
 
-
             var (newJwt, newRefresh, success) =
-                await _jwtProvider.RefreshTokenAsync(refreshInfo.UserUpnHash, refreshToken, null);
+                await _jwtProvider.RefreshTokenAsync(
+                    refreshInfo.UserUpnHash,
+                    refreshToken,
+                    refreshInfo.CircuitId
+                );
 
             if (!success)
             {
