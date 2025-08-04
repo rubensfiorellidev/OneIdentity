@@ -95,7 +95,7 @@ namespace OneID.Shared.Authentication
                                                          string userAgent = null)
         {
 
-            circuitId ??= GenerateCircuitId(preferredUsername ?? email ?? name ?? "anonymous");
+            circuitId = Guid.NewGuid().ToString();
 
             ipAddress = NormalizeIp(ipAddress);
 
@@ -169,6 +169,7 @@ namespace OneID.Shared.Authentication
                 userAgent,
                 circuitId
             );
+
 
             return new AuthResult
             {
@@ -450,8 +451,8 @@ namespace OneID.Shared.Authentication
             foreach (var item in excess)
                 PatchRevoked(db, item);
 
-            var resolvedCircuitId = existing.CircuitId ?? circuitId ?? httpContext?.TraceIdentifier ?? Ulid.NewUlid().ToString();
-            await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, circuitId);
+            var resolvedCircuitId = Guid.NewGuid().ToString();
+            await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, resolvedCircuitId);
 
             var authResult = await GenerateAuthenticatedAccessTokenAsync(
                 user.KeycloakUserId,

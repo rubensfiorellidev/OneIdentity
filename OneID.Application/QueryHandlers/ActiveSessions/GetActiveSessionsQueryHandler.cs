@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using OneID.Application.DTOs.ActiveSessions;
 using OneID.Application.Interfaces.CQRS;
 using OneID.Application.Queries.ActiveSessions;
@@ -9,18 +10,29 @@ namespace OneID.Application.QueryHandlers.ActiveSessions
     public class GetActiveSessionsQueryHandler : IQueryHandler<GetActiveSessionsQuery, List<ActiveSessionInfo>>
     {
         private readonly IConnectionMultiplexer _redis;
+        private readonly ILogger<GetActiveSessionsQueryHandler> _logger;
 
-        public GetActiveSessionsQueryHandler(IConnectionMultiplexer redis)
+        public GetActiveSessionsQueryHandler(IConnectionMultiplexer redis, ILogger<GetActiveSessionsQueryHandler> logger)
         {
             _redis = redis;
+            _logger = logger;
         }
 
         public async Task<List<ActiveSessionInfo>> Handle(GetActiveSessionsQuery query, CancellationToken cancellationToken)
         {
             var db = _redis.GetDatabase();
-            var server = _redis.GetServer(_redis.GetEndPoints().First());
+
+            var server = _redis
+                .GetEndPoints()
+                .Select(ep => _redis.GetServer(ep))
+                .FirstOrDefault(s => !s.IsReplica && s.IsConnected);
+
+            if (server is null)
+                return [];
+
             var keys = server.Keys(pattern: "session:*").ToArray();
 
+            var now = DateTimeOffset.UtcNow;
             var sessions = new List<ActiveSessionInfo>();
 
             foreach (var key in keys)
@@ -29,20 +41,19 @@ namespace OneID.Application.QueryHandlers.ActiveSessions
                 if (!json.HasValue)
                     continue;
 
-                var session = JsonConvert.DeserializeObject<ActiveSessionInfo>(json!);
-                if (session is not null)
-                    sessions.Add(session);
+                try
+                {
+                    var session = JsonConvert.DeserializeObject<ActiveSessionInfo>(json!);
+                    if (session is not null && session.ExpiresAt > now)
+                        sessions.Add(session);
+                }
+                catch (JsonException ex)
+                {
+                    _logger.LogError($"Erro ao desserializar sessão: {ex.Message}");
+                }
             }
 
-            var now = DateTimeOffset.UtcNow.AddSeconds(-5);
-
-            var ordered = sessions
-                .Where(s => s.ExpiresAt > DateTimeOffset.UtcNow)
-                .OrderByDescending(s => s.LastActivity)
-                .ToList();
-
-            return ordered;
-
+            return [.. sessions.OrderByDescending(s => s.LastActivity)];
         }
     }
 

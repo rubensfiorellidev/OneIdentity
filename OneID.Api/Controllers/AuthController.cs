@@ -247,8 +247,6 @@ namespace OneID.Api.Controllers
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshTokenAsync()
         {
-            Response.Headers.CacheControl = "no-store";
-
             using var activity = Telemetry.Source.StartActivity(
                 "Refresh do token de acesso",
                 ActivityKind.Server
@@ -266,15 +264,6 @@ namespace OneID.Api.Controllers
             }
 
             var refreshToken = Request.Cookies["refresh_token"];
-
-            if (string.IsNullOrWhiteSpace(refreshToken))
-            {
-                var authHeader = Request.Headers.Authorization.ToString();
-                if (authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
-                {
-                    refreshToken = authHeader["Bearer ".Length..].Trim();
-                }
-            }
 
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
@@ -341,7 +330,6 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Path = "/",
                 Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
 
             });
@@ -351,7 +339,6 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Path = "/",
                 Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
 
             });
