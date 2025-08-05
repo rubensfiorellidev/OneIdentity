@@ -507,8 +507,6 @@ namespace OneID.Shared.Authentication
 
             );
 
-            _logger.LogWarning("🔐 Raw Refresh Token retornado: {RawToken}", authResult.RefreshToken);
-
             authResult.CircuitId = existingCircuitId;
 
             await db.SaveChangesAsync();
