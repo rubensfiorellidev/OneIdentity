@@ -213,10 +213,9 @@ namespace OneID.Shared
                     },
                     OnAuthenticationFailed = context =>
                     {
-                        // Verifica se o endpoint é [AllowAnonymous]
                         if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
                         {
-                            context.NoResult(); // Não inicia a resposta
+                            context.NoResult();
                             return Task.CompletedTask;
                         }
 
@@ -235,10 +234,9 @@ namespace OneID.Shared
                     },
                     OnChallenge = async context =>
                     {
-                        // Verifica se o endpoint é [AllowAnonymous]
                         if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
                         {
-                            context.HandleResponse(); // Impede o envio de 401
+                            context.HandleResponse();
                             return;
                         }
 
@@ -277,7 +275,6 @@ namespace OneID.Shared
                     {
                         OnMessageReceived = context =>
                         {
-                            // Ignora validação para endpoints com [AllowAnonymous]
                             if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
                             {
                                 context.Token = null;
@@ -340,7 +337,6 @@ namespace OneID.Shared
         }
         private static string ExtractToken(HttpRequest request)
         {
-            // Ignora a validação para o endpoint de refresh token
             if (request.Path.Value.EndsWith("/v1/auth/refresh-token", StringComparison.OrdinalIgnoreCase))
             {
                 return null;
