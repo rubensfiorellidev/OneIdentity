@@ -247,20 +247,13 @@ namespace OneID.Api.Controllers
                 "Refresh do token de acesso",
                 ActivityKind.Server
             );
-
             activity?.SetTag("rota", "v1/auth/refresh-token");
             activity?.SetTag("method", "POST");
             activity?.SetTag("refresh.iniciado_em", DateTimeOffset.UtcNow);
-
             _logger.LogInformation("Token de refresh solicitado às {Now}", DateTimeOffset.Now);
 
-            foreach (var cookie in Request.Cookies)
-            {
-                _logger.LogInformation("Cookie recebido: {Key} = {Value}", cookie.Key, cookie.Value);
-            }
-
             var refreshToken = Request.Cookies["refresh_token"];
-
+            _logger.LogInformation("Refresh token recebido: {Token}", refreshToken ?? "nulo");
             if (string.IsNullOrWhiteSpace(refreshToken))
             {
                 activity?.SetTag("erro", "refresh_token_ausente");
@@ -269,41 +262,31 @@ namespace OneID.Api.Controllers
             }
 
             activity?.SetTag("refresh_token.recebido", true);
-
             var refreshInfo = await _refreshTokenService.GetRefreshTokenAsync(refreshToken);
             if (refreshInfo is null)
             {
                 activity?.SetTag("erro", "refresh_token_nao_encontrado");
-                _logger.LogWarning("Refresh token não encontrado.");
+                _logger.LogWarning("Refresh token não encontrado para o valor: {Token}", refreshToken);
                 return Unauthorized("Refresh token inválido.");
             }
 
             activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
-
-            var (newJwt, newRefresh, success) =
-                    await _jwtProvider.RefreshTokenAsync(
-                    refreshInfo.UserUpnHash,
-                    refreshToken,
-                    refreshInfo.CircuitId
-                    );
-
+            var (newJwt, newRefresh, success) = await _jwtProvider.RefreshTokenAsync(
+                refreshInfo.UserUpnHash,
+                refreshToken,
+                refreshInfo.CircuitId
+            );
             if (!success)
             {
                 activity?.SetTag("erro", "refresh_token_expirado_ou_invalido");
-                _logger.LogWarning("Falha no refresh. Token inválido ou expirado.");
+                _logger.LogWarning("Falha no refresh para o token: {Token}. Token inválido ou expirado.", refreshToken);
                 return Unauthorized("Refresh token inválido ou expirado.");
             }
 
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
-
-
-            SetRefreshCookies(newJwt,
-                           newRefresh,
-                           JwtDefaults.AccessTokenLifetime,
-                           JwtDefaults.RefreshTokenLifetime);
-
-
+            _logger.LogInformation("Refresh token bem-sucedido. Novo access token gerado.");
+            SetRefreshCookies(newJwt, newRefresh, JwtDefaults.AccessTokenLifetime, JwtDefaults.RefreshTokenLifetime);
             return Ok(new
             {
                 success = true,
@@ -311,7 +294,6 @@ namespace OneID.Api.Controllers
                 refreshToken = newRefresh
             });
         }
-
         private async Task<Dictionary<string, object>> GetServiceUserClaimsAsync(string serviceUserId)
         {
             await using var db = _contextFactory.CreateDbContext();
@@ -351,6 +333,12 @@ namespace OneID.Api.Controllers
 
         private void SetRefreshCookies(string accessToken, string refreshToken, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
         {
+            if (Response.HasStarted)
+            {
+                _logger.LogError("Tentativa de modificar cookies após o início da resposta.");
+                return;
+            }
+
             Response.Cookies.Delete("access_token");
             Response.Cookies.Delete("refresh_token");
 
@@ -387,7 +375,6 @@ namespace OneID.Api.Controllers
                 _ => remoteIp
             };
         }
-
 
     }
     public class AuthRequest

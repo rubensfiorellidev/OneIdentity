@@ -3,6 +3,7 @@ using Amazon.Extensions.NETCore.Setup;
 using Amazon.Runtime;
 using Amazon.SimpleEmail;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
@@ -212,23 +213,35 @@ namespace OneID.Shared
                     },
                     OnAuthenticationFailed = context =>
                     {
-                        context.NoResult();
+                        // Verifica se o endpoint é [AllowAnonymous]
+                        if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+                        {
+                            context.NoResult(); // Não inicia a resposta
+                            return Task.CompletedTask;
+                        }
 
+                        context.NoResult();
                         if (!context.Response.HasStarted)
                         {
                             context.Response.StatusCode = 401;
                             context.Response.ContentType = "application/json";
                             return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                         }
-
                         context.HttpContext.RequestServices
                             .GetRequiredService<ILogger<JwtBearerEvents>>()
                             .LogWarning("Falha de autenticação: resposta já iniciada. Token inválido ou expirado.");
-
                         return Task.CompletedTask;
+
                     },
                     OnChallenge = async context =>
                     {
+                        // Verifica se o endpoint é [AllowAnonymous]
+                        if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+                        {
+                            context.HandleResponse(); // Impede o envio de 401
+                            return;
+                        }
+
                         if (!context.Response.HasStarted)
                         {
                             context.HandleResponse();
@@ -262,17 +275,31 @@ namespace OneID.Shared
 
                     options.Events = new JwtBearerEvents
                     {
+                        OnMessageReceived = context =>
+                        {
+                            // Ignora validação para endpoints com [AllowAnonymous]
+                            if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+                            {
+                                context.Token = null;
+                                return Task.CompletedTask;
+                            }
+                            context.Token = ExtractToken(context.Request);
+                            return Task.CompletedTask;
+                        },
                         OnAuthenticationFailed = context =>
                         {
+                            if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+                            {
+                                context.NoResult();
+                                return Task.CompletedTask;
+                            }
                             context.NoResult();
-
                             if (!context.Response.HasStarted)
                             {
                                 context.Response.StatusCode = 401;
                                 context.Response.ContentType = "application/json";
                                 return context.Response.WriteAsync("{\"error\":\"Token inválido ou malformado\"}");
                             }
-
                             context.HttpContext.RequestServices
                                 .GetRequiredService<ILogger<JwtBearerEvents>>()
                                 .LogWarning("Falha de autenticação: resposta já iniciada. Token inválido ou expirado.");
@@ -281,6 +308,11 @@ namespace OneID.Shared
                         },
                         OnChallenge = async context =>
                         {
+                            if (context.HttpContext.GetEndpoint()?.Metadata.GetMetadata<AllowAnonymousAttribute>() != null)
+                            {
+                                context.HandleResponse();
+                                return;
+                            }
                             if (!context.Response.HasStarted)
                             {
                                 context.HandleResponse();
@@ -308,6 +340,12 @@ namespace OneID.Shared
         }
         private static string ExtractToken(HttpRequest request)
         {
+            // Ignora a validação para o endpoint de refresh token
+            if (request.Path.Value.EndsWith("/v1/auth/refresh-token", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
             var authHeader = request.Headers.Authorization.ToString();
             if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
             {

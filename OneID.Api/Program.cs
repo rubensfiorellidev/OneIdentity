@@ -166,6 +166,7 @@ app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
+
 app.UseMiddleware<TracingMiddleware>();
 app.MapControllers();
 
