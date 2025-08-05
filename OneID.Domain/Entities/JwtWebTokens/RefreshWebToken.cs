@@ -48,5 +48,6 @@ namespace OneID.Domain.Entities.JwtWebTokens
         public string UserAgent { get; init; }
         public string IpAddress { get; init; }
         public string CircuitId { get; init; }
+        public string RawToken { get; init; }
     }
 }

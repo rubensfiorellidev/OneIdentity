@@ -110,7 +110,8 @@ namespace OneID.Shared.Authentication
             RsaSecurityKey key = GetRSAKey();
 
             string keyId = GenerateKeyId(key);
-            var jti = Ulid.NewUlid().ToString();
+            var accessJti = Ulid.NewUlid().ToString();
+            var refreshJti = Ulid.NewUlid().ToString();
             var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
             jwk.KeyId = keyId;
             jwk.Alg = SecurityAlgorithms.RsaSha256;
@@ -128,7 +129,7 @@ namespace OneID.Shared.Authentication
 
             var claims = new List<Claim>
             {
-                new(JwtClaims.Jti, jti),
+                new(JwtClaims.Jti, accessJti),
                 new(JwtClaims.Sub, userId),
                 new(JwtClaims.UniqueName, preferredUsername ?? userId),
                 new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
@@ -151,13 +152,15 @@ namespace OneID.Shared.Authentication
 
             claims.AddRange(customClaims);
 
-            var expiresAt = DateTime.UtcNow.Add(accessTokenLifetime ?? JwtDefaults.AccessTokenLifetime);
+            DateTimeOffset issuedAt = DateTimeOffset.UtcNow;
+            DateTimeOffset expiresAt = issuedAt.Add(accessTokenLifetime ?? JwtDefaults.AccessTokenLifetime);
+
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
                 NotBefore = DateTime.UtcNow,
-                Expires = expiresAt,
+                Expires = expiresAt.UtcDateTime,
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = signingCredentials
             };
@@ -165,7 +168,7 @@ namespace OneID.Shared.Authentication
             var jws = handler.CreateToken(descriptor);
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(
                 user.LoginHash,
-                jti,
+                refreshJti,
                 ipAddress,
                 userAgent,
                 circuitId,
@@ -178,7 +181,7 @@ namespace OneID.Shared.Authentication
                 IpAddress = ipAddress,
                 UserAgent = userAgent,
                 LastActivity = DateTime.UtcNow,
-                ExpiresAt = expiresAt,
+                ExpiresAt = DateTimeOffset.UtcNow.Add(JwtDefaults.AccessTokenLifetime).UtcDateTime,
                 UpnOrName = user.FullName ?? preferredUsername ?? user.Login,
 
             });
@@ -186,9 +189,9 @@ namespace OneID.Shared.Authentication
             return new AuthResult
             {
                 Jwtoken = jws,
-                RefreshToken = refreshToken.TokenHash,
+                RefreshToken = refreshToken.RawToken!,
                 Result = true,
-                ExpiresAt = expiresAt,
+                ExpiresAt = DateTimeOffset.UtcNow.Add(JwtDefaults.AccessTokenLifetime).UtcDateTime,
                 CircuitId = circuitId
             };
         }
@@ -503,6 +506,8 @@ namespace OneID.Shared.Authentication
                 resolvedCircuitId
 
             );
+
+            _logger.LogWarning("🔐 Raw Refresh Token retornado: {RawToken}", authResult.RefreshToken);
 
             authResult.CircuitId = existingCircuitId;
 

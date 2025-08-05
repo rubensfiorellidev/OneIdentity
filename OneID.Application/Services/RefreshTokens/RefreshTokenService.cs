@@ -61,12 +61,15 @@ namespace OneID.Application.Services.RefreshTokens
                 userAgent,
                 ipAddress: ip,
                 circuitId: circuitId
-            );
+            )
+            {
+                RawToken = rawToken
+            };
 
             await _repository.AddAsync(refreshToken);
             await _repository.SaveChangesAsync();
 
-            return refreshToken with { TokenHash = rawToken };
+            return refreshToken;
         }
 
         public async Task<RefreshWebToken> GetRefreshTokenAsync(string rawToken)

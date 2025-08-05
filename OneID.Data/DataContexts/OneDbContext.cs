@@ -83,6 +83,8 @@ namespace OneID.Data.DataContexts
 
             builder.ApplyConfigurationsFromAssembly(typeof(OneDbContext).Assembly);
 
+            builder.Entity<RefreshWebToken>()
+                .Ignore(x => x.RawToken);
 
             // Mapeamento de UserRole
             builder.Entity<UserRole>(entity =>
