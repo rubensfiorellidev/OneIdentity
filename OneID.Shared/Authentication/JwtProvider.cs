@@ -91,10 +91,13 @@ namespace OneID.Shared.Authentication
                                                          string email = null,
                                                          string name = null,
                                                          string ipAddress = null,
-                                                         string userAgent = null)
+                                                         string userAgent = null,
+                                                         string circuitId = null,
+                                                         TimeSpan? accessTokenLifetime = null,
+                                                         TimeSpan? refreshTokenLifetime = null)
         {
 
-            var circuitId = _httpContextAccessor.HttpContext?.Items["circuit_id"]?.ToString()
+            circuitId ??= _httpContextAccessor.HttpContext?.Items["circuit_id"]?.ToString()
                             ?? Guid.NewGuid().ToString();
 
             ipAddress = NormalizeIp(ipAddress);
@@ -148,8 +151,7 @@ namespace OneID.Shared.Authentication
 
             claims.AddRange(customClaims);
 
-            var expiresAt = DateTime.UtcNow.Add(JwtDefaults.AccessTokenLifetime);
-
+            var expiresAt = DateTime.UtcNow.Add(accessTokenLifetime ?? JwtDefaults.AccessTokenLifetime);
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = _jwtOptions.Issuer,
@@ -161,13 +163,13 @@ namespace OneID.Shared.Authentication
             };
 
             var jws = handler.CreateToken(descriptor);
-
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(
                 user.LoginHash,
                 jti,
                 ipAddress,
                 userAgent,
-                circuitId
+                circuitId,
+                refreshTokenLifetime ?? JwtDefaults.RefreshTokenLifetime
             );
 
             await _sender.Send(new RegisterSessionCommand
@@ -405,14 +407,18 @@ namespace OneID.Shared.Authentication
             return validScopes.Contains(scopeClaim);
         }
 
-
-
         public async Task<(string NewJwt, string NewRefresh, bool Success)> RefreshTokenAsync(
             string userUpnHash,
             string refreshToken,
-            string circuitId)
+            string existingCircuitId)
         {
             await using var db = _contextFactory.CreateDbContext();
+
+            var accountUser = await db.UserAccounts
+                .FirstOrDefaultAsync(x => x.LoginHash == userUpnHash);
+
+            if (accountUser == null)
+                return (null, null, false);
 
             var httpContext = _httpContextAccessor.HttpContext;
             var ipAddress = GetClientIpAddress(httpContext);
@@ -471,9 +477,9 @@ namespace OneID.Shared.Authentication
 
             if (string.IsNullOrWhiteSpace(resolvedCircuitId))
             {
-                if (!string.IsNullOrWhiteSpace(circuitId))
+                if (!string.IsNullOrWhiteSpace(existingCircuitId))
                 {
-                    resolvedCircuitId = circuitId;
+                    resolvedCircuitId = existingCircuitId;
                     await _refreshTokenService.PatchCircuitIdIfMissingAsync(existing.Id, resolvedCircuitId);
                 }
                 else
@@ -493,9 +499,12 @@ namespace OneID.Shared.Authentication
                 user.CorporateEmail,
                 user.FullName,
                 ipAddress,
-                userAgent
+                userAgent,
+                resolvedCircuitId
 
             );
+
+            authResult.CircuitId = existingCircuitId;
 
             await db.SaveChangesAsync();
 

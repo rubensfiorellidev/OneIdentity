@@ -2,6 +2,7 @@
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.Tokens;
 using OneID.Domain.Entities.JwtWebTokens;
+using OneID.Domain.Helpers;
 using OneID.Domain.Interfaces;
 using System.Security.Cryptography;
 
@@ -27,7 +28,8 @@ namespace OneID.Application.Services.RefreshTokens
                                                                      string jti,
                                                                      string ip = null,
                                                                      string userAgent = null,
-                                                                     string circuitId = null)
+                                                                     string circuitId = null,
+                                                                     TimeSpan? refreshTokenLifetime = null)
         {
 
             var rawToken = _tokenGenerator.Generate();
@@ -44,13 +46,16 @@ namespace OneID.Application.Services.RefreshTokens
                 await MarkRefreshTokenAsUsedAsync(current.TokenHash);
             }
 
+            var now = DateTimeOffset.UtcNow;
+            var expiresAt = now.Add(refreshTokenLifetime ?? JwtDefaults.RefreshTokenLifetime);
+
             var refreshToken = new RefreshWebToken(
                 userUpnHash,
                 jti,
                 tokenHash,
                 saltBase64,
-                DateTimeOffset.UtcNow,
-                DateTimeOffset.UtcNow.AddDays(7),
+                now,
+                expiresAt,
                 false,
                 false,
                 userAgent,

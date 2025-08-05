@@ -223,7 +223,7 @@ namespace OneID.Api.Controllers
             );
 
 
-            SetAuthCookies(authResult.Jwtoken,
+            SetLoginCookies(authResult.Jwtoken,
                            authResult.RefreshToken,
                            JwtDefaults.AccessTokenLifetime,
                            JwtDefaults.RefreshTokenLifetime
@@ -281,11 +281,11 @@ namespace OneID.Api.Controllers
             activity?.SetTag("user.upn_hash", refreshInfo.UserUpnHash);
 
             var (newJwt, newRefresh, success) =
-                await _jwtProvider.RefreshTokenAsync(
+                    await _jwtProvider.RefreshTokenAsync(
                     refreshInfo.UserUpnHash,
                     refreshToken,
                     refreshInfo.CircuitId
-                );
+                    );
 
             if (!success)
             {
@@ -296,6 +296,12 @@ namespace OneID.Api.Controllers
 
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
+
+
+            SetRefreshCookies(newJwt,
+                           newRefresh,
+                           JwtDefaults.AccessTokenLifetime,
+                           JwtDefaults.RefreshTokenLifetime);
 
 
             return Ok(new
@@ -319,7 +325,7 @@ namespace OneID.Api.Controllers
             return claims;
         }
 
-        private void SetAuthCookies(string accessToken,
+        private void SetLoginCookies(string accessToken,
                                     string refreshToken,
                                     TimeSpan accessTokenLifetime,
                                     TimeSpan refreshTokenLifetime)
@@ -343,6 +349,27 @@ namespace OneID.Api.Controllers
             });
         }
 
+        private void SetRefreshCookies(string accessToken, string refreshToken, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
+        {
+            Response.Cookies.Delete("access_token");
+            Response.Cookies.Delete("refresh_token");
+
+            Response.Cookies.Append("access_token", accessToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
+            });
+
+            Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true,
+                SameSite = SameSiteMode.None,
+                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
+            });
+        }
         private static string GetClientIpAddress(HttpContext context)
         {
             if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))

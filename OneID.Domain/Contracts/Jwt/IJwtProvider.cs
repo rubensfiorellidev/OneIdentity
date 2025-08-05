@@ -12,7 +12,10 @@ namespace OneID.Domain.Contracts.Jwt
                                                                string email = null,
                                                                string name = null,
                                                                string ipAddress = null,
-                                                               string userAgent = null);
+                                                               string userAgent = null,
+                                                               string circuitId = null,
+                                                               TimeSpan? accessTokenLifetime = null,
+                                                               TimeSpan? refreshTokenLifetime = null);
         Task<string> EnsureKeysAsync();
         string CreateBootstrapToken(Dictionary<string, object> claims, TimeSpan? validFor);
         public RsaSecurityKey GetPublicKey();
