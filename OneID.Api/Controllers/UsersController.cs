@@ -1,4 +1,5 @@
 ﻿using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OneID.Application.DTOs.Users;
@@ -16,7 +17,7 @@ namespace OneID.Api.Controllers
             _logger = logger;
         }
 
-        [Authorize]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet]
         [Route("", Name = nameof(GetUsersAsync))]
         public async Task<IActionResult> GetUsersAsync([FromQuery] int page = 0,
