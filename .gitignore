@@ -375,3 +375,7 @@ FodyWeavers.xsd
 /Nginx/conf.d/default.conf
 /Nginx/docker-compose.yml
 /Nginx/Dockerfile
+/OneID.Api/Keys/key-metadata.json
+/OneID.Api/Keys/PrivateRsaKey.xml
+/OneID.Api/Keys/PublicRsaKey.xml
+/OneID.Api/Keys/PrivateRsaKey.xml
