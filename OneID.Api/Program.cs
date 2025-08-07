@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Server.Kestrel.Core;
-using OneID.Application;
+﻿using OneID.Application;
 using OneID.Data;
 using OneID.Domain.Abstractions.MiddlewareTracings;
 using OneID.Messaging;
@@ -7,8 +6,6 @@ using OneID.Shared;
 using OneID.Shared.Tools;
 using Serilog;
 using System.IO.Compression;
-using System.Security.Authentication;
-using System.Security.Cryptography.X509Certificates;
 
 var builder = WebApplication.CreateBuilder(args);
 var environment = builder.Environment.EnvironmentName;
@@ -20,25 +17,22 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Host.UseSerilog();
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
+var certificateConfig = builder.Configuration.GetSection("Kestrel:Endpoints:Https:Certificate");
+
+var passwordValue = certificateConfig["Password"];
+var certPassword = passwordValue != null && passwordValue.StartsWith("ENV:")
+    ? Environment.GetEnvironmentVariable(passwordValue.Replace("ENV:", ""))
+    : passwordValue;
+
+certPassword ??= string.Empty;
+
+builder.Configuration["Kestrel:Endpoints:Https:Certificate:Password"] = certPassword;
+
+builder.WebHost.ConfigureKestrel(options =>
 {
-    var certPath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-        ".aspnet", "https", "OneID.Api.pfx");
-
-    serverOptions.ConfigureHttpsDefaults(httpsOptions =>
-    {
-        httpsOptions.ServerCertificate = new X509Certificate2(certPath);
-        httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
-    });
-
-    serverOptions.ListenAnyIP(7200, listenOptions =>
-    {
-        listenOptions.UseHttps();
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2AndHttp3;
-    });
-
+    options.Configure(builder.Configuration.GetSection("Kestrel"));
 });
+
 
 builder.Configuration
     .AddJsonFile("appsettings.json", false, true)

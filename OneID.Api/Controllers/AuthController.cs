@@ -291,11 +291,6 @@ namespace OneID.Api.Controllers
                               JwtDefaults.AccessTokenLifetime,
                               JwtDefaults.RefreshTokenLifetime);
 
-            //remover
-            _logger.LogInformation("🆕 Novo access_token: {AccessToken}", newJwt);
-            _logger.LogInformation("🔁 Novo refresh_token: {RefreshToken}", newRefresh);
-
-
             return Ok(new
             {
                 success = true,
@@ -326,7 +321,8 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
+                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime),
+                Domain = ".oneidsecure.cloud"
 
             });
 
@@ -335,7 +331,9 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
+                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime),
+                Domain = ".oneidsecure.cloud"
+
 
             });
         }
@@ -351,7 +349,9 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime)
+                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime),
+                Domain = ".oneidsecure.cloud"
+
             });
 
             Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
@@ -359,7 +359,9 @@ namespace OneID.Api.Controllers
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime)
+                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime),
+                Domain = ".oneidsecure.cloud"
+
             });
         }
         private static string GetClientIpAddress(HttpContext context)

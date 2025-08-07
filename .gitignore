@@ -370,3 +370,8 @@ FodyWeavers.xsd
 /OneID.Api/appsettings.json
 /OneID.Api/appsettings.Development.json
 /OneID.Api/Properties/launchSettings.json
+/Nginx/certs/fullchain.pem
+/Nginx/certs/privkey.pem
+/Nginx/conf.d/default.conf
+/Nginx/docker-compose.yml
+/Nginx/Dockerfile
