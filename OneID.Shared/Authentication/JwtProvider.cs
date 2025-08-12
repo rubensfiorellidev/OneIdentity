@@ -116,7 +116,6 @@ namespace OneID.Shared.Authentication
             jwk.KeyId = keyId;
             jwk.Alg = SecurityAlgorithms.RsaSha256;
 
-
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             await using var db = _contextFactory.CreateDbContext();
