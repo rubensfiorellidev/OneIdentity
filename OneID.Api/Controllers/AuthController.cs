@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using OneID.Api.Auth;
 using OneID.Application.DTOs.Auth;
+using OneID.Application.Interfaces.CookiesOptions;
 using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.Services;
@@ -32,6 +34,7 @@ namespace OneID.Api.Controllers
         private readonly ICurrentUserService _currentUser;
         private readonly ITotpService _totpService;
         private readonly IRefreshTokenService _refreshTokenService;
+        private readonly IAuthCookieOptions _cookieOptions;
 
         private const string BootstraperUserId = "01JZTZXJSC1WY70TPPB1SRVQYZ";
         public AuthController(ISender sender,
@@ -42,7 +45,8 @@ namespace OneID.Api.Controllers
                               IHashService hashService,
                               ICurrentUserService currentUser,
                               ITotpService totpService,
-                              IRefreshTokenService refreshTokenService) : base(sender)
+                              IRefreshTokenService refreshTokenService,
+                              IAuthCookieOptions cookieOptions) : base(sender)
         {
             _jwtProvider = jwtProvider;
             _logger = logger;
@@ -52,6 +56,7 @@ namespace OneID.Api.Controllers
             _currentUser = currentUser;
             _totpService = totpService;
             _refreshTokenService = refreshTokenService;
+            _cookieOptions = cookieOptions;
         }
 
 
@@ -211,21 +216,20 @@ namespace OneID.Api.Controllers
                 userAgent
             );
 
-
-            SetLoginCookies(authResult.Jwtoken,
-                           authResult.RefreshToken,
-                           JwtDefaults.AccessTokenLifetime,
-                           JwtDefaults.RefreshTokenLifetime
-            );
-
             activity?.SetTag("login.sucesso", true);
             activity?.SetTag("login.finalizado_em", DateTimeOffset.UtcNow);
 
-            return Ok(new
-            {
-                token = authResult.Jwtoken,
-                refreshToken = authResult.RefreshToken
-            });
+            return new AuthCookiesResult(
+                accessToken: authResult.Jwtoken,
+                accessTtl: JwtDefaults.AccessTokenLifetime,
+                refreshToken: authResult.RefreshToken,
+                refreshTtl: JwtDefaults.RefreshTokenLifetime,
+                options: _cookieOptions,
+                includeBody: true,
+                body: new { token = authResult.Jwtoken, refreshToken = authResult.RefreshToken }
+            );
+
+
         }
 
         [AllowAnonymous]
@@ -275,17 +279,16 @@ namespace OneID.Api.Controllers
             activity?.SetTag("refresh.sucesso", true);
             activity?.SetTag("refresh.finalizado_em", DateTimeOffset.UtcNow);
 
-            SetRefreshCookies(newJwt,
-                              newRefresh,
-                              JwtDefaults.AccessTokenLifetime,
-                              JwtDefaults.RefreshTokenLifetime);
+            return new AuthCookiesResult(
+                accessToken: newJwt,
+                accessTtl: JwtDefaults.AccessTokenLifetime,
+                refreshToken: newRefresh,
+                refreshTtl: JwtDefaults.RefreshTokenLifetime,
+                options: _cookieOptions,
+                includeBody: true,
+                body: new { success = true, token = newJwt, refreshToken = newRefresh }
+            );
 
-            return Ok(new
-            {
-                success = true,
-                token = newJwt,
-                refreshToken = newRefresh
-            });
         }
         private async Task<Dictionary<string, object>> GetServiceUserClaimsAsync(string serviceUserId)
         {
@@ -300,59 +303,6 @@ namespace OneID.Api.Controllers
             return claims;
         }
 
-        private void SetLoginCookies(string accessToken,
-                                    string refreshToken,
-                                    TimeSpan accessTokenLifetime,
-                                    TimeSpan refreshTokenLifetime)
-        {
-            Response.Cookies.Append("access_token", accessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime),
-                Domain = ".oneidsecure.cloud"
-
-            });
-
-            Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime),
-                Domain = ".oneidsecure.cloud"
-
-
-            });
-        }
-
-        private void SetRefreshCookies(string accessToken, string refreshToken, TimeSpan accessTokenLifetime, TimeSpan refreshTokenLifetime)
-        {
-
-            Response.Cookies.Delete("access_token");
-            Response.Cookies.Delete("refresh_token");
-
-            Response.Cookies.Append("access_token", accessToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(accessTokenLifetime),
-                Domain = ".oneidsecure.cloud"
-
-            });
-
-            Response.Cookies.Append("refresh_token", refreshToken, new CookieOptions
-            {
-                HttpOnly = true,
-                Secure = true,
-                SameSite = SameSiteMode.None,
-                Expires = DateTimeOffset.UtcNow.Add(refreshTokenLifetime),
-                Domain = ".oneidsecure.cloud"
-
-            });
-        }
         private static string GetClientIpAddress(HttpContext context)
         {
             if (context.Request.Headers.TryGetValue("X-Forwarded-For", out var forwardedFor))
@@ -372,11 +322,5 @@ namespace OneID.Api.Controllers
         }
 
     }
-    public class AuthRequest
-    {
-        public string TotpCode { get; set; }
-
-    }
-
 
 }

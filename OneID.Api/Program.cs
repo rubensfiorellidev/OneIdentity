@@ -1,4 +1,6 @@
-﻿using OneID.Application;
+﻿using OneID.Api.Auth;
+using OneID.Application;
+using OneID.Application.Interfaces.CookiesOptions;
 using OneID.Data;
 using OneID.Domain.Abstractions.MiddlewareTracings;
 using OneID.Messaging;
@@ -95,6 +97,19 @@ builder.Logging.AddOpenTelemetry(options =>
     options.ParseStateValues = true;
     options.IncludeFormattedMessage = true;
 });
+
+builder.Services.AddSingleton<IAuthCookieOptions>(new AuthCookieOptions
+{
+    Domain = ".oneidsecure.cloud",
+    Path = "/",
+    SameSite = SameSiteMode.Lax,
+    HttpOnly = true,
+    Secure = true
+
+    //AccessCookieName = "__Secure-access_token",
+    //RefreshCookieName = "__Secure-refresh_token",
+});
+
 
 var app = builder.Build();
 
