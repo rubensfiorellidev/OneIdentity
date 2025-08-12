@@ -138,18 +138,23 @@ namespace OneID.Shared
 
             services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", builder =>
+                options.AddPolicy("DevCookieCors", builder =>
                 {
-                    builder.AllowAnyOrigin()
-                           .AllowAnyMethod()
-                           .AllowAnyHeader();
+                    builder.WithOrigins(
+                            "https://app.oneidsecure.cloud",
+                            "https://auth.oneidsecure.cloud",
+                            "https://dev.oneidsecure.cloud"
+                        )
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
                 });
 
                 options.AddPolicy("OneIdBackendCustom", builder =>
                 {
                     builder.SetIsOriginAllowed(origin =>
                         Uri.TryCreate(origin, UriKind.Absolute, out var uri) &&
-                        uri.Host.EndsWith(".oneid.cloud", StringComparison.OrdinalIgnoreCase))
+                        uri.Host.EndsWith(".oneidsecure.cloud", StringComparison.OrdinalIgnoreCase))
                            .AllowAnyMethod()
                            .AllowAnyHeader()
                            .AllowCredentials();

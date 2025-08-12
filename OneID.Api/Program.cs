@@ -8,6 +8,7 @@ using Serilog;
 using System.IO.Compression;
 
 var builder = WebApplication.CreateBuilder(args);
+
 var environment = builder.Environment.EnvironmentName;
 
 Log.Logger = new LoggerConfiguration()
@@ -23,9 +24,7 @@ var passwordValue = certificateConfig["Password"];
 var certPassword = passwordValue != null && passwordValue.StartsWith("ENV:")
     ? Environment.GetEnvironmentVariable(passwordValue.Replace("ENV:", ""))
     : passwordValue;
-
 certPassword ??= string.Empty;
-
 builder.Configuration["Kestrel:Endpoints:Https:Certificate:Password"] = certPassword;
 
 builder.WebHost.ConfigureKestrel(options =>
@@ -105,38 +104,22 @@ var logger = loggerFactory.CreateLogger<Program>();
 
 logger.LogInformation("Application is running in {Environment} environment.", environmentName);
 logger.LogInformation("Application is running in {TimeZone} TimeZone.", TimeZoneInfo.Local.Id);
-logger.LogInformation("Application started at {Now} (Local).", DateTime.Now);
-logger.LogInformation("Application started at {UtcNow} (UTC).", DateTime.UtcNow);
+logger.LogInformation("Application started at {Now} (Local).", DateTimeOffset.Now);
+logger.LogInformation("Application started at {UtcNow} (UTC).", DateTimeOffset.UtcNow);
 
 app.UseSerilogRequestLogging();
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-}
-
-if (builder.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseCors("AllowAll");
+    app.UseCors("DevCookieCors");
 }
 else
 {
     app.UseCors("OneIdBackendCustom");
 }
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHsts();
-}
-
-
-app.UseHttpsRedirection();
 
 app.Use(async (context, next) =>
 {
@@ -155,15 +138,12 @@ app.Use(async (context, next) =>
 });
 
 app.UseResponseCompression();
-
 app.UseStaticFiles();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
-
 app.UseMiddleware<TracingMiddleware>();
 app.MapControllers();
-
 
 app.Run();
 Log.CloseAndFlush();

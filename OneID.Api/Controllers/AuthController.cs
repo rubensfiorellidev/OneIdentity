@@ -8,7 +8,6 @@ using OneID.Application.Interfaces.Interceptor;
 using OneID.Application.Interfaces.Keycloak;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Interfaces.TotpServices;
-using OneID.Application.Queries.Auth;
 using OneID.Data.Interfaces;
 using OneID.Domain.Contracts.Jwt;
 using OneID.Domain.Helpers;
@@ -55,15 +54,6 @@ namespace OneID.Api.Controllers
             _refreshTokenService = refreshTokenService;
         }
 
-        [HttpGet("me")]
-        [Authorize]
-        public async Task<IActionResult> Me(CancellationToken cancellationToken)
-        {
-            var query = new GetCurrentUserQuery();
-            var result = await Sender.Send(query, cancellationToken);
-
-            return Ok(result);
-        }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("bootstrap-token")]
@@ -112,7 +102,6 @@ namespace OneID.Api.Controllers
             var token = _jwtProvider.CreateBootstrapToken(claims, TimeSpan.FromMinutes(2));
             return Ok(new { token });
         }
-
 
         [HttpPost("login")]
         [Authorize(AuthenticationSchemes = "RequestToken")]
