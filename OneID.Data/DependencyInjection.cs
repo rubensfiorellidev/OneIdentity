@@ -2,9 +2,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Npgsql;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
+using OneID.Application.Services;
 using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
@@ -58,16 +58,21 @@ namespace OneID.Data
 
         public static IServiceCollection AddDbContextInfra(this IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
         {
-            services.AddDbContextFactory<OneDbContext>((serviceProvider, options) =>
+            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
+            services.AddSingleton<AuditStampInterceptor>();
+
+            services.AddDbContextFactory<OneDbContext>((sp, options) =>
             {
+                configuration = sp.GetRequiredService<IConfiguration>();
+                environment = sp.GetRequiredService<IHostEnvironment>();
+
                 string connectionString = environment.IsDevelopment()
                     ? configuration.GetConnectionString("NPSqlConnection")
                     : environment.IsEnvironment("Staging")
                         ? configuration.GetConnectionString("NPSqlConnectionStaging")
                         : configuration.GetConnectionString("NPSqlConnectionProduction");
 
-                var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-                var dataSource = dataSourceBuilder.Build();
+                var dataSource = new Npgsql.NpgsqlDataSourceBuilder(connectionString).Build();
 
                 options.UseNpgsql(dataSource, npgsqlOptions =>
                 {
@@ -75,13 +80,10 @@ namespace OneID.Data
                     npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), null);
                 });
 
+                options.AddInterceptors(sp.GetRequiredService<AuditStampInterceptor>());
+
                 options.EnableSensitiveDataLogging(environment.IsDevelopment());
-
             });
-
-
-
-            services.AddScoped<IOneDbContextFactory, OneDbContextFactory>();
 
             return services;
         }

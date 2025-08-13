@@ -86,7 +86,6 @@ namespace OneID.Data.DataContexts
             builder.Entity<RefreshWebToken>()
                 .Ignore(x => x.RawToken);
 
-            // Mapeamento de UserRole
             builder.Entity<UserRole>(entity =>
             {
                 entity.ToTable("tb_oneid_user_roles");
@@ -104,7 +103,6 @@ namespace OneID.Data.DataContexts
                       .OnDelete(DeleteBehavior.Cascade);
             });
 
-            // Mapeamento de Role
             builder.Entity<Role>(entity =>
             {
                 entity.ToTable("tb_oneid_roles");
@@ -139,7 +137,6 @@ namespace OneID.Data.DataContexts
 
             });
 
-            // Mapeamento de UserClaim
             builder.Entity<UserClaim>(entity =>
             {
                 entity.ToTable("tb_oneid_user_claims");
@@ -167,7 +164,6 @@ namespace OneID.Data.DataContexts
 
             });
 
-            // Mapeamento de ServiceUserClaim
             builder.Entity<ServiceUser>(entity =>
             {
                 entity.ToTable("tb_oneid_service_user");
