@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using OneID.Application.Interfaces.Logins;
 using OneID.Application.Interfaces.Repositories;
 using OneID.Application.Interfaces.Services;
 using OneID.Application.Services;
@@ -12,6 +13,7 @@ using OneID.Data.Interfaces;
 using OneID.Data.Redis;
 using OneID.Data.Repositories.AdmissionContext;
 using OneID.Data.Repositories.DeduplicationSagaContext;
+using OneID.Data.Repositories.Logins;
 using OneID.Data.Repositories.RefreshTokens;
 using OneID.Data.Repositories.RolesContext;
 using OneID.Data.Repositories.StoredEvents;
@@ -48,6 +50,8 @@ namespace OneID.Data
             services.AddScoped<IRoleWriterRepository, RoleWriterRepository>();
             services.AddScoped<IRedisRepository, RedisRepository>();
             services.AddScoped<IQueryUserRepository, QueryUserRepository>();
+            services.AddScoped<ILoginReservationRepository, LoginReservationRepository>();
+            services.AddScoped<IIdempotencyStore, IdempotencyStore>();
 
 
 

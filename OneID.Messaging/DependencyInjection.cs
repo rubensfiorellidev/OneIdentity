@@ -6,10 +6,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
+using OneID.Application.Interfaces.Logins;
 using OneID.Application.Messaging.Sagas.Consumers;
 using OneID.Application.Messaging.Sagas.Contracts;
 using OneID.Application.Messaging.Sagas.StatesMachines;
 using OneID.Data.DataContexts;
+using OneID.Data.Repositories.Logins;
 using OneID.Domain.Entities.ApiOptions;
 using OneID.Domain.Entities.RabbitSettings;
 using RabbitMQ.Client;
@@ -23,8 +25,13 @@ namespace OneID.Messaging
     {
         public static IServiceCollection AddMassTrasitConfig(this IServiceCollection services)
         {
+            // Infra de login/idempotência
+            services.AddScoped<ILoginReservationRepository, LoginReservationRepository>();
+            services.AddScoped<IIdempotencyStore, IdempotencyStore>();
+
             services.AddMassTransit(x =>
             {
+                // SAGA
                 x.AddSagaStateMachine<AccountStateMachine, AccountSagaState>()
                     .EntityFrameworkRepository(r =>
                     {
@@ -34,13 +41,13 @@ namespace OneID.Messaging
                             var env = provider.GetRequiredService<IHostEnvironment>();
                             var config = provider.GetRequiredService<IConfiguration>();
 
-                            var connectionString = env.IsDevelopment()
+                            var cs = env.IsDevelopment()
                                 ? config.GetConnectionString("NPSqlConnection")
                                 : env.IsEnvironment("Staging")
                                     ? config.GetConnectionString("NPSqlConnectionStaging")
                                     : config.GetConnectionString("NPSqlConnectionProduction");
 
-                            builder.UseNpgsql(connectionString, npgsql =>
+                            builder.UseNpgsql(cs, npgsql =>
                             {
                                 npgsql.MigrationsAssembly(typeof(OneDbContext).Assembly.FullName);
                                 npgsql.EnableRetryOnFailure(5, TimeSpan.FromSeconds(30), null);
@@ -48,14 +55,22 @@ namespace OneID.Messaging
                         });
                     });
 
-
+                // Consumers (inclui compensações)
                 x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
                 x.AddConsumer<KeycloakUserProvisioningConsumer>();
                 x.AddConsumer<AccountCpfValidationConsumer>();
                 x.AddConsumer<CreateAccountDatabaseConsumer>();
+                x.AddConsumer<CommitLoginConsumer>();
+                x.AddConsumer<ReleaseLoginConsumer>();
 
-
+                // (Opcional, recomendado) EF Outbox para consistência publish==commit
+                x.AddEntityFrameworkOutbox<OneDbContext>(o =>
+                {
+                    o.UsePostgres();
+                    o.QueryDelay = TimeSpan.FromSeconds(1);
+                    o.DuplicateDetectionWindow = TimeSpan.FromMinutes(10);
+                });
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -64,7 +79,6 @@ namespace OneID.Messaging
                     var rabbit = config.GetSection("RabbitConnection").Get<RabbitConnectionSettings>();
 
                     string NormalizeVirtualHost(string vhost) => string.IsNullOrWhiteSpace(vhost) ? "/" : vhost.Trim('/');
-
                     var virtualHost = NormalizeVirtualHost(rabbit.VirtualHost);
 
                     cfg.Host(new Uri($"rabbitmq://{rabbit.HostName}:{rabbit.Port}/{virtualHost}"), h =>
@@ -79,9 +93,9 @@ namespace OneID.Messaging
                         });
                     });
 
+                    // Middlewares globais
                     cfg.UseDelayedRedelivery(r => r.Interval(3, TimeSpan.FromSeconds(10)));
                     cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
-
                     cfg.UseCircuitBreaker(cb =>
                     {
                         cb.TrackingPeriod = TimeSpan.FromMinutes(1);
@@ -89,13 +103,14 @@ namespace OneID.Messaging
                         cb.ActiveThreshold = 10;
                         cb.ResetInterval = TimeSpan.FromMinutes(5);
                     });
-
                     cfg.UseKillSwitch(k =>
                     {
                         k.SetActivationThreshold(10);
                         k.SetTripThreshold(0.20);
                         k.SetRestartTimeout(TimeSpan.FromMinutes(1));
                     });
+
+                    // --- Endpoints ---
 
                     cfg.ReceiveEndpoint("create-account-saga", e =>
                     {
@@ -112,14 +127,12 @@ namespace OneID.Messaging
 
                         e.ConfigureSaga<AccountSagaState>(context);
                         logger.LogInformation("Fila [create-account-saga] registrada com sucesso.");
-
                     });
 
                     cfg.ReceiveEndpoint("create-login", e =>
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
-
                         e.UseMessageRetry(r =>
                         {
                             r.Interval(3, TimeSpan.FromSeconds(5));
@@ -129,7 +142,6 @@ namespace OneID.Messaging
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
                         });
                         e.ConfigureConsumer<CreateLoginConsumer>(context);
-
                         logger.LogInformation("Fila [create-login] registrada com sucesso.");
                     });
 
@@ -137,7 +149,6 @@ namespace OneID.Messaging
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
-
                         e.UseMessageRetry(r =>
                         {
                             r.Handle<TimeoutException>();
@@ -146,9 +157,7 @@ namespace OneID.Messaging
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
                             r.Interval(3, TimeSpan.FromSeconds(10));
                         });
-
                         e.ConfigureConsumer<AdmissionAuditConsumer>(context);
-
                         logger.LogInformation("Fila [admission-audit] registrada com sucesso.");
                     });
 
@@ -156,7 +165,6 @@ namespace OneID.Messaging
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
-
                         e.UseMessageRetry(r =>
                         {
                             r.Handle<TimeoutException>();
@@ -165,9 +173,7 @@ namespace OneID.Messaging
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
                             r.Interval(3, TimeSpan.FromSeconds(10));
                         });
-
                         e.ConfigureConsumer<KeycloakUserProvisioningConsumer>(context);
-
                         logger.LogInformation("Fila [keycloak-provisioning] registrada com sucesso.");
                     });
 
@@ -175,7 +181,6 @@ namespace OneID.Messaging
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
-
                         e.UseMessageRetry(r =>
                         {
                             r.Interval(3, TimeSpan.FromSeconds(5));
@@ -184,9 +189,7 @@ namespace OneID.Messaging
                             r.Handle<NpgsqlException>(ex => ex.IsTransient);
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
                         });
-
                         e.ConfigureConsumer<AccountCpfValidationConsumer>(context);
-
                         logger.LogInformation("Fila [cpf-validation] registrada com sucesso.");
                     });
 
@@ -194,7 +197,6 @@ namespace OneID.Messaging
                     {
                         e.PrefetchCount = 10;
                         e.UseInMemoryOutbox(context);
-
                         e.UseMessageRetry(r =>
                         {
                             r.Interval(3, TimeSpan.FromSeconds(5));
@@ -203,12 +205,27 @@ namespace OneID.Messaging
                             r.Handle<NpgsqlException>(ex => ex.IsTransient);
                             r.Handle<DbUpdateException>(ex => ex.InnerException is NpgsqlException npg && npg.IsTransient);
                         });
-
                         e.ConfigureConsumer<CreateAccountDatabaseConsumer>(context);
-
                         logger.LogInformation("Fila [create-account-database] registrada com sucesso.");
                     });
 
+                    cfg.ReceiveEndpoint("commit-login", e =>
+                    {
+                        e.PrefetchCount = 10;
+                        e.UseInMemoryOutbox(context);
+                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5)));
+                        e.ConfigureConsumer<CommitLoginConsumer>(context);
+                        logger.LogInformation("Fila [commit-login] registrada com sucesso.");
+                    });
+
+                    cfg.ReceiveEndpoint("release-login", e =>
+                    {
+                        e.PrefetchCount = 10;
+                        e.UseInMemoryOutbox(context);
+                        e.UseMessageRetry(r => r.Incremental(3, TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(5)));
+                        e.ConfigureConsumer<ReleaseLoginConsumer>(context);
+                        logger.LogInformation("Fila [release-login] registrada com sucesso.");
+                    });
                 });
             });
 

@@ -8,6 +8,7 @@ using OneID.Domain.Entities.AuditSagas;
 using OneID.Domain.Entities.DepartmentContext;
 using OneID.Domain.Entities.JobTitleContext;
 using OneID.Domain.Entities.JwtWebTokens;
+using OneID.Domain.Entities.Logins;
 using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
 using OneID.Domain.Entities.Tokens;
@@ -47,6 +48,8 @@ namespace OneID.Data.DataContexts
         public DbSet<Department> Departments => Set<Department>();
         public DbSet<JobTitle> JobTitles => Set<JobTitle>();
         public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
+        public DbSet<LoginReservation> LoginReservations => Set<LoginReservation>();
+        public DbSet<IdempotencyEntry> IdempotencyEntries => Set<IdempotencyEntry>();
 
 
 

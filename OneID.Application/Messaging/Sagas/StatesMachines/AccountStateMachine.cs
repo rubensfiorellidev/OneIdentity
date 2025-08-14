@@ -99,7 +99,12 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                     .Then(context =>
                     {
                         var pwd = PasswordTempGenerator.GenerateTemporaryPassword();
-                        var corporateEmail = $"{context.Message.Login}@oneidsecure.com";
+                        var corporateEmail = $"{context.Message.Login}@oneidsecure.cloud";
+
+                        context.Saga.LoginAllocated = true;
+                        context.Saga.Login = context.Message.Login;
+                        context.Saga.CorporateEmail = corporateEmail;
+                        context.Saga.UpdatedAt = DateTimeOffset.UtcNow;
 
                         context.Saga.KeycloakData = context.Saga.KeycloakData with
                         {
@@ -271,6 +276,10 @@ namespace OneID.Application.Messaging.Sagas.StatesMachines
                         Password = context.Saga.AccountData.Password,
                         ManagerLogin = context.Saga.AccountData.LoginManager
 
+                    })
+                    .Publish(context => new CommitLoginRequested
+                    {
+                        CorrelationId = context.Saga.CorrelationId
                     })
                     .TransitionTo(WaitingAzureResult),
 
