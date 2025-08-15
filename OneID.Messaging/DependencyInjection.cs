@@ -25,13 +25,11 @@ namespace OneID.Messaging
     {
         public static IServiceCollection AddMassTrasitConfig(this IServiceCollection services)
         {
-            // Infra de login/idempotência
             services.AddScoped<ILoginReservationRepository, LoginReservationRepository>();
-            services.AddScoped<IIdempotencyStore, IdempotencyStore>();
+            services.AddScoped<IIdempotencyStoreRepository, IdempotencyStoreRepository>();
 
             services.AddMassTransit(x =>
             {
-                // SAGA
                 x.AddSagaStateMachine<AccountStateMachine, AccountSagaState>()
                     .EntityFrameworkRepository(r =>
                     {
@@ -55,7 +53,6 @@ namespace OneID.Messaging
                         });
                     });
 
-                // Consumers (inclui compensações)
                 x.AddConsumer<CreateLoginConsumer>();
                 x.AddConsumer<AdmissionAuditConsumer>();
                 x.AddConsumer<KeycloakUserProvisioningConsumer>();
@@ -63,14 +60,6 @@ namespace OneID.Messaging
                 x.AddConsumer<CreateAccountDatabaseConsumer>();
                 x.AddConsumer<CommitLoginConsumer>();
                 x.AddConsumer<ReleaseLoginConsumer>();
-
-                // (Opcional, recomendado) EF Outbox para consistência publish==commit
-                x.AddEntityFrameworkOutbox<OneDbContext>(o =>
-                {
-                    o.UsePostgres();
-                    o.QueryDelay = TimeSpan.FromSeconds(1);
-                    o.DuplicateDetectionWindow = TimeSpan.FromMinutes(10);
-                });
 
                 x.UsingRabbitMq((context, cfg) =>
                 {
@@ -93,7 +82,6 @@ namespace OneID.Messaging
                         });
                     });
 
-                    // Middlewares globais
                     cfg.UseDelayedRedelivery(r => r.Interval(3, TimeSpan.FromSeconds(10)));
                     cfg.UseMessageRetry(r => r.Interval(3, TimeSpan.FromSeconds(5)));
                     cfg.UseCircuitBreaker(cb =>

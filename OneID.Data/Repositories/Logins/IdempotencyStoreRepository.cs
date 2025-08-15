@@ -4,11 +4,11 @@ using OneID.Domain.Entities.Logins;
 
 namespace OneID.Data.Repositories.Logins
 {
-    public sealed class IdempotencyStore : IIdempotencyStore
+    public sealed class IdempotencyStoreRepository : IIdempotencyStoreRepository
     {
         private readonly IOneDbContextFactory _dbContextFactory;
 
-        public IdempotencyStore(IOneDbContextFactory dbContextFactory)
+        public IdempotencyStoreRepository(IOneDbContextFactory dbContextFactory)
         {
             _dbContextFactory = dbContextFactory;
         }

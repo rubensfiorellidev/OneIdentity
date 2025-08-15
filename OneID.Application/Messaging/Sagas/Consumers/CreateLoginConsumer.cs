@@ -14,11 +14,11 @@ namespace OneID.Application.Messaging.Sagas.Consumers
         private readonly ILogger<CreateLoginConsumer> _logger;
         private readonly IUserLoginGenerator _loginGenerator;
         private readonly ILoginReservationRepository _loginRepo;
-        private readonly IIdempotencyStore _idempo;
+        private readonly IIdempotencyStoreRepository _idempo;
 
 
         public CreateLoginConsumer(ILogger<CreateLoginConsumer> logger, IUserLoginGenerator loginGenerator,
-                                   ILoginReservationRepository loginRepo, IIdempotencyStore idempo)
+                                   ILoginReservationRepository loginRepo, IIdempotencyStoreRepository idempo)
         {
             _logger = logger;
             _loginGenerator = loginGenerator;

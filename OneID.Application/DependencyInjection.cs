@@ -16,6 +16,7 @@ using OneID.Application.Services;
 using OneID.Application.Services.AesCryptoServices;
 using OneID.Application.Services.Graph;
 using OneID.Application.Services.KeyCloakServices;
+using OneID.Application.Services.RefreshTokens;
 using OneID.Application.Services.StrategyEvents;
 using OneID.Application.Services.TotpServices;
 using OneID.Domain.Abstractions.EventsContext;
@@ -60,6 +61,8 @@ namespace OneID.Application
             });
 
 
+            services.AddHttpContextAccessor();
+
             services.AddScoped<IUserLoginGenerator, UserLoginGenerator>();
             services.AddScoped<IKeycloakUserCreator, KeycloakUserCreator>();
             services.AddScoped<IKeycloakUserChecker, KeycloakUserChecker>();
@@ -75,10 +78,9 @@ namespace OneID.Application
             services.AddScoped<IAccessPackageRoleService, AccessPackageRoleService>();
             services.AddScoped<IAzureGraphUserSyncService, AzureGraphUserSyncService>();
             services.AddScoped<IAccessPackageGroupService, AccessPackageGroupService>();
-            services.AddHttpContextAccessor();
             services.AddScoped<ILoggedUserAccessor, LoggedUserAccessor>();
             services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
-
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
 
             services.AddSingleton<ITotpService, TotpService>();

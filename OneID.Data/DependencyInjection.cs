@@ -2,23 +2,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using OneID.Application.Interfaces.Logins;
 using OneID.Application.Interfaces.Repositories;
-using OneID.Application.Interfaces.Services;
 using OneID.Application.Services;
-using OneID.Application.Services.RefreshTokens;
 using OneID.Data.DataContexts;
 using OneID.Data.Factories;
 using OneID.Data.Interfaces;
-using OneID.Data.Redis;
-using OneID.Data.Repositories.AdmissionContext;
-using OneID.Data.Repositories.DeduplicationSagaContext;
-using OneID.Data.Repositories.Logins;
-using OneID.Data.Repositories.RefreshTokens;
-using OneID.Data.Repositories.RolesContext;
-using OneID.Data.Repositories.StoredEvents;
-using OneID.Data.Repositories.UsersContext;
-using OneID.Domain.Interfaces;
+using StackExchange.Redis;
 
 
 #nullable disable
@@ -31,30 +20,21 @@ namespace OneID.Data
         {
             services.AddDbContextInfra(configuration, environment);
 
-            services.AddScoped<IAdmissionAuditRepository, AdmissionAuditRepository>();
-            services.AddScoped<ILoginExistsUserRepository, LoginExistsUserRepository>();
-            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
-            services.AddScoped<IStoredEventRepository, StoredEventRepository>();
-            services.AddScoped<IAddUserAccountRepository, AddUserAccountRepository>();
-            services.AddScoped<IAddUserAccountStagingRepository, AddUserAccountStagingRepository>();
-            services.AddScoped<IDeduplicationKeyRepository, DeduplicationKeyRepository>();
-            services.AddScoped<IDeduplicationRepository, SagaDeduplicationRepository>();
-            services.AddScoped<IQueryAccountAdmissionStagingRepository, QueryAccountAdmissionStagingRepository>();
-            services.AddScoped<IAlertSettingsRepository, AlertSettingsRepository>();
-            services.AddScoped<IQueryUserAccountRepository, QueryUserAccountRepository>();
-            services.AddScoped<IAdmissionAlertRepository, AdmissionAlertRepository>();
-            services.AddScoped<IAccessPackageQueryRepository, AccessPackageQueryRepository>();
-            services.AddScoped<IUserClaimWriterRepository, UserClaimWriterRepository>();
-            services.AddScoped<IUserRoleWriterRepository, UserRoleWriterRepository>();
-            services.AddScoped<IRoleWriterRepository, RoleWriterRepository>();
-            services.AddScoped<IRedisRepository, RedisRepository>();
-            services.AddScoped<IQueryUserRepository, QueryUserRepository>();
-            services.AddScoped<ILoginReservationRepository, LoginReservationRepository>();
-            services.AddScoped<IIdempotencyStore, IdempotencyStore>();
+            services.AddSingleton<IConnectionMultiplexer>(_ =>
+                ConnectionMultiplexer.Connect(configuration.GetConnectionString("Redis")));
 
-
-
+            services.Scan(scan => scan
+                    .FromAssembliesOf(typeof(IAdmissionAuditRepository), typeof(IOneDbContextFactory))
+                    .AddClasses(classes => classes
+                        .InNamespaces(
+                            "OneID.Data.Repositories",
+                            "OneID.Data.Repositories.UsersContext",
+                            "OneID.Data.Redis"
+                        )
+                    .Where(t => t.Name.EndsWith("Repository")))
+                    .AsImplementedInterfaces()
+                    .WithScopedLifetime()
+            );
 
 
             return services;
