@@ -66,7 +66,8 @@ namespace OneID.Api.Controllers
         {
             using var activity = Telemetry.Source.StartActivity(
                 "Geração de token bootstrap",
-                ActivityKind.Server);
+                ActivityKind.Server
+            );
 
             activity?.SetTag("rota", "v1/auth/bootstrap-token");
             activity?.SetTag("method", "POST");
@@ -95,7 +96,8 @@ namespace OneID.Api.Controllers
         {
             using var activity = Telemetry.Source.StartActivity(
                 "TOTP request para acessar o login",
-                ActivityKind.Server);
+                ActivityKind.Server
+            );
 
             if (!_totpService.ValidateCode(request.TotpCode))
             {
@@ -114,7 +116,8 @@ namespace OneID.Api.Controllers
         {
             using var activity = Telemetry.Source.StartActivity(
                 "Login do usuário via token de requisição",
-                ActivityKind.Server);
+                ActivityKind.Server
+            );
 
             activity?.SetTag("rota", "v1/auth/login");
             activity?.SetTag("method", "POST");

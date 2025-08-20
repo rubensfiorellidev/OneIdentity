@@ -12,6 +12,7 @@ using OneID.Domain.Entities.Logins;
 using OneID.Domain.Entities.Packages;
 using OneID.Domain.Entities.Sagas;
 using OneID.Domain.Entities.Tokens;
+using OneID.Domain.Entities.TotpOptions;
 using OneID.Domain.Entities.UserContext;
 using OneID.Domain.Notifications;
 using OneID.Domain.ValueObjects;
@@ -50,7 +51,8 @@ namespace OneID.Data.DataContexts
         public DbSet<OneTimeToken> OneTimeTokens => Set<OneTimeToken>();
         public DbSet<LoginReservation> LoginReservations => Set<LoginReservation>();
         public DbSet<IdempotencyEntry> IdempotencyEntries => Set<IdempotencyEntry>();
-
+        public DbSet<MfaChallengeEntity> MfaChallenges => Set<MfaChallengeEntity>();
+        public DbSet<TotpCodeUseEntity> TotpCodeUses => Set<TotpCodeUseEntity>();
 
 
 
