@@ -75,6 +75,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+	  <Folder Include="Keys\" />
 	  <Folder Include="logs\" />
 	</ItemGroup>
 

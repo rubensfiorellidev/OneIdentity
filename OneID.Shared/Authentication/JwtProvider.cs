@@ -16,7 +16,6 @@ using OneID.Domain.Helpers;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
-using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -43,15 +42,6 @@ namespace OneID.Shared.Authentication
         private readonly string _metadataPath;
 
         private static readonly object _keyLock = new();
-
-        private sealed class KeyMetadata
-        {
-            public DateTimeOffset CreatedAt { get; set; }
-            public int KeySize { get; set; }
-            public string KeyId { get; set; }
-            public string KeyVersion { get; set; }
-            public string Salt { get; set; }
-        }
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
@@ -112,18 +102,34 @@ namespace OneID.Shared.Authentication
 
         private string GetActiveKeyId()
         {
-            // 1) Preferir o kid do metadata
             var meta = LoadMetadataSafe();
             if (!string.IsNullOrWhiteSpace(meta?.KeyId))
                 return meta.KeyId;
 
-            // 2) Fallback determinístico (sem salt): hash(SPKI)
             var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
             using var rsa = RSA.Create();
             rsa.ImportFromPem(publicPem.ToCharArray());
-            var pub = rsa.ExportSubjectPublicKeyInfo();
-            var hash = SHA256.HashData(pub);
+            var spki = rsa.ExportSubjectPublicKeyInfo();
+            var hash = SHA256.HashData(spki);
             return Base64UrlEncode(hash);
+        }
+
+        private char[] GetPrivateKeyPasswordOrThrow(out bool fromEnv)
+        {
+            fromEnv = false;
+            if (!string.IsNullOrWhiteSpace(_jwtOptions.PrivateKeyPassword))
+                return _jwtOptions.PrivateKeyPassword.ToCharArray();
+
+            var env = Environment.GetEnvironmentVariable("JWT_PRIVATE_KEY_PASSWORD");
+            if (!string.IsNullOrWhiteSpace(env))
+            {
+                fromEnv = true;
+                return env.ToCharArray();
+            }
+
+            throw new InvalidOperationException(
+                "Senha da chave privada não configurada. Defina Jwt:PrivateKeyPassword ou a env JWT_PRIVATE_KEY_PASSWORD."
+            );
         }
 
         public async Task<string> EnsureKeysAsync()
@@ -156,8 +162,8 @@ namespace OneID.Shared.Authentication
                         ?? "unknown-client";
 
             var handler = new JsonWebTokenHandler();
-            var key = GetRSAKey();                // inclui private key
-            key.KeyId = GetActiveKeyId();         // seta o 'kid' no header
+            var key = GetRSAKey();
+            key.KeyId = GetActiveKeyId();
 
             var accessJti = Ulid.NewUlid().ToString();
             var refreshJti = Ulid.NewUlid().ToString();
@@ -165,7 +171,6 @@ namespace OneID.Shared.Authentication
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
             await using var db = _contextFactory.CreateDbContext();
-
             var user = await db.UserAccounts
                 .FirstOrDefaultAsync(u => u.KeycloakUserId == keycloakUserId)
                 ?? throw new SecurityTokenException("Usuário não encontrado com base no KeycloakUserId");
@@ -173,23 +178,20 @@ namespace OneID.Shared.Authentication
             var userId = user.Id;
 
             var claims = new List<Claim>
-        {
-            new(JwtClaims.Jti, accessJti),
-            new(JwtClaims.Sub, userId),
-            new(JwtClaims.UniqueName, preferredUsername ?? userId),
-            new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-            new("ip", ipAddress),
-            new("user_agent", userAgent),
-            new("account_id", $"ONE-{userId.ToUpper()}"),
-            new("circuit_id", circuitId),
-            new("access_scope", "user_access")
-        };
+            {
+                new(JwtClaims.Jti, accessJti),
+                new(JwtClaims.Sub, userId),
+                new(JwtClaims.UniqueName, preferredUsername ?? userId),
+                new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+                new("ip", ipAddress),
+                new("user_agent", userAgent),
+                new("account_id", $"ONE-{userId.ToUpper()}"),
+                new("circuit_id", circuitId),
+                new("access_scope", "user_access")
+            };
 
-            if (!string.IsNullOrWhiteSpace(email))
-                claims.Add(new Claim("email", email));
-
-            if (!string.IsNullOrWhiteSpace(name))
-                claims.Add(new Claim("name", name));
+            if (!string.IsNullOrWhiteSpace(email)) claims.Add(new Claim("email", email));
+            if (!string.IsNullOrWhiteSpace(name)) claims.Add(new Claim("name", name));
 
             var customClaims = await GetUserClaimsAsync(userId);
             claims.AddRange(customClaims);
@@ -243,9 +245,28 @@ namespace OneID.Shared.Authentication
         {
             EnsureKeys();
 
-            string privatePem = File.ReadAllText(GetPemPath(_privateKeyPath));
+            var privatePem = File.ReadAllText(GetPemPath(_privateKeyPath));
             var rsa = RSA.Create();
-            rsa.ImportFromPem(privatePem.ToCharArray());
+
+            if (privatePem.Contains("BEGIN ENCRYPTED PRIVATE KEY", StringComparison.OrdinalIgnoreCase))
+            {
+                bool fromEnv;
+                var pwd = GetPrivateKeyPasswordOrThrow(out fromEnv);
+                try
+                {
+                    rsa.ImportFromEncryptedPem(privatePem, pwd);
+                }
+                finally
+                {
+                    Array.Clear(pwd, 0, pwd.Length);
+                    if (fromEnv) Environment.SetEnvironmentVariable("JWT_PRIVATE_KEY_PASSWORD", null);
+                }
+            }
+            else
+            {
+                rsa.ImportFromPem(privatePem.ToCharArray());
+            }
+
             return new RsaSecurityKey(rsa);
         }
 
@@ -261,11 +282,11 @@ namespace OneID.Shared.Authentication
                     if (!File.Exists(privPem) || !File.Exists(pubPem) || ShouldRotateKeys())
                     {
                         GenerateAndSaveKeys();
-                        EnsureMetadata(); // mantém compat com fluxo antigo (noop se já gravado)
+                        EnsureMetadata();
                     }
                     else if (!File.Exists(_metadataPath))
                     {
-                        EnsureMetadata(); // cria metadados se sumiram
+                        EnsureMetadata();
                     }
                 }
             }
@@ -278,44 +299,51 @@ namespace OneID.Shared.Authentication
         private void GenerateAndSaveKeys()
         {
             if (!Directory.Exists(_keyDirectoryPath))
-            {
                 Directory.CreateDirectory(_keyDirectoryPath);
-            }
 
-            using var rsa = RSA.Create(_jwtOptions.KeySize);
+            using var rsa = RSA.Create(Math.Max(_jwtOptions.KeySize, 3072));
 
-            // PEMs
-            var privateKeyPem = ExportPrivateKeyAsPem(rsa);
+            // pública (sempre plaintext)
             var publicKeyPem = ExportPublicKeyAsPem(rsa);
-
-            File.WriteAllText(GetPemPath(_privateKeyPath), privateKeyPem);
             File.WriteAllText(GetPemPath(_publicKeyPath), publicKeyPem);
 
-            // Metadata forte: ULID + salt + kid(hash(ULID || salt || SPKI))
-            var keyVersionUlid = Ulid.NewUlid().ToString();
-            var saltBytes = RandomNumberGenerator.GetBytes(32);
-            var saltB64Url = Base64UrlEncode(saltBytes);
+            // privada (PKCS#8 criptografada com senha)
+            bool fromEnv;
+            var pwd = GetPrivateKeyPasswordOrThrow(out fromEnv);
+            try
+            {
+                var privateKeyPemEncrypted = ExportEncryptedPrivateKeyAsPem(rsa, pwd);
+                File.WriteAllText(GetPemPath(_privateKeyPath), privateKeyPemEncrypted);
+            }
+            finally
+            {
+                Array.Clear(pwd, 0, pwd.Length);
+                if (fromEnv) Environment.SetEnvironmentVariable("JWT_PRIVATE_KEY_PASSWORD", null);
+            }
 
-            // hash do SPKI
+            // ===== metadata forte: ULID + salt + kid = b64url(sha256(ULID || salt || SPKI))
             using var rsaPub = RSA.Create();
             rsaPub.ImportFromPem(publicKeyPem.ToCharArray());
             var spki = rsaPub.ExportSubjectPublicKeyInfo();
 
-            var raw = new List<byte>(Encoding.UTF8.GetBytes(keyVersionUlid));
-            raw.AddRange(saltBytes);
-            raw.AddRange(spki);
+            var keyVersionUlid = Ulid.NewUlid().ToString();
+            var saltBytes = RandomNumberGenerator.GetBytes(32);
+            var kvBytes = Encoding.UTF8.GetBytes(keyVersionUlid);
 
-            var kidBytes = SHA256.HashData(CollectionsMarshal.AsSpan(raw));
-            var kid = Base64UrlEncode(kidBytes);
+            var raw = new byte[kvBytes.Length + saltBytes.Length + spki.Length];
+            Buffer.BlockCopy(kvBytes, 0, raw, 0, kvBytes.Length);
+            Buffer.BlockCopy(saltBytes, 0, raw, kvBytes.Length, saltBytes.Length);
+            Buffer.BlockCopy(spki, 0, raw, kvBytes.Length + saltBytes.Length, spki.Length);
 
-            var metadata = new KeyMetadata
-            {
-                CreatedAt = DateTime.UtcNow,
-                KeySize = _jwtOptions.KeySize,
-                KeyId = kid,
-                KeyVersion = keyVersionUlid,
-                Salt = saltB64Url
-            };
+            var kid = Base64UrlEncode(SHA256.HashData(raw));
+
+            var metadata = new KeyMetadata(
+                CreatedAt: DateTimeOffset.UtcNow,
+                KeySize: Math.Max(_jwtOptions.KeySize, 3072),
+                KeyId: kid,
+                KeyVersion: keyVersionUlid,
+                Salt: Base64UrlEncode(saltBytes)
+            );
 
             File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
         }
@@ -323,15 +351,13 @@ namespace OneID.Shared.Authentication
         private bool ShouldRotateKeys()
         {
             if (!File.Exists(_metadataPath))
-            {
                 return true;
-            }
 
             try
             {
                 var meta = JsonConvert.DeserializeObject<KeyMetadata>(File.ReadAllText(_metadataPath));
-                var createdAt = meta?.CreatedAt ?? DateTime.MinValue;
-                return (DateTime.UtcNow - createdAt).TotalDays >= 90;
+                var createdAt = meta?.CreatedAt ?? DateTimeOffset.MinValue;
+                return (DateTimeOffset.UtcNow - createdAt).TotalDays >= 90;
             }
             catch
             {
@@ -339,7 +365,6 @@ namespace OneID.Shared.Authentication
             }
         }
 
-        // Mantido como utilitário (fallback determinístico, sem salt)
         private string GenerateKeyId(RsaSecurityKey rsaKey)
         {
             var keyBytes = rsaKey.Rsa.ExportSubjectPublicKeyInfo();
@@ -444,45 +469,41 @@ namespace OneID.Shared.Authentication
 
         private void EnsureMetadata()
         {
-            if (!File.Exists(_metadataPath))
+            if (File.Exists(_metadataPath)) return;
+
+            try
             {
-                try
-                {
-                    // cria metadata consistente a partir da chave pública atual
-                    var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
-                    using var rsa = RSA.Create();
-                    rsa.ImportFromPem(publicPem.ToCharArray());
-                    var spki = rsa.ExportSubjectPublicKeyInfo();
+                var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
+                using var rsa = RSA.Create();
+                rsa.ImportFromPem(publicPem.ToCharArray());
+                var spki = rsa.ExportSubjectPublicKeyInfo();
 
-                    var keyVersionUlid = Ulid.NewUlid().ToString();
-                    var saltBytes = RandomNumberGenerator.GetBytes(32);
-                    var saltB64Url = Base64UrlEncode(saltBytes);
+                var keyVersionUlid = Ulid.NewUlid().ToString();
+                var saltBytes = RandomNumberGenerator.GetBytes(32);
+                var kvBytes = Encoding.UTF8.GetBytes(keyVersionUlid);
 
-                    var raw = new List<byte>(Encoding.UTF8.GetBytes(keyVersionUlid));
-                    raw.AddRange(saltBytes);
-                    raw.AddRange(spki);
+                var raw = new byte[kvBytes.Length + saltBytes.Length + spki.Length];
+                Buffer.BlockCopy(kvBytes, 0, raw, 0, kvBytes.Length);
+                Buffer.BlockCopy(saltBytes, 0, raw, kvBytes.Length, saltBytes.Length);
+                Buffer.BlockCopy(spki, 0, raw, kvBytes.Length + saltBytes.Length, spki.Length);
 
-                    var kidBytes = SHA256.HashData(CollectionsMarshal.AsSpan(raw));
-                    var kid = Base64UrlEncode(kidBytes);
+                var kid = Base64UrlEncode(SHA256.HashData(raw));
 
-                    var metadata = new KeyMetadata
-                    {
-                        CreatedAt = DateTime.UtcNow,
-                        KeySize = _jwtOptions.KeySize,
-                        KeyId = kid,
-                        KeyVersion = keyVersionUlid,
-                        Salt = saltB64Url
-                    };
+                var metadata = new KeyMetadata(
+                    CreatedAt: DateTimeOffset.UtcNow,
+                    KeySize: Math.Max(_jwtOptions.KeySize, 3072),
+                    KeyId: kid,
+                    KeyVersion: keyVersionUlid,
+                    Salt: Base64UrlEncode(saltBytes)
+                );
 
-                    File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
-                    _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
-                }
-                catch
-                {
-                    // fallback mínimo pra não travar boot
-                    var metadata = new { CreatedAt = DateTime.UtcNow };
-                    File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
-                }
+                File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
+                _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
+            }
+            catch
+            {
+                var fallback = new { CreatedAt = DateTimeOffset.UtcNow };
+                File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(fallback));
             }
         }
 
@@ -636,13 +657,13 @@ namespace OneID.Shared.Authentication
         private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)
         {
             var claims = new Dictionary<string, object>
-        {
-            { JwtClaims.Jti, Ulid.NewUlid().ToString() },
-            { JwtClaims.UniqueName, username },
-            { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-            { "access_scope", accessScope },
-            { "correlation_id", correlationId.ToString() }
-        };
+            {
+                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+                { JwtClaims.UniqueName, username },
+                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+                { "access_scope", accessScope },
+                { "correlation_id", correlationId.ToString() }
+            };
 
             return CreateBootstrapToken(claims, lifetime ?? TimeSpan.FromMinutes(2));
         }
@@ -663,13 +684,13 @@ namespace OneID.Shared.Authentication
                 : "unknown";
 
             var claims = new Dictionary<string, object>
-        {
-            { JwtClaims.Jti, Ulid.NewUlid().ToString() },
-            { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-            { "access_scope", "bootstrap_token" },
-            { "ip", ip },
-            { "user_agent", userAgent }
-        };
+            {
+                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+                { "access_scope", "bootstrap_token" },
+                { "ip", ip },
+                { "user_agent", userAgent }
+            };
 
             return CreateBootstrapToken(claims, TimeSpan.FromMinutes(5));
         }
@@ -716,6 +737,20 @@ namespace OneID.Shared.Authentication
             var b64 = Convert.ToBase64String(publicKeyBytes, Base64FormattingOptions.InsertLineBreaks);
             return $"-----BEGIN PUBLIC KEY-----\n{b64}\n-----END PUBLIC KEY-----\n";
         }
+
+        private static string ExportEncryptedPrivateKeyAsPem(RSA rsa, ReadOnlySpan<char> password)
+        {
+            var pbe = new PbeParameters(
+                PbeEncryptionAlgorithm.Aes256Cbc,
+                HashAlgorithmName.SHA256,
+                iterationCount: 200_000
+            );
+
+            var encrypted = rsa.ExportEncryptedPkcs8PrivateKey(password, pbe);
+            var b64 = Convert.ToBase64String(encrypted, Base64FormattingOptions.InsertLineBreaks);
+            return $"-----BEGIN ENCRYPTED PRIVATE KEY-----\n{b64}\n-----END ENCRYPTED PRIVATE KEY-----\n";
+        }
+
     }
 
 }
