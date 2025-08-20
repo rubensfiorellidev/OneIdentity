@@ -96,7 +96,7 @@ namespace OneID.Shared.Authentication
                     return JsonConvert.DeserializeObject<KeyMetadata>(File.ReadAllText(_metadataPath));
                 }
             }
-            catch { /* ignore */ }
+            catch { }
             return null;
         }
 
@@ -226,7 +226,7 @@ namespace OneID.Shared.Authentication
                 CircuitId = circuitId,
                 IpAddress = ipAddress,
                 UserAgent = userAgent,
-                LastActivity = DateTime.UtcNow,
+                LastActivity = DateTimeOffset.UtcNow,
                 ExpiresAt = expiresAt,
                 UpnOrName = user.FullName ?? preferredUsername ?? user.Login,
             });
@@ -250,8 +250,7 @@ namespace OneID.Shared.Authentication
 
             if (privatePem.Contains("BEGIN ENCRYPTED PRIVATE KEY", StringComparison.OrdinalIgnoreCase))
             {
-                bool fromEnv;
-                var pwd = GetPrivateKeyPasswordOrThrow(out fromEnv);
+                var pwd = GetPrivateKeyPasswordOrThrow(out bool fromEnv);
                 try
                 {
                     rsa.ImportFromEncryptedPem(privatePem, pwd);
@@ -303,13 +302,10 @@ namespace OneID.Shared.Authentication
 
             using var rsa = RSA.Create(Math.Max(_jwtOptions.KeySize, 3072));
 
-            // pública (sempre plaintext)
             var publicKeyPem = ExportPublicKeyAsPem(rsa);
             File.WriteAllText(GetPemPath(_publicKeyPath), publicKeyPem);
 
-            // privada (PKCS#8 criptografada com senha)
-            bool fromEnv;
-            var pwd = GetPrivateKeyPasswordOrThrow(out fromEnv);
+            var pwd = GetPrivateKeyPasswordOrThrow(out bool fromEnv);
             try
             {
                 var privateKeyPemEncrypted = ExportEncryptedPrivateKeyAsPem(rsa, pwd);
@@ -321,7 +317,6 @@ namespace OneID.Shared.Authentication
                 if (fromEnv) Environment.SetEnvironmentVariable("JWT_PRIVATE_KEY_PASSWORD", null);
             }
 
-            // ===== metadata forte: ULID + salt + kid = b64url(sha256(ULID || salt || SPKI))
             using var rsaPub = RSA.Create();
             rsaPub.ImportFromPem(publicKeyPem.ToCharArray());
             var spki = rsaPub.ExportSubjectPublicKeyInfo();
@@ -363,13 +358,6 @@ namespace OneID.Shared.Authentication
             {
                 return true;
             }
-        }
-
-        private string GenerateKeyId(RsaSecurityKey rsaKey)
-        {
-            var keyBytes = rsaKey.Rsa.ExportSubjectPublicKeyInfo();
-            var hash = SHA256.HashData(keyBytes);
-            return Base64UrlEncode(hash);
         }
 
         private string GetClientIpAddress(HttpContext httpContext)
@@ -722,13 +710,6 @@ namespace OneID.Shared.Authentication
             }
 
             return ip;
-        }
-
-        private static string ExportPrivateKeyAsPem(RSA rsa)
-        {
-            var privateKeyBytes = rsa.ExportPkcs8PrivateKey();
-            var b64 = Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks);
-            return $"-----BEGIN PRIVATE KEY-----\n{b64}\n-----END PRIVATE KEY-----\n";
         }
 
         private static string ExportPublicKeyAsPem(RSA rsa)
