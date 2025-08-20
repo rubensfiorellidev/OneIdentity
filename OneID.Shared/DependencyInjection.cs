@@ -30,7 +30,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using StackExchange.Redis;
 using System.IO.Compression;
-using System.Security.Cryptography;
 using System.Threading.RateLimiting;
 
 
@@ -168,16 +167,20 @@ namespace OneID.Shared
         #region JwtWebTokens
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
         {
+            services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.TryAddScoped<JwtProvider>();
+            services.ConfigureOptions<JwtOptionsSetup>();
+            services.AddScoped<IJwtProvider, JwtProvider>();
+
             var jwtSettings = configuration.GetSection("Jwt");
 
             var issuer = jwtSettings["Issuer"];
             var audience = jwtSettings["Audience"];
-            var publicKeyPath = jwtSettings["PublicKeyPath"];
 
-            var xmlKey = File.ReadAllText(publicKeyPath);
-            var rsa = RSA.Create();
-            rsa.FromXmlString(xmlKey);
-            var rsaKey = new RsaSecurityKey(rsa);
+
+            using var sp = services.BuildServiceProvider();
+            var provider = sp.GetRequiredService<IJwtProvider>();
+            var rsaKey = provider.GetPublicKey();
 
             services.AddAuthentication(options =>
             {
@@ -330,12 +333,6 @@ namespace OneID.Shared
                         }
                     };
                 });
-
-
-            services.TryAddScoped<IRefreshTokenService, RefreshTokenService>();
-            services.TryAddScoped<JwtProvider>();
-            services.ConfigureOptions<JwtOptionsSetup>();
-            services.AddScoped<IJwtProvider, JwtProvider>();
 
 
             return services;

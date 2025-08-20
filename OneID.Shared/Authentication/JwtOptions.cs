@@ -9,6 +9,8 @@
         public TimeSpan AccessTokenTotpExpires { get; set; } = TimeSpan.FromMinutes(2);
         public TimeSpan RefreshTokenExpires { get; set; }
         public string? PrivateKeyPath { get; set; }
+        public string? PublicKeyPath { get; set; }
+        public int KeySize { get; set; } = 3072;
 
     }
 }

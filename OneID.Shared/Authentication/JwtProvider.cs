@@ -7,7 +7,6 @@ using Microsoft.IdentityModel.JsonWebTokens;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
 using OneID.Application.Commands;
-using OneID.Application.Interfaces.SensitiveData;
 using OneID.Application.Interfaces.Services;
 using OneID.Data.DataContexts;
 using OneID.Data.Interfaces;
@@ -17,8 +16,10 @@ using OneID.Domain.Helpers;
 using OneID.Domain.Interfaces;
 using OneID.Domain.Results;
 using System.IdentityModel.Tokens.Jwt;
+using System.Runtime.InteropServices;
 using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using JwtClaims = System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames;
 
 
@@ -31,22 +32,32 @@ namespace OneID.Shared.Authentication
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<JwtProvider> _logger;
+        private readonly JwtSecurityTokenHandler _tokenHandler = new();
+        private readonly IOneDbContextFactory _contextFactory;
+        private readonly IHashService _hash;
+        private readonly ISender _sender;
+
         private readonly string _keyDirectoryPath;
         private readonly string _privateKeyPath;
         private readonly string _publicKeyPath;
         private readonly string _metadataPath;
-        private readonly JwtSecurityTokenHandler _tokenHandler = new();
-        private readonly IOneDbContextFactory _contextFactory;
-        private readonly ISensitiveDataDecryptionServiceUserAccount _decryptionService;
-        private readonly IHashService _hash;
-        private readonly ISender _sender;
+
+        private static readonly object _keyLock = new();
+
+        private sealed class KeyMetadata
+        {
+            public DateTimeOffset CreatedAt { get; set; }
+            public int KeySize { get; set; }
+            public string KeyId { get; set; }
+            public string KeyVersion { get; set; }
+            public string Salt { get; set; }
+        }
 
         public JwtProvider(IOptions<JwtOptions> jwtOptions,
                            IRefreshTokenService refreshTokenService,
                            IHttpContextAccessor httpContextAccessor,
                            ILogger<JwtProvider> logger,
                            IOneDbContextFactory contextFactory,
-                           ISensitiveDataDecryptionServiceUserAccount decryptionService,
                            IHashService hash,
                            ISender sender)
         {
@@ -55,8 +66,8 @@ namespace OneID.Shared.Authentication
             _httpContextAccessor = httpContextAccessor;
 
             _keyDirectoryPath = Path.Combine(Environment.CurrentDirectory, "Keys");
-            _privateKeyPath = Path.Combine(_keyDirectoryPath, "PrivateRsaKey.xml");
-            _publicKeyPath = Path.Combine(_keyDirectoryPath, "PublicRsaKey.xml");
+            _privateKeyPath = Path.Combine(Environment.CurrentDirectory, _jwtOptions.PrivateKeyPath);
+            _publicKeyPath = Path.Combine(Environment.CurrentDirectory, _jwtOptions.PublicKeyPath);
             _metadataPath = Path.Combine(_keyDirectoryPath, "key-metadata.json");
 
             try
@@ -71,18 +82,58 @@ namespace OneID.Shared.Authentication
 
             _logger = logger;
             _contextFactory = contextFactory;
-            _decryptionService = decryptionService;
             _hash = hash;
             _sender = sender;
         }
+
+        private string GetPemPath(string originalPath) =>
+            Path.ChangeExtension(originalPath, ".pem");
+
+        private static string Base64UrlEncode(byte[] data)
+        {
+            return Convert.ToBase64String(data)
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
+
+        private KeyMetadata LoadMetadataSafe()
+        {
+            try
+            {
+                if (File.Exists(_metadataPath))
+                {
+                    return JsonConvert.DeserializeObject<KeyMetadata>(File.ReadAllText(_metadataPath));
+                }
+            }
+            catch { /* ignore */ }
+            return null;
+        }
+
+        private string GetActiveKeyId()
+        {
+            // 1) Preferir o kid do metadata
+            var meta = LoadMetadataSafe();
+            if (!string.IsNullOrWhiteSpace(meta?.KeyId))
+                return meta.KeyId;
+
+            // 2) Fallback determinístico (sem salt): hash(SPKI)
+            var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
+            using var rsa = RSA.Create();
+            rsa.ImportFromPem(publicPem.ToCharArray());
+            var pub = rsa.ExportSubjectPublicKeyInfo();
+            var hash = SHA256.HashData(pub);
+            return Base64UrlEncode(hash);
+        }
+
         public async Task<string> EnsureKeysAsync()
         {
-            if (!File.Exists(_publicKeyPath) || !File.Exists(_privateKeyPath))
+            if (!File.Exists(GetPemPath(_publicKeyPath)) || !File.Exists(GetPemPath(_privateKeyPath)))
             {
                 GenerateAndSaveKeys();
             }
 
-            return await File.ReadAllTextAsync(_publicKeyPath);
+            return await File.ReadAllTextAsync(GetPemPath(_publicKeyPath));
         }
 
         public async Task<AuthResult> GenerateAuthenticatedAccessTokenAsync(
@@ -96,7 +147,6 @@ namespace OneID.Shared.Authentication
                                                          TimeSpan? accessTokenLifetime = null,
                                                          TimeSpan? refreshTokenLifetime = null)
         {
-
             circuitId ??= _httpContextAccessor.HttpContext?.Items["circuit_id"]?.ToString()
                             ?? Guid.NewGuid().ToString();
 
@@ -105,16 +155,12 @@ namespace OneID.Shared.Authentication
             userAgent ??= _httpContextAccessor.HttpContext?.Request?.Headers.UserAgent.FirstOrDefault()
                         ?? "unknown-client";
 
-
             var handler = new JsonWebTokenHandler();
-            RsaSecurityKey key = GetRSAKey();
+            var key = GetRSAKey();                // inclui private key
+            key.KeyId = GetActiveKeyId();         // seta o 'kid' no header
 
-            string keyId = GenerateKeyId(key);
             var accessJti = Ulid.NewUlid().ToString();
             var refreshJti = Ulid.NewUlid().ToString();
-            var jwk = JsonWebKeyConverter.ConvertFromRSASecurityKey(key);
-            jwk.KeyId = keyId;
-            jwk.Alg = SecurityAlgorithms.RsaSha256;
 
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
@@ -127,17 +173,17 @@ namespace OneID.Shared.Authentication
             var userId = user.Id;
 
             var claims = new List<Claim>
-            {
-                new(JwtClaims.Jti, accessJti),
-                new(JwtClaims.Sub, userId),
-                new(JwtClaims.UniqueName, preferredUsername ?? userId),
-                new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
-                new("ip", ipAddress),
-                new("user_agent", userAgent),
-                new("account_id", $"ONE-{userId.ToUpper()}"),
-                new("circuit_id", circuitId)
-
-            };
+        {
+            new(JwtClaims.Jti, accessJti),
+            new(JwtClaims.Sub, userId),
+            new(JwtClaims.UniqueName, preferredUsername ?? userId),
+            new(JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new("ip", ipAddress),
+            new("user_agent", userAgent),
+            new("account_id", $"ONE-{userId.ToUpper()}"),
+            new("circuit_id", circuitId),
+            new("access_scope", "user_access")
+        };
 
             if (!string.IsNullOrWhiteSpace(email))
                 claims.Add(new Claim("email", email));
@@ -145,26 +191,25 @@ namespace OneID.Shared.Authentication
             if (!string.IsNullOrWhiteSpace(name))
                 claims.Add(new Claim("name", name));
 
-            claims.Add(new Claim("access_scope", "user_access"));
-
             var customClaims = await GetUserClaimsAsync(userId);
-
             claims.AddRange(customClaims);
 
-            DateTimeOffset issuedAt = DateTimeOffset.UtcNow;
-            DateTimeOffset expiresAt = issuedAt.Add(accessTokenLifetime ?? JwtDefaults.AccessTokenLifetime);
+            var issuedAt = DateTime.UtcNow;
+            var expiresAt = issuedAt.Add(accessTokenLifetime ?? JwtDefaults.AccessTokenLifetime);
 
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
-                NotBefore = DateTime.UtcNow,
-                Expires = expiresAt.UtcDateTime,
+                IssuedAt = issuedAt,
+                NotBefore = issuedAt,
+                Expires = expiresAt,
                 Subject = new ClaimsIdentity(claims),
                 SigningCredentials = signingCredentials
             };
 
             var jws = handler.CreateToken(descriptor);
+
             var refreshToken = await _refreshTokenService.GenerateRefreshTokenAsync(
                 user.LoginHash,
                 refreshJti,
@@ -180,9 +225,8 @@ namespace OneID.Shared.Authentication
                 IpAddress = ipAddress,
                 UserAgent = userAgent,
                 LastActivity = DateTime.UtcNow,
-                ExpiresAt = DateTimeOffset.UtcNow.Add(JwtDefaults.AccessTokenLifetime).UtcDateTime,
+                ExpiresAt = expiresAt,
                 UpnOrName = user.FullName ?? preferredUsername ?? user.Login,
-
             });
 
             return new AuthResult
@@ -190,7 +234,7 @@ namespace OneID.Shared.Authentication
                 Jwtoken = jws,
                 RefreshToken = refreshToken.RawToken!,
                 Result = true,
-                ExpiresAt = DateTimeOffset.UtcNow.Add(JwtDefaults.AccessTokenLifetime).UtcDateTime,
+                ExpiresAt = expiresAt,
                 CircuitId = circuitId
             };
         }
@@ -199,11 +243,9 @@ namespace OneID.Shared.Authentication
         {
             EnsureKeys();
 
-            string xmlKey = File.ReadAllText(_privateKeyPath);
-
+            string privatePem = File.ReadAllText(GetPemPath(_privateKeyPath));
             var rsa = RSA.Create();
-            rsa.FromXmlString(xmlKey);
-
+            rsa.ImportFromPem(privatePem.ToCharArray());
             return new RsaSecurityKey(rsa);
         }
 
@@ -211,17 +253,23 @@ namespace OneID.Shared.Authentication
         {
             try
             {
-                if (!File.Exists(_privateKeyPath) || ShouldRotateKeys())
+                lock (_keyLock)
                 {
-                    GenerateAndSaveKeys();
-                    EnsureMetadata();
-                }
-                else if (!File.Exists(_metadataPath))
-                {
-                    EnsureMetadata();
+                    var privPem = GetPemPath(_privateKeyPath);
+                    var pubPem = GetPemPath(_publicKeyPath);
+
+                    if (!File.Exists(privPem) || !File.Exists(pubPem) || ShouldRotateKeys())
+                    {
+                        GenerateAndSaveKeys();
+                        EnsureMetadata(); // mantém compat com fluxo antigo (noop se já gravado)
+                    }
+                    else if (!File.Exists(_metadataPath))
+                    {
+                        EnsureMetadata(); // cria metadados se sumiram
+                    }
                 }
             }
-            catch (Exception)
+            catch
             {
                 throw;
             }
@@ -234,16 +282,42 @@ namespace OneID.Shared.Authentication
                 Directory.CreateDirectory(_keyDirectoryPath);
             }
 
-            using var rsa = RSA.Create(2048);
-            string privateRsaKeyXml = rsa.ToXmlString(true);
-            string publicRsaKeyXml = rsa.ToXmlString(false);
+            using var rsa = RSA.Create(_jwtOptions.KeySize);
 
-            File.WriteAllText(_privateKeyPath, privateRsaKeyXml);
-            File.WriteAllText(_publicKeyPath, publicRsaKeyXml);
+            // PEMs
+            var privateKeyPem = ExportPrivateKeyAsPem(rsa);
+            var publicKeyPem = ExportPublicKeyAsPem(rsa);
 
-            var metadata = new { CreatedAt = DateTime.UtcNow };
+            File.WriteAllText(GetPemPath(_privateKeyPath), privateKeyPem);
+            File.WriteAllText(GetPemPath(_publicKeyPath), publicKeyPem);
+
+            // Metadata forte: ULID + salt + kid(hash(ULID || salt || SPKI))
+            var keyVersionUlid = Ulid.NewUlid().ToString();
+            var saltBytes = RandomNumberGenerator.GetBytes(32);
+            var saltB64Url = Base64UrlEncode(saltBytes);
+
+            // hash do SPKI
+            using var rsaPub = RSA.Create();
+            rsaPub.ImportFromPem(publicKeyPem.ToCharArray());
+            var spki = rsaPub.ExportSubjectPublicKeyInfo();
+
+            var raw = new List<byte>(Encoding.UTF8.GetBytes(keyVersionUlid));
+            raw.AddRange(saltBytes);
+            raw.AddRange(spki);
+
+            var kidBytes = SHA256.HashData(CollectionsMarshal.AsSpan(raw));
+            var kid = Base64UrlEncode(kidBytes);
+
+            var metadata = new KeyMetadata
+            {
+                CreatedAt = DateTime.UtcNow,
+                KeySize = _jwtOptions.KeySize,
+                KeyId = kid,
+                KeyVersion = keyVersionUlid,
+                Salt = saltB64Url
+            };
+
             File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
-
         }
 
         private bool ShouldRotateKeys()
@@ -255,9 +329,8 @@ namespace OneID.Shared.Authentication
 
             try
             {
-                var metadata = JsonConvert.DeserializeObject<dynamic>(File.ReadAllText(_metadataPath));
-                DateTime createdAt = metadata?.CreatedAt ?? DateTime.MinValue;
-
+                var meta = JsonConvert.DeserializeObject<KeyMetadata>(File.ReadAllText(_metadataPath));
+                var createdAt = meta?.CreatedAt ?? DateTime.MinValue;
                 return (DateTime.UtcNow - createdAt).TotalDays >= 90;
             }
             catch
@@ -266,12 +339,12 @@ namespace OneID.Shared.Authentication
             }
         }
 
+        // Mantido como utilitário (fallback determinístico, sem salt)
         private string GenerateKeyId(RsaSecurityKey rsaKey)
         {
             var keyBytes = rsaKey.Rsa.ExportSubjectPublicKeyInfo();
             var hash = SHA256.HashData(keyBytes);
-
-            return Convert.ToBase64String(hash);
+            return Base64UrlEncode(hash);
         }
 
         private string GetClientIpAddress(HttpContext httpContext)
@@ -296,6 +369,7 @@ namespace OneID.Shared.Authentication
         {
             var handler = new JsonWebTokenHandler();
             var key = GetRSAKey();
+            key.KeyId = GetActiveKeyId();
 
             var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
 
@@ -307,12 +381,15 @@ namespace OneID.Shared.Authentication
             var claimsIdentity = new ClaimsIdentity(claims.Select(c =>
                 new Claim(c.Key, c.Value?.ToString() ?? string.Empty)));
 
+            var now = DateTime.UtcNow;
+
             var descriptor = new SecurityTokenDescriptor
             {
                 Issuer = _jwtOptions.Issuer,
                 Audience = _jwtOptions.Audience,
-                NotBefore = DateTime.UtcNow,
-                Expires = DateTime.UtcNow.Add(validFor ?? _jwtOptions.AccessTokenTotpExpires),
+                IssuedAt = now,
+                NotBefore = now,
+                Expires = now.Add(validFor ?? _jwtOptions.AccessTokenTotpExpires),
                 Subject = claimsIdentity,
                 SigningCredentials = signingCredentials
             };
@@ -323,7 +400,6 @@ namespace OneID.Shared.Authentication
         public ClaimsPrincipal ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = GetRSAKey();
 
             var validationParameters = new TokenValidationParameters
             {
@@ -331,9 +407,9 @@ namespace OneID.Shared.Authentication
                 ValidateAudience = true,
                 ValidIssuer = _jwtOptions.Issuer,
                 ValidAudience = _jwtOptions.Audience,
-                IssuerSigningKey = key,
                 ValidateLifetime = true,
-                ClockSkew = TimeSpan.Zero
+                ClockSkew = TimeSpan.Zero,
+                IssuerSigningKey = GetPublicKey()
             };
 
             try
@@ -350,12 +426,14 @@ namespace OneID.Shared.Authentication
 
         public RsaSecurityKey GetPublicKey()
         {
-            string xmlKey = File.ReadAllText(_publicKeyPath);
-
+            var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
             var rsa = RSA.Create();
-            rsa.FromXmlString(xmlKey);
-
-            return new RsaSecurityKey(rsa);
+            rsa.ImportFromPem(publicPem.ToCharArray());
+            var key = new RsaSecurityKey(rsa)
+            {
+                KeyId = GetActiveKeyId()
+            };
+            return key;
         }
 
         public IDictionary<string, object> DecodeToken(string token)
@@ -368,9 +446,43 @@ namespace OneID.Shared.Authentication
         {
             if (!File.Exists(_metadataPath))
             {
-                var metadata = new { CreatedAt = DateTime.UtcNow };
-                File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
-                _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
+                try
+                {
+                    // cria metadata consistente a partir da chave pública atual
+                    var publicPem = File.ReadAllText(GetPemPath(_publicKeyPath));
+                    using var rsa = RSA.Create();
+                    rsa.ImportFromPem(publicPem.ToCharArray());
+                    var spki = rsa.ExportSubjectPublicKeyInfo();
+
+                    var keyVersionUlid = Ulid.NewUlid().ToString();
+                    var saltBytes = RandomNumberGenerator.GetBytes(32);
+                    var saltB64Url = Base64UrlEncode(saltBytes);
+
+                    var raw = new List<byte>(Encoding.UTF8.GetBytes(keyVersionUlid));
+                    raw.AddRange(saltBytes);
+                    raw.AddRange(spki);
+
+                    var kidBytes = SHA256.HashData(CollectionsMarshal.AsSpan(raw));
+                    var kid = Base64UrlEncode(kidBytes);
+
+                    var metadata = new KeyMetadata
+                    {
+                        CreatedAt = DateTime.UtcNow,
+                        KeySize = _jwtOptions.KeySize,
+                        KeyId = kid,
+                        KeyVersion = keyVersionUlid,
+                        Salt = saltB64Url
+                    };
+
+                    File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
+                    _logger.LogInformation("Metadata do par de chaves criado em {CreatedAt}", metadata.CreatedAt);
+                }
+                catch
+                {
+                    // fallback mínimo pra não travar boot
+                    var metadata = new { CreatedAt = DateTime.UtcNow };
+                    File.WriteAllText(_metadataPath, JsonConvert.SerializeObject(metadata));
+                }
             }
         }
 
@@ -400,7 +512,6 @@ namespace OneID.Shared.Authentication
 
         public bool ValidateTokenForLogin(string token, params string[] validScopes)
         {
-
             var principal = ValidateToken(token);
             if (principal == null)
                 return false;
@@ -503,7 +614,6 @@ namespace OneID.Shared.Authentication
                 ipAddress,
                 userAgent,
                 resolvedCircuitId
-
             );
 
             authResult.CircuitId = existingCircuitId;
@@ -526,13 +636,13 @@ namespace OneID.Shared.Authentication
         private string GenerateScopedJwt(string username, Guid correlationId, string accessScope, TimeSpan? lifetime = null)
         {
             var claims = new Dictionary<string, object>
-            {
-                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
-                { JwtClaims.UniqueName, username },
-                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-                { "access_scope", accessScope },
-                { "correlation_id", correlationId.ToString() }
-            };
+        {
+            { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+            { JwtClaims.UniqueName, username },
+            { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+            { "access_scope", accessScope },
+            { "correlation_id", correlationId.ToString() }
+        };
 
             return CreateBootstrapToken(claims, lifetime ?? TimeSpan.FromMinutes(2));
         }
@@ -553,13 +663,13 @@ namespace OneID.Shared.Authentication
                 : "unknown";
 
             var claims = new Dictionary<string, object>
-            {
-                { JwtClaims.Jti, Ulid.NewUlid().ToString() },
-                { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
-                { "access_scope", "bootstrap_token" },
-                { "ip", ip },
-                { "user_agent", userAgent }
-            };
+        {
+            { JwtClaims.Jti, Ulid.NewUlid().ToString() },
+            { JwtClaims.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds() },
+            { "access_scope", "bootstrap_token" },
+            { "ip", ip },
+            { "user_agent", userAgent }
+        };
 
             return CreateBootstrapToken(claims, TimeSpan.FromMinutes(5));
         }
@@ -593,6 +703,19 @@ namespace OneID.Shared.Authentication
             return ip;
         }
 
+        private static string ExportPrivateKeyAsPem(RSA rsa)
+        {
+            var privateKeyBytes = rsa.ExportPkcs8PrivateKey();
+            var b64 = Convert.ToBase64String(privateKeyBytes, Base64FormattingOptions.InsertLineBreaks);
+            return $"-----BEGIN PRIVATE KEY-----\n{b64}\n-----END PRIVATE KEY-----\n";
+        }
+
+        private static string ExportPublicKeyAsPem(RSA rsa)
+        {
+            var publicKeyBytes = rsa.ExportSubjectPublicKeyInfo();
+            var b64 = Convert.ToBase64String(publicKeyBytes, Base64FormattingOptions.InsertLineBreaks);
+            return $"-----BEGIN PUBLIC KEY-----\n{b64}\n-----END PUBLIC KEY-----\n";
+        }
     }
 
 }
