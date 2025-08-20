@@ -381,3 +381,5 @@ FodyWeavers.xsd
 /OneID.Api/Keys/PrivateRsaKey.xml
 /OneID.Api/Keys/PrivateRsaKey.xml
 /OneID.Api/Keys/PrivateRsaKey.xml
+/OneID.Api/Keys/PrivateRsaKey.pem
+/OneID.Api/Keys/PublicRsaKey.pem
